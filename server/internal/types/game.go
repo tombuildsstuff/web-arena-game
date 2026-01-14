@@ -58,12 +58,13 @@ type Player struct {
 
 // BuyZone represents a location where players can purchase units
 type BuyZone struct {
-	ID       string  `json:"id"`
-	OwnerID  int     `json:"ownerId"`  // Which player owns this buy zone
-	UnitType string  `json:"unitType"` // "tank" or "airplane"
-	Position Vector3 `json:"position"`
-	Radius   float64 `json:"radius"` // Interaction radius
-	Cost     int     `json:"cost"`
+	ID          string  `json:"id"`
+	OwnerID     int     `json:"ownerId"`    // Which player owns this buy zone (-1 = neutral)
+	UnitType    string  `json:"unitType"`   // "tank" or "airplane"
+	Position    Vector3 `json:"position"`
+	Radius      float64 `json:"radius"`     // Interaction radius
+	Cost        int     `json:"cost"`
+	IsClaimable bool    `json:"isClaimable"` // Whether this zone can be claimed
 }
 
 // Unit represents a unit (tank, airplane, or player) in the game

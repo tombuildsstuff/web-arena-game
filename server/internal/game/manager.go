@@ -63,7 +63,6 @@ func (m *Manager) AddToQueue(clientID string, conn ClientConnection, displayName
 
 	// Check if already in queue
 	if _, exists := m.queue[clientID]; exists {
-		log.Printf("Client %s already in queue", clientID)
 		return
 	}
 
@@ -74,8 +73,6 @@ func (m *Manager) AddToQueue(clientID string, conn ClientConnection, displayName
 		DisplayName: displayName,
 		IsGuest:     isGuest,
 	}
-
-	log.Printf("Client %s (%s) added to queue (queue size: %d)", clientID, displayName, len(m.queue))
 
 	// Try to match players
 	m.tryMatchPlayers()
@@ -88,7 +85,6 @@ func (m *Manager) RemoveFromQueue(clientID string) {
 
 	if _, exists := m.queue[clientID]; exists {
 		delete(m.queue, clientID)
-		log.Printf("Client %s removed from queue", clientID)
 	}
 }
 
@@ -147,6 +143,50 @@ func (m *Manager) tryMatchPlayers() {
 	room.Start()
 }
 
+// CreateAIGame creates a game with a human player vs AI
+func (m *Manager) CreateAIGame(clientID string, conn ClientConnection, displayName string, isGuest bool, difficulty string) {
+	// Remove from queue if present
+	m.queueMutex.Lock()
+	delete(m.queue, clientID)
+	m.queueMutex.Unlock()
+
+	// Create game room with AI as player 2
+	gameID := uuid.New().String()
+	aiDisplayName := "AI (" + difficulty + ")"
+
+	room := NewGameRoom(gameID,
+		clientID, displayName, isGuest,
+		"ai-"+gameID, aiDisplayName, false,
+	)
+
+	// Set human player connection
+	room.SetClientConnection(0, conn)
+
+	// Set AI connection (dummy - AI doesn't need to receive messages)
+	room.SetClientConnection(1, &AIClientConnection{})
+
+	// Create and set AI controller (AI is player 1, index 1)
+	aiController := NewAIController(1, difficulty)
+	room.SetAIController(aiController)
+
+	// Set callback for when game ends
+	room.SetOnGameEnd(m.handleGameEnd)
+
+	// Set callback for recording game results to leaderboard
+	room.SetOnGameResult(m.leaderboard.RecordGameResult)
+
+	// Store room
+	m.roomsMutex.Lock()
+	m.rooms[gameID] = room
+	m.clientToRoom[clientID] = gameID
+	m.roomsMutex.Unlock()
+
+	log.Printf("Created AI game room %s: %s vs %s", gameID, displayName, aiDisplayName)
+
+	// Start the game
+	room.Start()
+}
+
 // handleGameEnd cleans up when a game finishes
 func (m *Manager) handleGameEnd(roomID string) {
 	m.roomsMutex.Lock()
@@ -168,7 +208,7 @@ func (m *Manager) handleGameEnd(roomID string) {
 	// Remove room
 	delete(m.rooms, roomID)
 
-	log.Printf("Cleaned up game room %s (removed %d client mappings)", roomID, len(clientIDs))
+	// Verbose: log.Printf("Cleaned up game room %s (removed %d client mappings)", roomID, len(clientIDs))
 }
 
 // GetRoomByClient returns the game room for a client
@@ -224,8 +264,6 @@ func (m *Manager) RemoveClient(clientID string) {
 			delete(m.rooms, roomID)
 		}
 		delete(m.clientToRoom, clientID)
-
-		log.Printf("Client %s removed from game room %s", clientID, roomID)
 		return
 	}
 
@@ -235,7 +273,6 @@ func (m *Manager) RemoveClient(clientID string) {
 			room.RemoveSpectator(clientID)
 		}
 		delete(m.spectatorToRoom, clientID)
-		log.Printf("Spectator %s removed from game %s", clientID, gameID)
 	}
 }
 
@@ -301,8 +338,6 @@ func (m *Manager) AddSpectator(clientID string, gameID string, conn ClientConnec
 	// Track spectator
 	m.spectatorToRoom[clientID] = gameID
 	room.AddSpectator(clientID, conn)
-
-	log.Printf("Client %s now spectating game %s", clientID, gameID)
 	return true
 }
 
@@ -316,7 +351,6 @@ func (m *Manager) RemoveSpectator(clientID string) {
 			room.RemoveSpectator(clientID)
 		}
 		delete(m.spectatorToRoom, clientID)
-		log.Printf("Client %s stopped spectating game %s", clientID, gameID)
 	}
 }
 

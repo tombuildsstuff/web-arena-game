@@ -28,6 +28,9 @@ type GameRoom struct {
 	onGameEnd         GameEndCallback    // Callback when game ends
 	onGameResult      GameResultCallback // Callback for game results (leaderboard)
 
+	// AI controller (nil for human vs human games)
+	aiController *AIController
+
 	// Game systems
 	pathfindingSystem  *PathfindingSystem
 	spatialGrid        *SpatialGrid
@@ -91,12 +94,18 @@ func (r *GameRoom) SetOnGameResult(callback GameResultCallback) {
 	r.onGameResult = callback
 }
 
+// SetAIController sets the AI controller for computer-controlled player
+func (r *GameRoom) SetAIController(ai *AIController) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.aiController = ai
+}
+
 // AddSpectator adds a spectator to the game room
 func (r *GameRoom) AddSpectator(clientID string, conn ClientConnection) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.spectators[clientID] = conn
-	log.Printf("Spectator %s joined game %s (total spectators: %d)", clientID, r.ID, len(r.spectators))
 
 	// Send current game state to the new spectator
 	stateData := r.State.ToType()
@@ -112,7 +121,6 @@ func (r *GameRoom) RemoveSpectator(clientID string) {
 	defer r.mu.Unlock()
 	if _, exists := r.spectators[clientID]; exists {
 		delete(r.spectators, clientID)
-		log.Printf("Spectator %s left game %s (total spectators: %d)", clientID, r.ID, len(r.spectators))
 	}
 }
 
@@ -201,6 +209,11 @@ func (r *GameRoom) update() {
 	// Update passive income
 	r.updateIncome()
 
+	// Update AI (if present)
+	if r.aiController != nil {
+		r.aiController.Update(r.State, r)
+	}
+
 	// Update movement
 	r.movementSystem.Update(r.State, deltaTime)
 
@@ -209,7 +222,6 @@ func (r *GameRoom) update() {
 		spawnedUnits := r.State.SpawnQueue.ProcessQueue(r.State)
 		for _, unit := range spawnedUnits {
 			r.State.AddUnit(unit)
-			log.Printf("Spawned queued %s for player %d", unit.GetType(), unit.GetOwnerID())
 		}
 	}
 
@@ -303,7 +315,6 @@ func (r *GameRoom) HandlePurchase(playerID int, unitType string) {
 
 	// Check if player can afford
 	if !player.CanAfford(cost) {
-		log.Printf("Player %d cannot afford %s (cost: %d, money: %d)", playerID, unitType, cost, player.Money)
 		if conn, ok := r.clientConnections[playerID]; ok {
 			conn.SendMessage("error", types.ErrorPayload{
 				Message: "Not enough money",
@@ -326,8 +337,6 @@ func (r *GameRoom) HandlePurchase(playerID int, unitType string) {
 
 	// Add to state
 	r.State.AddUnit(unit)
-
-	log.Printf("Player %d purchased %s (remaining money: %d)", playerID, unitType, player.Money)
 }
 
 // HandlePlayerMove handles player movement input
@@ -427,7 +436,6 @@ func (r *GameRoom) HandleBuyFromZone(playerID int, zoneID string, conn ClientCon
 
 	// Add to spawn queue
 	r.State.SpawnQueue.Add(zone.UnitType, playerID, spawnPos, targetPos, zoneID)
-	log.Printf("Player %d queued %s from zone %s (remaining: $%d)", playerID, zone.UnitType, zoneID, player.Money)
 }
 
 // HandleClaimTurret handles a turret claiming request
@@ -485,7 +493,70 @@ func (r *GameRoom) HandleClaimTurret(playerID int, turretID string, conn ClientC
 
 	// Claim the turret
 	turret.Claim(playerID)
-	log.Printf("Player %d claimed turret %s", playerID, turretID)
+}
+
+// HandleClaimBuyZone handles a buy zone claiming request
+func (r *GameRoom) HandleClaimBuyZone(playerID int, zoneID string, conn ClientConnection) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.State.GameStatus != "playing" {
+		return
+	}
+
+	// Find the buy zone
+	var zone *BuyZone
+	for _, z := range r.State.BuyZones {
+		if z.ID == zoneID {
+			zone = z
+			break
+		}
+	}
+
+	if zone == nil {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Invalid buy zone",
+		})
+		return
+	}
+
+	// Get the player unit
+	playerUnit := r.State.GetPlayerUnit(playerID)
+	if playerUnit == nil || !playerUnit.IsAlive() {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "You must be alive to claim a base",
+		})
+		return
+	}
+
+	// Check if player is near the buy zone
+	if !zone.IsPlayerInRange(playerUnit.GetPosition()) {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Get closer to the base",
+		})
+		return
+	}
+
+	// Check if zone can be claimed
+	if !zone.CanBeClaimed(playerID) {
+		if !zone.IsClaimable {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "This base cannot be claimed",
+			})
+		} else if zone.OwnerID == playerID {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "You already own this base",
+			})
+		} else {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "This base is already owned",
+			})
+		}
+		return
+	}
+
+	// Claim the zone
+	zone.Claim(playerID)
 }
 
 // HandlePlayerShoot handles player shoot command

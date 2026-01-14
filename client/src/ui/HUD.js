@@ -55,7 +55,7 @@ export class HUD {
 
     // Update player unit health and respawn status
     if (myPlayerUnit) {
-      this.playerHealthElement.textContent = `Health: ${myPlayerUnit.health}/10`;
+      this.playerHealthElement.textContent = `Health: ${myPlayerUnit.health}/80`;
 
       if (myPlayerUnit.isRespawning && myPlayerUnit.respawnTime > 0) {
         this.respawnTimerElement.textContent = `Respawning: ${Math.ceil(myPlayerUnit.respawnTime)}s`;
@@ -78,11 +78,12 @@ export class HUD {
     if (!this.gameLoop || !this.buyZonePromptElement) return;
 
     const nearbyZone = this.gameLoop.getNearbyBuyZone();
+    const nearbyClaimableZone = this.gameLoop.getNearbyClaimableBuyZone();
     const nearbyTurret = this.gameLoop.getNearbyTurret();
     const myPlayer = this.gameState.getMyPlayer();
     const pendingCounts = this.gameState.getMyPendingSpawnCounts();
 
-    // Priority: buy zones first
+    // Priority: owned buy zones first, then claimable zones, then turrets
     if (nearbyZone && myPlayer) {
       const unitName = nearbyZone.unitType === 'tank' ? 'Tank' : 'Airplane';
       const cost = nearbyZone.cost;
@@ -104,6 +105,12 @@ export class HUD {
       this.buyZonePromptElement.style.borderColor = canAfford
         ? 'rgba(251, 191, 36, 0.6)'
         : 'rgba(239, 68, 68, 0.6)';
+    } else if (nearbyClaimableZone) {
+      // Show claim prompt for neutral claimable buy zones
+      this.buyZoneTextElement.innerHTML = `Press <span class="key">E</span> to claim Forward Base`;
+
+      this.buyZonePromptElement.classList.remove('hidden');
+      this.buyZonePromptElement.style.borderColor = 'rgba(34, 197, 94, 0.6)'; // Green for claimable bases
     } else if (nearbyTurret) {
       // Show turret claiming prompt (only shown for neutral turrets)
       this.buyZoneTextElement.innerHTML = `Press <span class="key">E</span> to claim Turret`;

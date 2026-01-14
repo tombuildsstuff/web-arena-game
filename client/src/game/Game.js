@@ -88,6 +88,7 @@ export class Game {
       (targetX, targetZ) => this.sendPlayerShoot(targetX, targetZ),
       (zoneId) => this.sendBuyFromZone(zoneId),
       (turretId) => this.sendClaimTurret(turretId),
+      (zoneId) => this.sendClaimBuyZone(zoneId),
       this.gameLoop
     );
 
@@ -319,6 +320,7 @@ export class Game {
     document.getElementById('hud').classList.remove('hidden');
     document.getElementById('queue-screen').classList.remove('hidden');
     document.getElementById('join-queue-button').disabled = false;
+    document.getElementById('play-vs-ai-button').disabled = false;
     document.getElementById('queue-status').classList.add('hidden');
 
     // Refresh lobby status and leaderboard
@@ -334,9 +336,24 @@ export class Game {
       if (this.ws.isConnected()) {
         this.ws.send('join_queue', {});
         joinButton.disabled = true;
+        document.getElementById('play-vs-ai-button').disabled = true;
         queueStatus.classList.remove('hidden');
       }
     });
+
+    // Play vs AI button
+    const playVsAIButton = document.getElementById('play-vs-ai-button');
+    const aiDifficulty = document.getElementById('ai-difficulty');
+    if (playVsAIButton) {
+      playVsAIButton.addEventListener('click', () => {
+        if (this.ws.isConnected()) {
+          const difficulty = aiDifficulty.value;
+          this.ws.send('start_vs_ai', { difficulty });
+          joinButton.disabled = true;
+          playVsAIButton.disabled = true;
+        }
+      });
+    }
 
     // Stop spectating button
     const stopSpectatingButton = document.getElementById('stop-spectating-button');
@@ -351,15 +368,18 @@ export class Game {
     const statusElement = document.getElementById('connection-status');
     const statusText = document.getElementById('status-text');
     const joinButton = document.getElementById('join-queue-button');
+    const playVsAIButton = document.getElementById('play-vs-ai-button');
 
     if (connected) {
       statusElement.className = 'connected';
       statusText.textContent = 'Connected';
       joinButton.disabled = false;
+      if (playVsAIButton) playVsAIButton.disabled = false;
     } else {
       statusElement.className = 'disconnected';
       statusText.textContent = 'Disconnected';
       joinButton.disabled = true;
+      if (playVsAIButton) playVsAIButton.disabled = true;
     }
   }
 
@@ -387,6 +407,12 @@ export class Game {
     }
   }
 
+  sendClaimBuyZone(zoneId) {
+    if (this.ws.isConnected() && this.gameState.gameStatus === 'playing') {
+      this.ws.send('claim_buy_zone', { zoneId });
+    }
+  }
+
   showBuyZoneError(message) {
     // Get the nearby buy zone position for the popup
     const nearbyZone = this.gameLoop.getNearbyBuyZone();
@@ -411,6 +437,7 @@ export class Game {
     // Show queue screen
     document.getElementById('queue-screen').classList.remove('hidden');
     document.getElementById('join-queue-button').disabled = false;
+    document.getElementById('play-vs-ai-button').disabled = false;
     document.getElementById('queue-status').classList.add('hidden');
 
     // Refresh leaderboard

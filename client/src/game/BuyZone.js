@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { PLAYER_COLORS } from '../utils/constants.js';
 
+// Neutral/claimable zone color (green)
+const NEUTRAL_COLOR = 0x22c55e;
+
 export class BuyZone {
   constructor(scene, zone) {
     this.scene = scene;
@@ -9,12 +12,19 @@ export class BuyZone {
     this.label = null;
     this.glowMesh = null;
     this.canAfford = true;
-    this.baseColor = PLAYER_COLORS[zone.ownerId];
+    this.baseColor = this.getZoneColor(zone.ownerId);
     this.create();
   }
 
+  getZoneColor(ownerId) {
+    if (ownerId === -1) {
+      return NEUTRAL_COLOR;
+    }
+    return PLAYER_COLORS[ownerId];
+  }
+
   create() {
-    const color = PLAYER_COLORS[this.zone.ownerId];
+    const color = this.getZoneColor(this.zone.ownerId);
 
     // Create a circular platform for the buy zone
     const platformGeometry = new THREE.CylinderGeometry(
@@ -32,9 +42,10 @@ export class BuyZone {
     });
 
     this.mesh = new THREE.Mesh(platformGeometry, platformMaterial);
+    const baseY = this.zone.position.y || 0;
     this.mesh.position.set(
       this.zone.position.x,
-      0.15,
+      baseY + 0.15,
       this.zone.position.z
     );
     this.mesh.receiveShadow = true;
@@ -56,7 +67,7 @@ export class BuyZone {
     this.glowMesh.rotation.x = -Math.PI / 2;
     this.glowMesh.position.set(
       this.zone.position.x,
-      0.35,
+      baseY + 0.35,
       this.zone.position.z
     );
     this.scene.add(this.glowMesh);
@@ -74,7 +85,7 @@ export class BuyZone {
       const icon = new THREE.Mesh(iconGeometry, iconMaterial);
       icon.position.set(
         this.zone.position.x,
-        0.7,
+        baseY + 0.7,
         this.zone.position.z
       );
       icon.castShadow = true;
@@ -93,7 +104,7 @@ export class BuyZone {
       icon.rotation.x = Math.PI / 2;
       icon.position.set(
         this.zone.position.x,
-        0.7,
+        baseY + 0.7,
         this.zone.position.z
       );
       icon.castShadow = true;
@@ -148,6 +159,22 @@ export class BuyZone {
     const dz = position.z - this.zone.position.z;
     const distSq = dx * dx + dz * dz;
     return distSq <= this.zone.radius * this.zone.radius;
+  }
+
+  // Update the owner of this zone (when claimed)
+  updateOwner(newOwnerId) {
+    if (this.zone.ownerId === newOwnerId) return;
+
+    this.zone.ownerId = newOwnerId;
+    this.baseColor = this.getZoneColor(newOwnerId);
+
+    // Update mesh colors
+    if (this.mesh) {
+      this.mesh.material.color.setHex(this.baseColor);
+    }
+    if (this.glowMesh) {
+      this.glowMesh.material.color.setHex(this.baseColor);
+    }
   }
 
   remove() {

@@ -149,6 +149,18 @@
         <button id="join-queue-button" disabled>Join Queue</button>
         <p id="queue-status" class="hidden">Waiting for opponent...</p>
 
+        <div id="vs-ai-section">
+          <span class="or-divider">or</span>
+          <div class="ai-controls">
+            <select id="ai-difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button id="play-vs-ai-button" disabled>Play vs AI</button>
+          </div>
+        </div>
+
         <!-- Lobby Status -->
         <div id="lobby-status">
           <p id="players-waiting" class="hidden">0 players waiting</p>

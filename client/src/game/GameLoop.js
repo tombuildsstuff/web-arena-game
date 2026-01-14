@@ -32,6 +32,7 @@ export class GameLoop {
     this.previousTurretStates = new Map(); // Track turret states for sound triggers
     this.previousRespawnStates = new Map(); // Track respawn states for sound triggers
     this.nearbyBuyZone = null; // The buy zone the player is currently near
+    this.nearbyClaimableBuyZone = null; // A claimable buy zone the player is near
     this.nearbyTurret = null; // The turret the player is currently near
     this.buyZonePopup = null; // Reference to the popup for position updates
     this.isSpectating = false; // Spectator mode flag
@@ -160,20 +161,27 @@ export class GameLoop {
   }
 
   syncBuyZones() {
-    // Only initialize buy zones once
-    if (this.buyZonesInitialized) return;
-
     const stateBuyZones = this.gameState.buyZones || [];
     if (stateBuyZones.length === 0) return;
 
-    for (const zone of stateBuyZones) {
-      if (!this.buyZoneMeshes.has(zone.id)) {
-        const buyZone = new BuyZone(this.scene.getScene(), zone);
-        this.buyZoneMeshes.set(zone.id, buyZone);
+    // Initialize buy zones once
+    if (!this.buyZonesInitialized) {
+      for (const zone of stateBuyZones) {
+        if (!this.buyZoneMeshes.has(zone.id)) {
+          const buyZone = new BuyZone(this.scene.getScene(), zone);
+          this.buyZoneMeshes.set(zone.id, buyZone);
+        }
       }
+      this.buyZonesInitialized = true;
     }
 
-    this.buyZonesInitialized = true;
+    // Update buy zone ownership (in case zones were claimed)
+    for (const zoneData of stateBuyZones) {
+      const buyZone = this.buyZoneMeshes.get(zoneData.id);
+      if (buyZone && buyZone.zone.ownerId !== zoneData.ownerId) {
+        buyZone.updateOwner(zoneData.ownerId);
+      }
+    }
   }
 
   updateBuyZones() {
@@ -193,23 +201,34 @@ export class GameLoop {
 
     // Check if player is near any buy zone
     this.nearbyBuyZone = null;
+    this.nearbyClaimableBuyZone = null;
     const playerUnit = this.gameState.getMyPlayerUnit();
     if (!playerUnit || playerUnit.isRespawning) return;
 
     const playerPos = playerUnit.position;
     for (const [zoneId, buyZone] of this.buyZoneMeshes.entries()) {
-      // Only check zones owned by this player
+      if (!buyZone.isInRange(playerPos)) continue;
+
+      // Check if this is a zone owned by this player (can buy from it)
       if (buyZone.zone.ownerId === this.gameState.playerId) {
-        if (buyZone.isInRange(playerPos)) {
-          this.nearbyBuyZone = buyZone.zone;
-          break;
-        }
+        this.nearbyBuyZone = buyZone.zone;
+        break;
+      }
+
+      // Check if this is a claimable neutral zone
+      if (buyZone.zone.isClaimable && buyZone.zone.ownerId === -1) {
+        this.nearbyClaimableBuyZone = buyZone.zone;
+        // Continue checking - owned zones take priority
       }
     }
   }
 
   getNearbyBuyZone() {
     return this.nearbyBuyZone;
+  }
+
+  getNearbyClaimableBuyZone() {
+    return this.nearbyClaimableBuyZone;
   }
 
   syncTurrets() {
@@ -563,6 +582,7 @@ export class GameLoop {
     this.previousTurretStates.clear();
     this.previousRespawnStates.clear();
     this.nearbyBuyZone = null;
+    this.nearbyClaimableBuyZone = null;
     this.nearbyTurret = null;
     this.elapsedTime = 0;
 

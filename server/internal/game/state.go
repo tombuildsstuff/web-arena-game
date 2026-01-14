@@ -176,6 +176,19 @@ func (s *State) GetObstacles() []*Obstacle {
 	return s.Obstacles
 }
 
+// GetElevationAt returns the ground elevation at a given position
+// Checks all ramp obstacles and returns the highest elevation
+func (s *State) GetElevationAt(x, z float64) float64 {
+	maxElevation := 0.0
+	for _, obs := range s.Obstacles {
+		elevation := obs.GetElevationAt(x, z)
+		if elevation > maxElevation {
+			maxElevation = elevation
+		}
+	}
+	return maxElevation
+}
+
 // GetPlayerUnit returns the player unit for the given player ID
 func (s *State) GetPlayerUnit(playerID int) *PlayerUnit {
 	for _, unit := range s.Units {

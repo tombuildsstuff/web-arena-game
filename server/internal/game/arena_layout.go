@@ -6,11 +6,11 @@ import (
 	"github.com/tombuildsstuff/web-arena-game/server/internal/types"
 )
 
-// GetSymmetricObstacles returns a complex arena layout with many rooms and corridors
+// GetSymmetricObstacles returns an arena layout with standalone walls providing cover
 // Arena is 200x200 with bases at (-90, 0, 0) and (90, 0, 0)
 // Layout is symmetric about the X=0 axis for fair gameplay
 //
-// All doorways/gaps are at least 1.5x tank diameter (6 units) to ensure passage
+// IMPORTANT: Walls are standalone segments with spacing around them - no enclosed rooms
 func GetSymmetricObstacles() []*Obstacle {
 	obstacles := make([]*Obstacle, 0)
 	idCounter := 0
@@ -23,13 +23,6 @@ func GetSymmetricObstacles() []*Obstacle {
 	// Constants
 	wallHeight := 6.0
 	wallThickness := 2.0
-
-	// Minimum gap calculation:
-	// - Tank collision radius: 2.0 (diameter 4.0)
-	// - Pathfinding buffer: 2.0 (cells within 2.0 of obstacles are unwalkable)
-	// - Required gap: (2.0 + 2.0) * 2 = 8.0 minimum
-	// - Using 10.0 for comfortable 1.5x passage
-	minGap := 10.0
 
 	// ============================================================
 	// OUTER WALLS - Define the playable area boundary
@@ -50,247 +43,275 @@ func GetSymmetricObstacles() []*Obstacle {
 	)
 
 	// ============================================================
-	// HORIZONTAL LANE DIVIDERS (Z = ±30)
-	// Creates 3 lanes: top, middle, bottom
-	// Each wall section leaves gaps of minGap (10 units) for doorways
+	// HORIZONTAL LANE DIVIDERS (Z = ±35)
+	// Short standalone segments with large gaps between them
+	// No walls connect to vertical walls
 	// ============================================================
 
-	// Upper lane divider (Z = -30)
-	// Layout: [wall -85 to -55] [gap 10] [wall -45 to -5] [gap 10] [wall 5 to 45] [gap 10] [wall 55 to 85]
-	//
-	// Left outer section: center at -70, width 30 -> edges at -85 to -55
+	// Upper lane divider segments (Z = -35)
+	// Segment 1: near left base
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -70, Y: 0, Z: -30},
-			types.Vector3{X: 30, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: -65, Y: 0, Z: -35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
-	// Left inner section: center at -25, width 40 -> edges at -45 to -5
+	// Segment 2: left-center
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -25, Y: 0, Z: -30},
-			types.Vector3{X: 40, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: -25, Y: 0, Z: -35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
-	// Right inner section: center at 25, width 40 -> edges at 5 to 45
+	// Segment 3: right-center
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 25, Y: 0, Z: -30},
-			types.Vector3{X: 40, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: 25, Y: 0, Z: -35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
-	// Right outer section: center at 70, width 30 -> edges at 55 to 85
+	// Segment 4: near right base
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 70, Y: 0, Z: -30},
-			types.Vector3{X: 30, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: 65, Y: 0, Z: -35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
 
-	// Lower lane divider (Z = 30) - mirrors upper
+	// Lower lane divider segments (Z = 35) - mirrors upper
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -70, Y: 0, Z: 30},
-			types.Vector3{X: 30, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: -65, Y: 0, Z: 35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -25, Y: 0, Z: 30},
-			types.Vector3{X: 40, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: -25, Y: 0, Z: 35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 25, Y: 0, Z: 30},
-			types.Vector3{X: 40, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: 25, Y: 0, Z: 35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 70, Y: 0, Z: 30},
-			types.Vector3{X: 30, Y: wallHeight, Z: wallThickness}, 0),
+			types.Vector3{X: 65, Y: 0, Z: 35},
+			types.Vector3{X: 20, Y: wallHeight, Z: wallThickness}, 0),
 	)
 
 	// ============================================================
-	// VERTICAL ROOM DIVIDERS (X = ±50)
-	// Creates side rooms separated from center area
-	// Doorways at Z = -40, 0, +40 (each 10 units wide)
+	// VERTICAL COVER WALLS (X = ±45)
+	// Short standalone segments - NOT connected to horizontal walls
+	// Positioned to avoid creating rooms
 	// ============================================================
 
-	// Left vertical divider at X = -50
-	// Top section: Z from -85 to -45 (height 40), leaves 10-unit gap at Z=-40
+	// Left vertical segments at X = -45
+	// Top lane segment
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -50, Y: 0, Z: -65},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 40}, 0),
+			types.Vector3{X: -45, Y: 0, Z: -60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
-	// Upper-middle section: Z from -35 to -5 (height 30), 10-unit gaps at Z=-40 and Z=0
+	// Center segment
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -50, Y: 0, Z: -20},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 30}, 0),
+			types.Vector3{X: -45, Y: 0, Z: 0},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
 	)
-	// Lower-middle section: Z from 5 to 35 (height 30), 10-unit gaps at Z=0 and Z=40
+	// Bottom lane segment
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -50, Y: 0, Z: 20},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 30}, 0),
-	)
-	// Bottom section: Z from 45 to 85 (height 40)
-	obstacles = append(obstacles,
-		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -50, Y: 0, Z: 65},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 40}, 0),
+			types.Vector3{X: -45, Y: 0, Z: 60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
 
-	// Right vertical divider at X = 50 - mirrors left
+	// Right vertical segments at X = 45 - mirrors left
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 50, Y: 0, Z: -65},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 40}, 0),
+			types.Vector3{X: 45, Y: 0, Z: -60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 50, Y: 0, Z: -20},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 30}, 0),
+			types.Vector3{X: 45, Y: 0, Z: 0},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 50, Y: 0, Z: 20},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 30}, 0),
-	)
-	obstacles = append(obstacles,
-		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 50, Y: 0, Z: 65},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 40}, 0),
+			types.Vector3{X: 45, Y: 0, Z: 60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
 
 	// ============================================================
-	// BASE APPROACH WALLS (X = ±75)
-	// Smaller walls near bases - just outer sections to guide traffic
-	// Wide center passage for easy tank access
+	// BASE APPROACH WALLS (X = ±70)
+	// Short segments to provide cover near bases
 	// ============================================================
 
-	// Left base walls at X = -75
-	// Top section only: Z from -85 to -50 (height 35)
+	// Left base walls at X = -70
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -75, Y: 0, Z: -67.5},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 35}, 0),
+			types.Vector3{X: -70, Y: 0, Z: -60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
 	)
-	// Bottom section only: Z from 50 to 85 (height 35)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -75, Y: 0, Z: 67.5},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 35}, 0),
+			types.Vector3{X: -70, Y: 0, Z: 60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
 	)
 
-	// Right base walls at X = 75 - mirrors left
+	// Right base walls at X = 70 - mirrors left
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 75, Y: 0, Z: -67.5},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 35}, 0),
+			types.Vector3{X: 70, Y: 0, Z: -60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 75, Y: 0, Z: 67.5},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 35}, 0),
+			types.Vector3{X: 70, Y: 0, Z: 60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
 	)
 
 	// ============================================================
 	// CENTRAL CORRIDOR WALLS (X = ±15)
-	// Short walls in outer lanes only, leaving center completely open
+	// Short walls in outer lanes for cover
 	// ============================================================
 
-	// Left central walls - only in top and bottom lanes
+	// Left central walls
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -15, Y: 0, Z: -57},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
+			types.Vector3{X: -15, Y: 0, Z: -60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -15, Y: 0, Z: 57},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
+			types.Vector3{X: -15, Y: 0, Z: 60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
 
 	// Right central walls - mirrors left
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 15, Y: 0, Z: -57},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
+			types.Vector3{X: 15, Y: 0, Z: -60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 15, Y: 0, Z: 57},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 20}, 0),
+			types.Vector3{X: 15, Y: 0, Z: 60},
+			types.Vector3{X: wallThickness, Y: wallHeight, Z: 15}, 0),
 	)
 
 	// ============================================================
-	// COVER PILLARS (provide cover without blocking movement)
-	// All pillars are small enough (3x3) to leave minGap around them
+	// COVER PILLARS (provide cover without blocking turret sight lines)
+	// Spread in clusters of 3 at reasonable distance from turrets
 	// ============================================================
 
 	pillarSize := 3.0
 	pillarHeight := 6.0
 
-	// Central area pillars
+	// Central area pillars (near center room turrets at ±25, 0)
+	// Spread across the middle lane
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 0, Y: 0, Z: -15},
+			types.Vector3{X: -10, Y: 0, Z: -8},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 0, Y: 0, Z: 15},
+			types.Vector3{X: 0, Y: 0, Z: 0},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 10, Y: 0, Z: 8},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 	)
 
-	// Mid-field pillars
+	// Cover near central corridor turrets (at 0, ±50)
+	// Top turret cover - 3 pillars spread in arc, ~20 units from turret
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: -35, Y: 0, Z: 0},
+			types.Vector3{X: -15, Y: 0, Z: -35},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 35, Y: 0, Z: 0},
+			types.Vector3{X: 0, Y: 0, Z: -30},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 15, Y: 0, Z: -35},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+	)
+	// Bottom turret cover
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: -15, Y: 0, Z: 35},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 0, Y: 0, Z: 30},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 15, Y: 0, Z: 35},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 	)
 
-	// Lane pillars (top and bottom lanes)
+	// Cover near corner turrets (at ±55, ±65)
+	// Top-left corner - 3 pillars spread, ~20 units from turret
 	obstacles = append(obstacles,
-		// Top lane
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: -35, Y: 0, Z: -55},
+			types.Vector3{X: -70, Y: 0, Z: -50},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 0, Y: 0, Z: -55},
+			types.Vector3{X: -55, Y: 0, Z: -45},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 35, Y: 0, Z: -55},
+			types.Vector3{X: -40, Y: 0, Z: -50},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
-		// Bottom lane
+	)
+	// Top-right corner
+	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: -35, Y: 0, Z: 55},
+			types.Vector3{X: 40, Y: 0, Z: -50},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 0, Y: 0, Z: 55},
+			types.Vector3{X: 55, Y: 0, Z: -45},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 35, Y: 0, Z: 55},
+			types.Vector3{X: 70, Y: 0, Z: -50},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+	)
+	// Bottom-left corner
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: -70, Y: 0, Z: 50},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: -55, Y: 0, Z: 45},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: -40, Y: 0, Z: 50},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+	)
+	// Bottom-right corner
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 40, Y: 0, Z: 50},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 55, Y: 0, Z: 45},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 70, Y: 0, Z: 50},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 	)
 
-	// Side room pillars
+	// Mid-lane cover (near turrets at ±50, ±40)
+	// Left side - between base and center
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: -65, Y: 0, Z: -55},
+			types.Vector3{X: -35, Y: 0, Z: -25},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: -65, Y: 0, Z: 0},
+			types.Vector3{X: -35, Y: 0, Z: 25},
+			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
+	)
+	// Right side
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstaclePillar,
+			types.Vector3{X: 35, Y: 0, Z: -25},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: -65, Y: 0, Z: 55},
-			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
-		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 65, Y: 0, Z: -55},
-			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
-		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 65, Y: 0, Z: 0},
-			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
-		NewObstacle(nextID(), ObstaclePillar,
-			types.Vector3{X: 65, Y: 0, Z: 55},
+			types.Vector3{X: 35, Y: 0, Z: 25},
 			types.Vector3{X: pillarSize, Y: pillarHeight, Z: pillarSize}, 0),
 	)
 
@@ -317,8 +338,127 @@ func GetSymmetricObstacles() []*Obstacle {
 			types.Vector3{X: coverSize, Y: coverHeight, Z: coverSize}, 0),
 	)
 
-	// Suppress unused variable warning
-	_ = minGap
+	// Mid-field cover blocks
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: -55, Y: 0, Z: 0},
+			types.Vector3{X: coverSize, Y: coverHeight, Z: coverSize}, 0),
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: 55, Y: 0, Z: 0},
+			types.Vector3{X: coverSize, Y: coverHeight, Z: coverSize}, 0),
+	)
+
+	// ============================================================
+	// FORWARD BASE PLATFORMS (raised areas at Z = ±70)
+	// These are the claimable forward bases
+	// Uses flat ramps so units can walk on them
+	// ============================================================
+
+	platformHeight := 3.0
+	platformSize := 12.0
+
+	// North forward base platform (Z = -70) - flat ramp so units can walk on it
+	obstacles = append(obstacles,
+		NewRamp(nextID(),
+			types.Vector3{X: 0, Y: 0, Z: -70},
+			types.Vector3{X: platformSize, Y: platformHeight, Z: platformSize},
+			0,
+			platformHeight, // Flat - same elevation at both ends
+			platformHeight,
+		),
+	)
+
+	// South forward base platform (Z = 70) - flat ramp so units can walk on it
+	obstacles = append(obstacles,
+		NewRamp(nextID(),
+			types.Vector3{X: 0, Y: 0, Z: 70},
+			types.Vector3{X: platformSize, Y: platformHeight, Z: platformSize},
+			0,
+			platformHeight, // Flat - same elevation at both ends
+			platformHeight,
+		),
+	)
+
+	// ============================================================
+	// RAMPS TO FORWARD BASES
+	// Ramps leading up to the raised platforms
+	// ============================================================
+
+	rampWidth := 10.0
+	rampLength := 12.0
+
+	// North platform ramp (approaching from center, Z increasing towards -70)
+	// Ramp goes from Z=-52 (ground level) to Z=-64 (platform level)
+	obstacles = append(obstacles,
+		NewRamp(nextID(),
+			types.Vector3{X: 0, Y: 0, Z: -58}, // Center of ramp
+			types.Vector3{X: rampWidth, Y: platformHeight, Z: rampLength},
+			0,                 // No rotation
+			platformHeight,    // ElevationStart at MinZ (-64) = 3 (top)
+			0,                 // ElevationEnd at MaxZ (-52) = 0 (bottom)
+		),
+	)
+
+	// South platform ramp (approaching from center, Z decreasing towards 70)
+	// Ramp goes from Z=52 (ground level) to Z=64 (platform level)
+	obstacles = append(obstacles,
+		NewRamp(nextID(),
+			types.Vector3{X: 0, Y: 0, Z: 58}, // Center of ramp
+			types.Vector3{X: rampWidth, Y: platformHeight, Z: rampLength},
+			0,                 // No rotation
+			0,                 // ElevationStart at MinZ (52) = 0 (bottom)
+			platformHeight,    // ElevationEnd at MaxZ (64) = 3 (top)
+		),
+	)
+
+	// ============================================================
+	// PLATFORM EDGE BARRIERS
+	// Prevent units from walking off platform edges - must use ramps
+	// Platform is 12x12, ramp is 10 wide, so leave 10-unit gap for ramp
+	// ============================================================
+
+	barrierHeight := 1.5 // Low barrier, just enough to block movement
+	barrierThickness := 1.0
+
+	// North platform barriers (platform at Z=-70, spans X:-6 to 6, Z:-76 to -64)
+	// Left edge (X = -6)
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: -6, Y: platformHeight, Z: -70},
+			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
+	)
+	// Right edge (X = 6)
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: 6, Y: platformHeight, Z: -70},
+			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
+	)
+	// Back edge (Z = -76) - full width
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: 0, Y: platformHeight, Z: -76},
+			types.Vector3{X: platformSize, Y: barrierHeight, Z: barrierThickness}, 0),
+	)
+
+	// South platform barriers (platform at Z=70, spans X:-6 to 6, Z:64 to 76)
+	// Left edge (X = -6)
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: -6, Y: platformHeight, Z: 70},
+			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
+	)
+	// Right edge (X = 6)
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: 6, Y: platformHeight, Z: 70},
+			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
+	)
+	// Back edge (Z = 76) - full width
+	obstacles = append(obstacles,
+		NewObstacle(nextID(), ObstacleCover,
+			types.Vector3{X: 0, Y: platformHeight, Z: 76},
+			types.Vector3{X: platformSize, Y: barrierHeight, Z: barrierThickness}, 0),
+	)
 
 	return obstacles
 }

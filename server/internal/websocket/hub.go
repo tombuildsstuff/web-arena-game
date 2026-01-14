@@ -79,11 +79,14 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 	msg := clientMsg.Message
 	client := clientMsg.Client
 
-	log.Printf("Received message from %s: %s", client.ID, msg.Type)
+	// Verbose: log.Printf("Received message from %s: %s", client.ID, msg.Type)
 
 	switch msg.Type {
 	case "join_queue":
 		h.handleJoinQueue(client)
+
+	case "start_vs_ai":
+		h.handleStartVsAI(client, msg.Payload)
 
 	case "purchase_unit":
 		h.handlePurchaseUnit(client, msg.Payload)
@@ -99,6 +102,9 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 
 	case "claim_turret":
 		h.handleClaimTurret(client, msg.Payload)
+
+	case "claim_buy_zone":
+		h.handleClaimBuyZone(client, msg.Payload)
 
 	case "leave_game":
 		h.handleLeaveGame(client)
@@ -123,6 +129,37 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 // handleJoinQueue adds a client to the matchmaking queue
 func (h *Hub) handleJoinQueue(client *Client) {
 	h.gameManager.AddToQueue(client.ID, client, client.DisplayName, client.IsGuest)
+}
+
+// handleStartVsAI starts a game against AI
+func (h *Hub) handleStartVsAI(client *Client, payload interface{}) {
+	// Parse payload
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	var startAI types.StartVsAIPayload
+	if err := json.Unmarshal(data, &startAI); err != nil {
+		return
+	}
+
+	// Validate difficulty
+	difficulty := startAI.Difficulty
+	if difficulty != "easy" && difficulty != "medium" && difficulty != "hard" {
+		difficulty = "medium" // Default to medium
+	}
+
+	// Check if client is already in a game
+	if h.gameManager.GetRoomByClient(client.ID) != nil {
+		client.SendMessage("error", types.ErrorPayload{
+			Message: "Already in a game",
+		})
+		return
+	}
+
+	// Create AI game
+	h.gameManager.CreateAIGame(client.ID, client, client.DisplayName, client.IsGuest, difficulty)
 }
 
 // handlePurchaseUnit processes a unit purchase request
@@ -281,9 +318,38 @@ func (h *Hub) handleClaimTurret(client *Client, payload interface{}) {
 	room.HandleClaimTurret(playerID, claim.TurretID, client)
 }
 
+// handleClaimBuyZone processes a buy zone claiming request
+func (h *Hub) handleClaimBuyZone(client *Client, payload interface{}) {
+	// Parse payload
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	var claim types.ClaimBuyZonePayload
+	if err := json.Unmarshal(data, &claim); err != nil {
+		return
+	}
+
+	// Get the game room for this client
+	room := h.gameManager.GetRoomByClient(client.ID)
+	if room == nil {
+		return
+	}
+
+	// Get player ID
+	playerID := h.gameManager.GetPlayerIDInRoom(client.ID)
+	if playerID < 0 {
+		return
+	}
+
+	// Forward to game room
+	room.HandleClaimBuyZone(playerID, claim.ZoneID, client)
+}
+
 // handleLeaveGame removes a client from their current game
 func (h *Hub) handleLeaveGame(client *Client) {
-	log.Printf("Client %s leaving game", client.ID)
+	// Verbose: log.Printf("Client %s leaving game", client.ID)
 	h.gameManager.RemoveClient(client.ID)
 }
 

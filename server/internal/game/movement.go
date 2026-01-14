@@ -139,6 +139,9 @@ func (s *MovementSystem) updatePlayerMovement(unit Unit, state *State, deltaTime
 	newPos.X = clamp(newPos.X, -arenaHalfSize, arenaHalfSize)
 	newPos.Z = clamp(newPos.Z, -arenaHalfSize, arenaHalfSize)
 
+	// Apply ground elevation from ramps/platforms
+	newPos.Y = state.GetElevationAt(newPos.X, newPos.Z)
+
 	playerUnit.SetPosition(newPos)
 }
 
@@ -519,6 +522,9 @@ func (s *MovementSystem) updateTankMovement(unit Unit, state *State, deltaTime f
 			unit.SetPathAttempts(0)
 		}
 	}
+
+	// Apply ground elevation from ramps/platforms
+	newPos.Y = state.GetElevationAt(newPos.X, newPos.Z)
 
 	// Update position and last position
 	unit.SetPosition(newPos)
