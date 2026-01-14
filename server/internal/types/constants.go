@@ -14,7 +14,7 @@ const (
 	TickDuration = time.Second / TickRate
 
 	// Economy settings
-	StartingMoney          = 100
+	StartingMoney          = 500
 	PassiveIncomePerSecond = 10
 
 	// Tank stats
@@ -52,7 +52,7 @@ const (
 	TurretAttackRange  = 20.0 // ~4 squares, requires line of sight
 	TurretAttackSpeed  = 1.5  // attacks per second
 	TurretRespawnTime  = 10.0 // seconds
-	TurretClaimRadius  = 5.0  // radius for claiming
+	TurretClaimRadius  = 7.5  // radius for claiming (3x3 squares)
 	TurretTrackingTime = 1000 // milliseconds to lock on before firing
 )
 
