@@ -2,6 +2,7 @@ package game
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -554,6 +555,18 @@ func (r *GameRoom) HandleClaimBuyZone(playerID int, zoneID string, conn ClientCo
 		}
 		return
 	}
+
+	// Check if player has enough money to claim
+	player := r.State.Players[playerID]
+	if player.Money < zone.ClaimCost {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: fmt.Sprintf("Not enough money! Need $%d", zone.ClaimCost),
+		})
+		return
+	}
+
+	// Deduct the claim cost
+	player.Money -= zone.ClaimCost
 
 	// Claim the zone
 	zone.Claim(playerID)

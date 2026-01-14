@@ -16,6 +16,7 @@ const (
 	// Economy settings
 	StartingMoney          = 1000
 	PassiveIncomePerSecond = 10
+	ForwardBaseClaimCost   = 1000
 
 	// Tank stats
 	TankCost        = 50

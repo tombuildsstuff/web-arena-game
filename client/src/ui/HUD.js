@@ -105,12 +105,19 @@ export class HUD {
       this.buyZonePromptElement.style.borderColor = canAfford
         ? 'rgba(251, 191, 36, 0.6)'
         : 'rgba(239, 68, 68, 0.6)';
-    } else if (nearbyClaimableZone) {
+    } else if (nearbyClaimableZone && myPlayer) {
       // Show claim prompt for neutral claimable buy zones
-      this.buyZoneTextElement.innerHTML = `Press <span class="key">E</span> to claim Forward Base`;
+      const claimCost = nearbyClaimableZone.claimCost;
+      const canAfford = myPlayer.money >= claimCost;
+
+      this.buyZoneTextElement.innerHTML = canAfford
+        ? `Press <span class="key">E</span> to claim Forward Base ($${claimCost})`
+        : `Forward Base ($${claimCost}) - Not enough money`;
 
       this.buyZonePromptElement.classList.remove('hidden');
-      this.buyZonePromptElement.style.borderColor = 'rgba(34, 197, 94, 0.6)'; // Green for claimable bases
+      this.buyZonePromptElement.style.borderColor = canAfford
+        ? 'rgba(136, 136, 136, 0.6)'  // Grey for claimable bases (matches zone color)
+        : 'rgba(239, 68, 68, 0.6)';   // Red if can't afford
     } else if (nearbyTurret) {
       // Show turret claiming prompt (only shown for neutral turrets)
       this.buyZoneTextElement.innerHTML = `Press <span class="key">E</span> to claim Turret`;

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { PLAYER_COLORS } from '../utils/constants.js';
 
-// Neutral/claimable zone color (green)
-const NEUTRAL_COLOR = 0x22c55e;
+// Neutral/claimable zone color (grey, matching unclaimed turrets)
+const NEUTRAL_COLOR = 0x888888;
 
 export class BuyZone {
   constructor(scene, zone) {

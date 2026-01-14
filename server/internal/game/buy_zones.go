@@ -11,7 +11,8 @@ type BuyZone struct {
 	UnitType    string // "tank" or "airplane"
 	Position    types.Vector3
 	Radius      float64
-	Cost        int
+	Cost        int  // Cost to buy units from this zone
+	ClaimCost   int  // Cost to claim this zone (0 if not claimable)
 	IsClaimable bool // Whether this zone can be claimed by players
 }
 
@@ -24,6 +25,7 @@ func (b *BuyZone) ToType() types.BuyZone {
 		Position:    b.Position,
 		Radius:      b.Radius,
 		Cost:        b.Cost,
+		ClaimCost:   b.ClaimCost,
 		IsClaimable: b.IsClaimable,
 	}
 }
@@ -112,6 +114,7 @@ func GetBuyZones() []*BuyZone {
 		Position:    types.Vector3{X: 0, Y: 3, Z: -70},
 		Radius:      5.0,
 		Cost:        types.TankCost,
+		ClaimCost:   types.ForwardBaseClaimCost,
 		IsClaimable: true,
 	})
 	// South forward base (on raised platform at Y=3)
@@ -122,6 +125,7 @@ func GetBuyZones() []*BuyZone {
 		Position:    types.Vector3{X: 0, Y: 3, Z: 70},
 		Radius:      5.0,
 		Cost:        types.TankCost,
+		ClaimCost:   types.ForwardBaseClaimCost,
 		IsClaimable: true,
 	})
 
