@@ -77,3 +77,28 @@ type BuyFromZonePayload struct {
 type ClaimTurretPayload struct {
 	TurretID string `json:"turretId"` // ID of the turret to claim
 }
+
+// SpectateStartPayload is sent when a spectator joins a game
+type SpectateStartPayload struct {
+	GameID string    `json:"gameId"`
+	State  GameState `json:"state"`
+}
+
+// SpectateGamePayload represents a request to spectate a game
+type SpectateGamePayload struct {
+	GameID string `json:"gameId"` // ID of the game to spectate
+}
+
+// ActiveGame represents a game available for spectating
+type ActiveGame struct {
+	GameID         string `json:"gameId"`
+	Player1Name    string `json:"player1Name"`
+	Player2Name    string `json:"player2Name"`
+	SpectatorCount int    `json:"spectatorCount"`
+}
+
+// LobbyStatusPayload is sent to clients with queue and game information
+type LobbyStatusPayload struct {
+	QueueSize   int          `json:"queueSize"`
+	ActiveGames []ActiveGame `json:"activeGames"`
+}

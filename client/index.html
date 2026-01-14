@@ -40,6 +40,15 @@
       <span id="status-text">Connecting...</span>
     </div>
 
+    <!-- Spectator HUD -->
+    <div id="spectator-hud" class="hidden">
+      <div class="spectator-banner">
+        <span>SPECTATING</span>
+        <span id="spectator-players"></span>
+        <button id="stop-spectating-button">Exit</button>
+      </div>
+    </div>
+
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="hidden">
       <div class="game-over-content">
@@ -136,6 +145,15 @@
 
         <button id="join-queue-button" disabled>Join Queue</button>
         <p id="queue-status" class="hidden">Waiting for opponent...</p>
+
+        <!-- Lobby Status -->
+        <div id="lobby-status">
+          <p id="players-waiting" class="hidden">0 players waiting</p>
+          <div id="active-games" class="hidden">
+            <h3>Live Games</h3>
+            <div id="active-games-list"></div>
+          </div>
+        </div>
 
         <!-- Leaderboard -->
         <div id="leaderboard">

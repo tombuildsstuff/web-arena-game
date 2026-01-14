@@ -707,3 +707,116 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Lobby Status */
+#lobby-status {
+  margin-top: 20px;
+  text-align: center;
+}
+
+#players-waiting {
+  color: #fbbf24;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+#active-games h3 {
+  font-size: 18px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+
+#active-games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.active-game-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.active-game-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.game-players {
+  font-size: 14px;
+  color: #e2e8f0;
+}
+
+.game-players .vs {
+  color: #94a3b8;
+  margin: 0 8px;
+}
+
+.game-spectators {
+  font-size: 12px;
+  color: #64748b;
+  margin-right: 12px;
+}
+
+.spectate-button {
+  background: rgba(139, 92, 246, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  color: #c4b5fd;
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.spectate-button:hover {
+  background: rgba(139, 92, 246, 0.5);
+  color: white;
+}
+
+/* Spectator HUD */
+#spectator-hud {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+}
+
+.spectator-banner {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(139, 92, 246, 0.9);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 0 0 8px 8px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+#spectator-players {
+  font-weight: normal;
+  opacity: 0.9;
+}
+
+#stop-spectating-button {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#stop-spectating-button:hover {
+  background: rgba(0, 0, 0, 0.5);
+}

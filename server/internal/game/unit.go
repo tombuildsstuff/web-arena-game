@@ -43,6 +43,11 @@ type Unit interface {
 	SetStuckTicks(ticks int)
 	GetPathAttempts() int
 	SetPathAttempts(attempts int)
+	// Avoidance direction persistence (to prevent flickering)
+	GetAvoidanceDirection() int // -1 = left, 0 = none, 1 = right
+	SetAvoidanceDirection(dir int)
+	GetAvoidanceTicks() int
+	SetAvoidanceTicks(ticks int)
 }
 
 // BaseUnit provides common functionality for all units
@@ -69,6 +74,9 @@ type BaseUnit struct {
 	// Patrol mode fields (for perimeter sweep)
 	Patrolling   bool
 	PatrolCorner int // Index of current patrol corner target (0-3)
+	// Avoidance direction persistence (to prevent flickering when tanks collide)
+	AvoidanceDirection int // -1 = left, 0 = none, 1 = right
+	AvoidanceTicks     int // Ticks remaining to keep using the same avoidance direction
 }
 
 func (u *BaseUnit) GetID() string {
@@ -223,4 +231,22 @@ func (u *BaseUnit) GetPathAttempts() int {
 
 func (u *BaseUnit) SetPathAttempts(attempts int) {
 	u.PathAttempts = attempts
+}
+
+// Avoidance direction methods
+
+func (u *BaseUnit) GetAvoidanceDirection() int {
+	return u.AvoidanceDirection
+}
+
+func (u *BaseUnit) SetAvoidanceDirection(dir int) {
+	u.AvoidanceDirection = dir
+}
+
+func (u *BaseUnit) GetAvoidanceTicks() int {
+	return u.AvoidanceTicks
+}
+
+func (u *BaseUnit) SetAvoidanceTicks(ticks int) {
+	u.AvoidanceTicks = ticks
 }

@@ -22,7 +22,8 @@ type GameRoom struct {
 	IsRunning         bool
 	mu                sync.RWMutex
 	stopChan          chan bool
-	clientConnections map[int]ClientConnection // Map player ID to client connection
+	clientConnections map[int]ClientConnection    // Map player ID to client connection
+	spectators        map[string]ClientConnection // Map client ID to spectator connection
 	lastIncomeTime    time.Time
 	onGameEnd         GameEndCallback    // Callback when game ends
 	onGameResult      GameResultCallback // Callback for game results (leaderboard)
@@ -57,6 +58,7 @@ func NewGameRoom(id string, player1ClientID, player1DisplayName string, player1I
 		IsRunning:          false,
 		stopChan:           make(chan bool),
 		clientConnections:  make(map[int]ClientConnection),
+		spectators:         make(map[string]ClientConnection),
 		lastIncomeTime:     time.Now(),
 		pathfindingSystem:  pathfindingSystem,
 		spatialGrid:        spatialGrid,
@@ -87,6 +89,38 @@ func (r *GameRoom) SetOnGameResult(callback GameResultCallback) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.onGameResult = callback
+}
+
+// AddSpectator adds a spectator to the game room
+func (r *GameRoom) AddSpectator(clientID string, conn ClientConnection) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.spectators[clientID] = conn
+	log.Printf("Spectator %s joined game %s (total spectators: %d)", clientID, r.ID, len(r.spectators))
+
+	// Send current game state to the new spectator
+	stateData := r.State.ToType()
+	conn.SendMessage("spectate_start", types.SpectateStartPayload{
+		GameID: r.ID,
+		State:  stateData,
+	})
+}
+
+// RemoveSpectator removes a spectator from the game room
+func (r *GameRoom) RemoveSpectator(clientID string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, exists := r.spectators[clientID]; exists {
+		delete(r.spectators, clientID)
+		log.Printf("Spectator %s left game %s (total spectators: %d)", clientID, r.ID, len(r.spectators))
+	}
+}
+
+// GetSpectatorCount returns the number of spectators
+func (r *GameRoom) GetSpectatorCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.spectators)
 }
 
 // Start starts the game room update loop
@@ -554,15 +588,21 @@ func (r *GameRoom) broadcastGameStart() {
 	}
 }
 
-// broadcastState sends the current game state to all players
+// broadcastState sends the current game state to all players and spectators
 func (r *GameRoom) broadcastState() {
 	stateData := r.State.ToType()
+	payload := types.GameUpdatePayload{
+		Timestamp: r.State.Timestamp,
+		State:     stateData,
+	}
 
+	// Send to players
 	for _, conn := range r.clientConnections {
-		payload := types.GameUpdatePayload{
-			Timestamp: r.State.Timestamp,
-			State:     stateData,
-		}
+		conn.SendMessage("game_update", payload)
+	}
+
+	// Send to spectators
+	for _, conn := range r.spectators {
 		conn.SendMessage("game_update", payload)
 	}
 }
@@ -594,7 +634,13 @@ func (r *GameRoom) broadcastGameOver(winner int, reason string) {
 		},
 	}
 
+	// Send to players
 	for _, conn := range r.clientConnections {
+		conn.SendMessage("game_over", payload)
+	}
+
+	// Send to spectators
+	for _, conn := range r.spectators {
 		conn.SendMessage("game_over", payload)
 	}
 
@@ -633,15 +679,28 @@ func (r *GameRoom) GetClientIDs() []string {
 	return clientIDs
 }
 
+// GetGameInfo returns summary information about the game for lobby display
+func (r *GameRoom) GetGameInfo() types.ActiveGame {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	return types.ActiveGame{
+		GameID:         r.ID,
+		Player1Name:    r.State.Players[0].DisplayName,
+		Player2Name:    r.State.Players[1].DisplayName,
+		SpectatorCount: len(r.spectators),
+	}
+}
+
 // Marshal game room to JSON (for debugging)
 func (r *GameRoom) MarshalJSON() ([]byte, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	return json.Marshal(struct {
-		ID        string           `json:"id"`
-		State     types.GameState  `json:"state"`
-		IsRunning bool             `json:"isRunning"`
+		ID        string          `json:"id"`
+		State     types.GameState `json:"state"`
+		IsRunning bool            `json:"isRunning"`
 	}{
 		ID:        r.ID,
 		State:     r.State.ToType(),

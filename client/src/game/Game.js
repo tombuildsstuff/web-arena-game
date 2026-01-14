@@ -27,6 +27,8 @@ export class Game {
     this.buyZonePopup = null;
     this.leaderboard = null;
     this.authService = null;
+    this.isSpectating = false;
+    this.lobbyStatusInterval = null;
   }
 
   init() {
@@ -82,6 +84,11 @@ export class Game {
       this.gameLoop
     );
 
+    // Update movement direction when camera rotates (for camera-relative controls)
+    this.camera.setRotationChangeCallback(() => {
+      this.playerInput.updateMovementDirection();
+    });
+
     // Initialize WebSocket
     this.setupWebSocket();
 
@@ -136,7 +143,50 @@ export class Game {
       this.gameState.winner = payload.winner;
       this.gameState.gameStatus = 'finished';
       this.playerInput.disable();
-      this.gameOverScreen.show(payload.winner, payload.reason, payload.matchDuration, payload.stats);
+
+      if (this.isSpectating) {
+        // Spectator - just show game over and return to lobby
+        this.stopSpectating();
+      } else {
+        // Player - show full game over screen
+        this.gameOverScreen.show(payload.winner, payload.reason, payload.matchDuration, payload.stats);
+      }
+    });
+
+    // Add handler for lobby status
+    this.messageHandler.on('lobby_status', (payload) => {
+      this.updateLobbyStatus(payload);
+    });
+
+    // Add handler for spectate start
+    this.messageHandler.on('spectate_start', (payload) => {
+      console.log('Spectating game:', payload.gameId);
+      this.isSpectating = true;
+
+      // Enable spectator mode on game loop
+      this.gameLoop.setSpectatorMode(true);
+
+      if (payload.state) {
+        this.gameState.update(payload.state);
+        this.scene.createBases(this.gameState.players);
+      }
+
+      // Hide queue screen, show spectator HUD
+      document.getElementById('queue-screen').classList.add('hidden');
+      document.getElementById('hud').classList.add('hidden');
+      document.getElementById('spectator-hud').classList.remove('hidden');
+
+      // Update spectator players display
+      const players = this.gameState.players;
+      if (players && players.length >= 2) {
+        document.getElementById('spectator-players').textContent =
+          `${players[0].displayName} vs ${players[1].displayName}`;
+      }
+    });
+
+    // Add handler for spectate stopped
+    this.messageHandler.on('spectate_stopped', () => {
+      this.returnToLobby();
     });
 
     this.ws = new WebSocketClient((message) => {
@@ -145,9 +195,114 @@ export class Game {
 
     this.ws.setConnectionChangeHandler((connected) => {
       this.updateConnectionStatus(connected);
+
+      if (connected) {
+        // Request lobby status periodically when connected
+        this.requestLobbyStatus();
+        this.lobbyStatusInterval = setInterval(() => {
+          if (this.ws.isConnected() && !this.isSpectating && this.gameState.gameStatus !== 'playing') {
+            this.requestLobbyStatus();
+          }
+        }, 3000); // Update every 3 seconds
+      } else {
+        // Clear interval when disconnected
+        if (this.lobbyStatusInterval) {
+          clearInterval(this.lobbyStatusInterval);
+          this.lobbyStatusInterval = null;
+        }
+      }
     });
 
     this.ws.connect();
+  }
+
+  requestLobbyStatus() {
+    if (this.ws.isConnected()) {
+      this.ws.send('get_lobby_status', {});
+    }
+  }
+
+  updateLobbyStatus(payload) {
+    const { queueSize, activeGames } = payload;
+
+    // Update players waiting
+    const playersWaitingEl = document.getElementById('players-waiting');
+    if (queueSize > 0) {
+      playersWaitingEl.textContent = queueSize === 1
+        ? '1 player waiting'
+        : `${queueSize} players waiting`;
+      playersWaitingEl.classList.remove('hidden');
+    } else {
+      playersWaitingEl.classList.add('hidden');
+    }
+
+    // Update active games
+    const activeGamesEl = document.getElementById('active-games');
+    const activeGamesListEl = document.getElementById('active-games-list');
+
+    if (activeGames && activeGames.length > 0) {
+      activeGamesEl.classList.remove('hidden');
+      activeGamesListEl.innerHTML = activeGames.map(game => `
+        <div class="active-game-item">
+          <span class="game-players">
+            ${this.escapeHtml(game.player1Name)}
+            <span class="vs">vs</span>
+            ${this.escapeHtml(game.player2Name)}
+          </span>
+          <div>
+            <span class="game-spectators">${game.spectatorCount} watching</span>
+            <button class="spectate-button" data-game-id="${game.gameId}">Watch</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Add click handlers for spectate buttons
+      activeGamesListEl.querySelectorAll('.spectate-button').forEach(button => {
+        button.addEventListener('click', () => {
+          const gameId = button.dataset.gameId;
+          this.spectateGame(gameId);
+        });
+      });
+    } else {
+      activeGamesEl.classList.add('hidden');
+    }
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  spectateGame(gameId) {
+    if (this.ws.isConnected()) {
+      this.ws.send('spectate_game', { gameId });
+    }
+  }
+
+  stopSpectating() {
+    if (this.ws.isConnected()) {
+      this.ws.send('stop_spectating', {});
+    }
+    this.returnToLobby();
+  }
+
+  returnToLobby() {
+    this.isSpectating = false;
+    this.gameLoop.setSpectatorMode(false);
+    this.gameState.clear();
+    this.gameLoop.reset();
+
+    // Hide spectator HUD, show queue screen
+    document.getElementById('spectator-hud').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('queue-screen').classList.remove('hidden');
+    document.getElementById('join-queue-button').disabled = false;
+    document.getElementById('queue-status').classList.add('hidden');
+
+    // Refresh lobby status and leaderboard
+    this.requestLobbyStatus();
+    this.leaderboard.fetch();
   }
 
   setupQueueScreen() {
@@ -161,6 +316,14 @@ export class Game {
         queueStatus.classList.remove('hidden');
       }
     });
+
+    // Stop spectating button
+    const stopSpectatingButton = document.getElementById('stop-spectating-button');
+    if (stopSpectatingButton) {
+      stopSpectatingButton.addEventListener('click', () => {
+        this.stopSpectating();
+      });
+    }
   }
 
   updateConnectionStatus(connected) {

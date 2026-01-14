@@ -163,24 +163,35 @@ export class PlayerInput {
   }
 
   sendMovement() {
-    // Calculate movement direction from keys
-    let dx = 0;
-    let dz = 0;
+    // Calculate movement direction from keys (in camera-relative space)
+    // forward/back is relative to camera view, left/right is perpendicular
+    let forward = 0;
+    let right = 0;
 
-    if (this.keys.up) dz -= 1;
-    if (this.keys.down) dz += 1;
-    if (this.keys.left) dx -= 1;
-    if (this.keys.right) dx += 1;
+    if (this.keys.up) forward += 1;    // W = move forward (away from camera)
+    if (this.keys.down) forward -= 1;  // S = move backward (toward camera)
+    if (this.keys.left) right -= 1;    // A = move left
+    if (this.keys.right) right += 1;   // D = move right
+
+    // Get camera-relative directions
+    const camForward = this.camera.getForwardDirection();
+    const camRight = this.camera.getRightDirection();
+
+    // Transform input to world space
+    let dx = forward * camForward.x + right * camRight.x;
+    let dz = forward * camForward.z + right * camRight.z;
 
     // Normalize if moving diagonally
-    if (dx !== 0 && dz !== 0) {
-      const len = Math.sqrt(dx * dx + dz * dz);
+    const len = Math.sqrt(dx * dx + dz * dz);
+    if (len > 0) {
       dx /= len;
       dz /= len;
     }
 
-    // Only send if direction changed
-    if (dx !== this.lastDirection.x || dz !== this.lastDirection.z) {
+    // Only send if direction changed (with small tolerance for floating point)
+    const threshold = 0.001;
+    if (Math.abs(dx - this.lastDirection.x) > threshold ||
+        Math.abs(dz - this.lastDirection.z) > threshold) {
       this.lastDirection.x = dx;
       this.lastDirection.z = dz;
 
@@ -192,5 +203,20 @@ export class PlayerInput {
 
   getTargetPosition() {
     return this.targetPosition;
+  }
+
+  // Check if any movement keys are currently pressed
+  isMoving() {
+    return this.keys.up || this.keys.down || this.keys.left || this.keys.right;
+  }
+
+  // Force recalculation of movement direction (called when camera rotates)
+  updateMovementDirection() {
+    if (this.enabled && this.isMoving()) {
+      // Reset last direction to force a resend
+      this.lastDirection.x = Infinity;
+      this.lastDirection.z = Infinity;
+      this.sendMovement();
+    }
   }
 }

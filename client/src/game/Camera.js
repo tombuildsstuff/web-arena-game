@@ -29,6 +29,9 @@ export class Camera {
     this.rotationSpeed = 0.005;
     this.zoomSpeed = 0.1;
 
+    // Callback for when camera rotation changes (for updating movement direction)
+    this.onRotationChange = null;
+
     this.create();
     this.setupControls();
   }
@@ -83,6 +86,11 @@ export class Camera {
 
         this.lastMouseX = e.clientX;
         this.lastMouseY = e.clientY;
+
+        // Notify listeners that rotation changed (for camera-relative movement)
+        if (this.onRotationChange) {
+          this.onRotationChange();
+        }
       }
     });
 
@@ -153,5 +161,28 @@ export class Camera {
   // Get the current look-at position (for raycasting ground plane)
   getLookAtPosition() {
     return this.currentLookAt.clone();
+  }
+
+  // Get the camera's forward direction on the XZ plane (normalized)
+  // Used for camera-relative movement controls
+  getForwardDirection() {
+    return {
+      x: -Math.sin(this.azimuth),
+      z: -Math.cos(this.azimuth)
+    };
+  }
+
+  // Get the camera's right direction on the XZ plane (normalized)
+  // Used for camera-relative movement controls
+  getRightDirection() {
+    return {
+      x: Math.cos(this.azimuth),
+      z: -Math.sin(this.azimuth)
+    };
+  }
+
+  // Set callback for when camera rotation changes
+  setRotationChangeCallback(callback) {
+    this.onRotationChange = callback;
   }
 }

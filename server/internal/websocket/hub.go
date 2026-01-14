@@ -103,6 +103,15 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 	case "leave_game":
 		h.handleLeaveGame(client)
 
+	case "get_lobby_status":
+		h.handleGetLobbyStatus(client)
+
+	case "spectate_game":
+		h.handleSpectateGame(client, msg.Payload)
+
+	case "stop_spectating":
+		h.handleStopSpectating(client)
+
 	default:
 		log.Printf("Unknown message type: %s", msg.Type)
 		client.SendMessage("error", types.ErrorPayload{
@@ -276,6 +285,68 @@ func (h *Hub) handleClaimTurret(client *Client, payload interface{}) {
 func (h *Hub) handleLeaveGame(client *Client) {
 	log.Printf("Client %s leaving game", client.ID)
 	h.gameManager.RemoveClient(client.ID)
+}
+
+// handleGetLobbyStatus returns queue size and active games
+func (h *Hub) handleGetLobbyStatus(client *Client) {
+	queueSize := h.gameManager.GetQueueSize()
+	activeGames := h.gameManager.GetActiveGames()
+
+	// Convert to types for JSON
+	games := make([]types.ActiveGame, len(activeGames))
+	for i, g := range activeGames {
+		games[i] = types.ActiveGame{
+			GameID:         g.GameID,
+			Player1Name:    g.Player1Name,
+			Player2Name:    g.Player2Name,
+			SpectatorCount: g.SpectatorCount,
+		}
+	}
+
+	client.SendMessage("lobby_status", types.LobbyStatusPayload{
+		QueueSize:   queueSize,
+		ActiveGames: games,
+	})
+}
+
+// handleSpectateGame handles a request to spectate a game
+func (h *Hub) handleSpectateGame(client *Client, payload interface{}) {
+	// Parse payload
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	var spectate types.SpectateGamePayload
+	if err := json.Unmarshal(data, &spectate); err != nil {
+		return
+	}
+
+	// Check if client is already in a game or spectating
+	if h.gameManager.GetRoomByClient(client.ID) != nil {
+		client.SendMessage("error", types.ErrorPayload{
+			Message: "Already in a game",
+		})
+		return
+	}
+
+	if h.gameManager.IsSpectating(client.ID) {
+		// Stop current spectating first
+		h.gameManager.RemoveSpectator(client.ID)
+	}
+
+	// Add as spectator
+	if !h.gameManager.AddSpectator(client.ID, spectate.GameID, client) {
+		client.SendMessage("error", types.ErrorPayload{
+			Message: "Game not found or already ended",
+		})
+	}
+}
+
+// handleStopSpectating stops spectating a game
+func (h *Hub) handleStopSpectating(client *Client) {
+	h.gameManager.RemoveSpectator(client.ID)
+	client.SendMessage("spectate_stopped", nil)
 }
 
 // Broadcast sends a message to all clients

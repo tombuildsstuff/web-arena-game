@@ -16,8 +16,11 @@ type Manager struct {
 	queue      map[string]*PlayerQueueEntry
 	queueMutex sync.Mutex
 
-	// Client to room mapping
+	// Client to room mapping (for players)
 	clientToRoom map[string]string // clientID -> roomID
+
+	// Spectator to room mapping
+	spectatorToRoom map[string]string // clientID -> roomID
 
 	// Leaderboard
 	leaderboard *Leaderboard
@@ -34,10 +37,11 @@ type PlayerQueueEntry struct {
 // NewManager creates a new game manager
 func NewManager() *Manager {
 	return &Manager{
-		rooms:        make(map[string]*GameRoom),
-		queue:        make(map[string]*PlayerQueueEntry),
-		clientToRoom: make(map[string]string),
-		leaderboard:  NewLeaderboard("leaderboard.json"),
+		rooms:           make(map[string]*GameRoom),
+		queue:           make(map[string]*PlayerQueueEntry),
+		clientToRoom:    make(map[string]string),
+		spectatorToRoom: make(map[string]string),
+		leaderboard:     NewLeaderboard("leaderboard.json"),
 	}
 }
 
@@ -198,7 +202,7 @@ func (m *Manager) GetPlayerIDInRoom(clientID string) int {
 	return -1
 }
 
-// RemoveClient removes a client from their game room
+// RemoveClient removes a client from their game room or spectating session
 func (m *Manager) RemoveClient(clientID string) {
 	m.queueMutex.Lock()
 	delete(m.queue, clientID)
@@ -207,6 +211,7 @@ func (m *Manager) RemoveClient(clientID string) {
 	m.roomsMutex.Lock()
 	defer m.roomsMutex.Unlock()
 
+	// Check if client is a player
 	if roomID, exists := m.clientToRoom[clientID]; exists {
 		if room, ok := m.rooms[roomID]; ok {
 			room.Stop()
@@ -215,6 +220,16 @@ func (m *Manager) RemoveClient(clientID string) {
 		delete(m.clientToRoom, clientID)
 
 		log.Printf("Client %s removed from game room %s", clientID, roomID)
+		return
+	}
+
+	// Check if client is a spectator
+	if gameID, exists := m.spectatorToRoom[clientID]; exists {
+		if room, ok := m.rooms[gameID]; ok {
+			room.RemoveSpectator(clientID)
+		}
+		delete(m.spectatorToRoom, clientID)
+		log.Printf("Spectator %s removed from game %s", clientID, gameID)
 	}
 }
 
@@ -237,4 +252,72 @@ func (m *Manager) GetQueueSize() int {
 	m.queueMutex.Lock()
 	defer m.queueMutex.Unlock()
 	return len(m.queue)
+}
+
+// GetActiveGames returns a list of active games for the lobby
+func (m *Manager) GetActiveGames() []ActiveGameInfo {
+	m.roomsMutex.RLock()
+	defer m.roomsMutex.RUnlock()
+
+	games := make([]ActiveGameInfo, 0, len(m.rooms))
+	for _, room := range m.rooms {
+		if room.IsRunning {
+			info := room.GetGameInfo()
+			games = append(games, ActiveGameInfo{
+				GameID:         info.GameID,
+				Player1Name:    info.Player1Name,
+				Player2Name:    info.Player2Name,
+				SpectatorCount: info.SpectatorCount,
+			})
+		}
+	}
+	return games
+}
+
+// ActiveGameInfo contains information about an active game
+type ActiveGameInfo struct {
+	GameID         string
+	Player1Name    string
+	Player2Name    string
+	SpectatorCount int
+}
+
+// AddSpectator adds a spectator to a game room
+func (m *Manager) AddSpectator(clientID string, gameID string, conn ClientConnection) bool {
+	m.roomsMutex.Lock()
+	defer m.roomsMutex.Unlock()
+
+	room, exists := m.rooms[gameID]
+	if !exists || !room.IsRunning {
+		return false
+	}
+
+	// Track spectator
+	m.spectatorToRoom[clientID] = gameID
+	room.AddSpectator(clientID, conn)
+
+	log.Printf("Client %s now spectating game %s", clientID, gameID)
+	return true
+}
+
+// RemoveSpectator removes a spectator from their game
+func (m *Manager) RemoveSpectator(clientID string) {
+	m.roomsMutex.Lock()
+	defer m.roomsMutex.Unlock()
+
+	if gameID, exists := m.spectatorToRoom[clientID]; exists {
+		if room, ok := m.rooms[gameID]; ok {
+			room.RemoveSpectator(clientID)
+		}
+		delete(m.spectatorToRoom, clientID)
+		log.Printf("Client %s stopped spectating game %s", clientID, gameID)
+	}
+}
+
+// IsSpectating checks if a client is currently spectating a game
+func (m *Manager) IsSpectating(clientID string) bool {
+	m.roomsMutex.RLock()
+	defer m.roomsMutex.RUnlock()
+	_, exists := m.spectatorToRoom[clientID]
+	return exists
 }

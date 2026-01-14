@@ -233,6 +233,7 @@ func (s *MovementSystem) wouldCollideWithUnit(movingUnit Unit, newPos types.Vect
 }
 
 // findAvoidanceDirection finds a direction to move around a blocking unit
+// Uses persistent avoidance direction to prevent flickering
 func (s *MovementSystem) findAvoidanceDirection(movingUnit Unit, desiredDir types.Vector3, allUnits []Unit) types.Vector3 {
 	pos := movingUnit.GetPosition()
 	movingRadius := movingUnit.GetCollisionRadius()
@@ -266,6 +267,9 @@ func (s *MovementSystem) findAvoidanceDirection(movingUnit Unit, desiredDir type
 	}
 
 	if closestBlocker == nil {
+		// No blocker, clear avoidance state
+		movingUnit.SetAvoidanceDirection(0)
+		movingUnit.SetAvoidanceTicks(0)
 		return desiredDir
 	}
 
@@ -284,15 +288,40 @@ func (s *MovementSystem) findAvoidanceDirection(movingUnit Unit, desiredDir type
 	perpLeft = normalize(perpLeft)
 	perpRight = normalize(perpRight)
 
-	// Choose the perpendicular direction closer to our desired direction
-	dotLeft := desiredDir.X*perpLeft.X + desiredDir.Z*perpLeft.Z
-	dotRight := desiredDir.X*perpRight.X + desiredDir.Z*perpRight.Z
+	// Check if we have a persistent avoidance direction
+	persistentDir := movingUnit.GetAvoidanceDirection()
+	avoidanceTicks := movingUnit.GetAvoidanceTicks()
 
 	var avoidDir types.Vector3
-	if dotLeft > dotRight {
-		avoidDir = perpLeft
+	var chosenDir int // -1 = left, 1 = right
+
+	if persistentDir != 0 && avoidanceTicks > 0 {
+		// Use the persistent direction
+		if persistentDir < 0 {
+			avoidDir = perpLeft
+			chosenDir = -1
+		} else {
+			avoidDir = perpRight
+			chosenDir = 1
+		}
+		// Decrement ticks
+		movingUnit.SetAvoidanceTicks(avoidanceTicks - 1)
 	} else {
-		avoidDir = perpRight
+		// Choose a new direction - prefer the one closer to our desired direction
+		dotLeft := desiredDir.X*perpLeft.X + desiredDir.Z*perpLeft.Z
+		dotRight := desiredDir.X*perpRight.X + desiredDir.Z*perpRight.Z
+
+		if dotLeft > dotRight {
+			avoidDir = perpLeft
+			chosenDir = -1
+		} else {
+			avoidDir = perpRight
+			chosenDir = 1
+		}
+
+		// Set persistent direction for ~1 second (20 ticks at 20 TPS)
+		movingUnit.SetAvoidanceDirection(chosenDir)
+		movingUnit.SetAvoidanceTicks(20)
 	}
 
 	// Test if we can move in the avoidance direction
@@ -307,7 +336,32 @@ func (s *MovementSystem) findAvoidanceDirection(movingUnit Unit, desiredDir type
 		return avoidDir
 	}
 
-	// If both directions blocked, return zero (stay put)
+	// Primary direction blocked, try the other direction
+	var altDir types.Vector3
+	if chosenDir < 0 {
+		altDir = perpRight
+	} else {
+		altDir = perpLeft
+	}
+
+	testPos = types.Vector3{
+		X: pos.X + altDir.X*testDist,
+		Y: pos.Y,
+		Z: pos.Z + altDir.Z*testDist,
+	}
+
+	if !s.wouldCollideWithUnit(movingUnit, testPos, allUnits) {
+		// Switch to the other direction and persist it
+		if chosenDir < 0 {
+			movingUnit.SetAvoidanceDirection(1)
+		} else {
+			movingUnit.SetAvoidanceDirection(-1)
+		}
+		movingUnit.SetAvoidanceTicks(20)
+		return altDir
+	}
+
+	// Both directions blocked, return zero (stay put)
 	return types.Vector3{X: 0, Y: 0, Z: 0}
 }
 
@@ -568,6 +622,7 @@ func (s *MovementSystem) findLeaderTank(unit Unit, state *State) Unit {
 
 // getDynamicTargetPosition returns a varied path target for tanks not following a leader
 // This creates more interesting movement patterns instead of all tanks taking the same path
+// Uses deterministic offset based on unit ID to prevent flickering when paths are recalculated
 func (s *MovementSystem) getDynamicTargetPosition(unit Unit, state *State) types.Vector3 {
 	pos := unit.GetPosition()
 	finalTarget := unit.GetTargetPosition() // Enemy base
@@ -580,15 +635,21 @@ func (s *MovementSystem) getDynamicTargetPosition(unit Unit, state *State) types
 		return finalTarget
 	}
 
-	// Pick a random intermediate point to route through
-	// This creates varied paths for different tanks
-
 	// Calculate the general direction to the target
 	dirToTarget := normalize(subtract(finalTarget, pos))
 
-	// Pick a point roughly halfway to the target, with random lateral offset
+	// Use unit ID to generate a deterministic lateral offset
+	// This ensures the same tank always takes roughly the same path
+	unitID := unit.GetID()
+	hash := uint32(0)
+	for _, c := range unitID {
+		hash = hash*31 + uint32(c)
+	}
+	// Convert hash to offset in range -20 to +20
+	lateralOffset := (float64(hash%1000)/1000.0 - 0.5) * 40.0
+
+	// Pick a point roughly halfway to the target, with deterministic lateral offset
 	midDist := distToTarget * 0.5
-	lateralOffset := (rand.Float64() - 0.5) * 40.0 // Random offset -20 to +20
 
 	// Perpendicular direction
 	perpDir := types.Vector3{X: -dirToTarget.Z, Y: 0, Z: dirToTarget.X}

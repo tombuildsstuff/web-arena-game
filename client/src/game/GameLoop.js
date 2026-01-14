@@ -30,10 +30,40 @@ export class GameLoop {
     this.nearbyBuyZone = null; // The buy zone the player is currently near
     this.nearbyTurret = null; // The turret the player is currently near
     this.buyZonePopup = null; // Reference to the popup for position updates
+    this.isSpectating = false; // Spectator mode flag
+    this.spectatorFollowIndex = 0; // Which player to follow in spectator mode
   }
 
   setBuyZonePopup(popup) {
     this.buyZonePopup = popup;
+  }
+
+  setSpectatorMode(isSpectating) {
+    this.isSpectating = isSpectating;
+    this.spectatorFollowIndex = 0;
+  }
+
+  // Switch which player the spectator camera follows
+  cycleSpectatorFollow() {
+    if (!this.isSpectating) return;
+    this.spectatorFollowIndex = (this.spectatorFollowIndex + 1) % 2;
+    this.updateSpectatorCamera();
+  }
+
+  // Update camera to follow the current spectator target
+  updateSpectatorCamera() {
+    if (!this.isSpectating) return;
+
+    const stateUnits = this.gameState.units || [];
+    const playerUnits = stateUnits.filter(u => u.type === 'player');
+
+    if (playerUnits.length > 0) {
+      const targetUnit = playerUnits[this.spectatorFollowIndex % playerUnits.length];
+      const unitObj = this.unitMeshes.get(targetUnit.id);
+      if (unitObj && unitObj.mesh) {
+        this.camera.setTarget(unitObj.mesh);
+      }
+    }
   }
 
   start() {
@@ -314,7 +344,7 @@ export class GameLoop {
     } else if (unit.type === 'airplane') {
       unitObj = new Airplane(this.scene.getScene(), unit, color);
     } else if (unit.type === 'player') {
-      const isLocalPlayer = unit.ownerId === this.gameState.playerId;
+      const isLocalPlayer = !this.isSpectating && unit.ownerId === this.gameState.playerId;
       // Get display name from player data
       const playerData = this.gameState.players[unit.ownerId];
       const displayName = playerData ? playerData.displayName : null;
@@ -322,6 +352,11 @@ export class GameLoop {
 
       // Set camera to follow local player
       if (isLocalPlayer && unitObj.mesh) {
+        this.camera.setTarget(unitObj.mesh);
+      }
+
+      // In spectator mode, follow the first player created (player 0)
+      if (this.isSpectating && unit.ownerId === this.spectatorFollowIndex && unitObj.mesh) {
         this.camera.setTarget(unitObj.mesh);
       }
     }
@@ -462,5 +497,9 @@ export class GameLoop {
     this.nearbyBuyZone = null;
     this.nearbyTurret = null;
     this.elapsedTime = 0;
+
+    // Reset spectator state
+    this.isSpectating = false;
+    this.spectatorFollowIndex = 0;
   }
 }
