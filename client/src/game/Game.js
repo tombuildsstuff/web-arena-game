@@ -8,6 +8,7 @@ import { MessageHandler } from '../network/MessageHandler.js';
 import { HUD } from '../ui/HUD.js';
 import { GameOverScreen } from '../ui/GameOverScreen.js';
 import { PlayerInput } from '../input/PlayerInput.js';
+import { TouchControls } from '../input/TouchControls.js';
 import { BuyZonePopup } from '../ui/BuyZonePopup.js';
 import { Leaderboard } from '../ui/Leaderboard.js';
 import { AuthService } from '../auth/AuthService.js';
@@ -25,6 +26,7 @@ export class Game {
     this.hud = null;
     this.gameOverScreen = null;
     this.playerInput = null;
+    this.touchControls = null;
     this.buyZonePopup = null;
     this.leaderboard = null;
     this.authService = null;
@@ -97,6 +99,18 @@ export class Game {
       this.playerInput.updateMovementDirection();
     });
 
+    // Initialize touch controls for mobile devices (user agent detection only)
+    if (this.isMobileDevice()) {
+      this.touchControls = new TouchControls({
+        camera: this.camera,
+        gameState: this.gameState,
+        canvas: this.renderer.getRenderer().domElement,
+        onMove: (direction) => this.sendPlayerMove(direction),
+        onShoot: (targetX, targetZ) => this.sendPlayerShoot(targetX, targetZ),
+        onInteract: () => this.playerInput.handleInteraction()
+      });
+    }
+
     // Initialize WebSocket
     this.setupWebSocket();
 
@@ -138,6 +152,9 @@ export class Game {
 
       // Enable player input
       this.playerInput.enable();
+      if (this.touchControls) {
+        this.touchControls.enable();
+      }
 
       // Play match start sound
       if (this.soundManager) {
@@ -160,6 +177,9 @@ export class Game {
       this.gameState.winner = payload.winner;
       this.gameState.gameStatus = 'finished';
       this.playerInput.disable();
+      if (this.touchControls) {
+        this.touchControls.disable();
+      }
 
       // Play match end sound
       if (this.soundManager) {
@@ -433,6 +453,9 @@ export class Game {
 
     // Disable player input until new game starts
     this.playerInput.disable();
+    if (this.touchControls) {
+      this.touchControls.disable();
+    }
 
     // Show queue screen
     document.getElementById('queue-screen').classList.remove('hidden');
@@ -442,6 +465,13 @@ export class Game {
 
     // Refresh leaderboard
     this.leaderboard.fetch();
+  }
+
+  isMobileDevice() {
+    // User agent detection only - don't use touch capability checks
+    // as those return true on many desktop devices
+    const ua = navigator.userAgent.toLowerCase();
+    return /android|iphone|ipad|ipod|mobile|tablet/.test(ua);
   }
 
   setupAuthUI() {
