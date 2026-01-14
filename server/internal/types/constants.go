@@ -37,6 +37,11 @@ const (
 	TankYPosition     = 1.0
 	AirplaneYPosition = 10.0
 
+	// Unit collision radii (for unit-to-unit collision)
+	TankCollisionRadius     = 2.0  // Tanks are ~3 units wide
+	AirplaneCollisionRadius = 1.5  // Airplanes are smaller
+	PlayerCollisionRadius   = 1.0  // Players are smallest
+
 	// Player unit stats
 	PlayerUnitSpeed       = 12.0
 	PlayerUnitHealth      = 5   // 5 hits before respawn

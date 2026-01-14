@@ -18,6 +18,9 @@ type Manager struct {
 
 	// Client to room mapping
 	clientToRoom map[string]string // clientID -> roomID
+
+	// Leaderboard
+	leaderboard *Leaderboard
 }
 
 // PlayerQueueEntry represents a player in the matchmaking queue
@@ -32,7 +35,13 @@ func NewManager() *Manager {
 		rooms:        make(map[string]*GameRoom),
 		queue:        make(map[string]*PlayerQueueEntry),
 		clientToRoom: make(map[string]string),
+		leaderboard:  NewLeaderboard("leaderboard.json"),
 	}
+}
+
+// GetLeaderboard returns the leaderboard instance
+func (m *Manager) GetLeaderboard() *Leaderboard {
+	return m.leaderboard
 }
 
 // AddToQueue adds a player to the matchmaking queue
@@ -102,6 +111,12 @@ func (m *Manager) tryMatchPlayers() {
 	room.SetClientConnection(0, player1.Connection)
 	room.SetClientConnection(1, player2.Connection)
 
+	// Set callback for when game ends
+	room.SetOnGameEnd(m.handleGameEnd)
+
+	// Set callback for recording game results to leaderboard
+	room.SetOnGameResult(m.leaderboard.RecordGameResult)
+
 	// Store room
 	m.roomsMutex.Lock()
 	m.rooms[gameID] = room
@@ -113,6 +128,30 @@ func (m *Manager) tryMatchPlayers() {
 
 	// Start the game
 	room.Start()
+}
+
+// handleGameEnd cleans up when a game finishes
+func (m *Manager) handleGameEnd(roomID string) {
+	m.roomsMutex.Lock()
+	defer m.roomsMutex.Unlock()
+
+	room, exists := m.rooms[roomID]
+	if !exists {
+		return
+	}
+
+	// Get client IDs before removing room
+	clientIDs := room.GetClientIDs()
+
+	// Remove client-to-room mappings
+	for _, clientID := range clientIDs {
+		delete(m.clientToRoom, clientID)
+	}
+
+	// Remove room
+	delete(m.rooms, roomID)
+
+	log.Printf("Cleaned up game room %s (removed %d client mappings)", roomID, len(clientIDs))
 }
 
 // GetRoomByClient returns the game room for a client

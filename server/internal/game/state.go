@@ -15,6 +15,7 @@ type State struct {
 	Projectiles    []*Projectile
 	BuyZones       []*BuyZone
 	Turrets        []*Turret
+	SpawnQueue     *SpawnQueue
 	GameStatus     string // "waiting", "playing", "finished"
 	Winner         *int
 	MatchStartTime int64 // Unix timestamp when match started
@@ -41,6 +42,7 @@ func NewState(player1ClientID, player2ClientID string) *State {
 		Projectiles:    make([]*Projectile, 0),
 		BuyZones:       GetBuyZones(),
 		Turrets:        GetTurrets(),
+		SpawnQueue:     NewSpawnQueue(),
 		GameStatus:     "playing",
 		Winner:         nil,
 		MatchStartTime: now,
@@ -74,16 +76,24 @@ func (s *State) ToType() types.GameState {
 		turretsData[i] = turret.ToType()
 	}
 
+	var pendingSpawnsData []types.PendingSpawn
+	if s.SpawnQueue != nil {
+		pendingSpawnsData = s.SpawnQueue.ToTypes()
+	} else {
+		pendingSpawnsData = make([]types.PendingSpawn, 0)
+	}
+
 	return types.GameState{
-		Timestamp:   s.Timestamp,
-		Players:     [2]types.Player{s.Players[0].ToType(), s.Players[1].ToType()},
-		Units:       unitsData,
-		Obstacles:   obstaclesData,
-		Projectiles: projectilesData,
-		BuyZones:    buyZonesData,
-		Turrets:     turretsData,
-		GameStatus:  s.GameStatus,
-		Winner:      s.Winner,
+		Timestamp:     s.Timestamp,
+		Players:       [2]types.Player{s.Players[0].ToType(), s.Players[1].ToType()},
+		Units:         unitsData,
+		Obstacles:     obstaclesData,
+		Projectiles:   projectilesData,
+		BuyZones:      buyZonesData,
+		Turrets:       turretsData,
+		PendingSpawns: pendingSpawnsData,
+		GameStatus:    s.GameStatus,
+		Winner:        s.Winner,
 	}
 }
 

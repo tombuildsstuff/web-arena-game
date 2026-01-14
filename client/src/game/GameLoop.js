@@ -198,15 +198,24 @@ export class GameLoop {
     if (!playerUnit || playerUnit.isRespawning) return;
 
     const playerPos = playerUnit.position;
+    const playerId = this.gameState.playerId;
+
     for (const turretData of stateTurrets) {
       const turretObj = this.turretMeshes.get(turretData.id);
-      if (turretObj && turretObj.isInRange(playerPos)) {
-        // Check if can be claimed
-        if (turretObj.canBeClaimed(this.gameState.playerId)) {
-          this.nearbyTurret = turretData;
-          break;
-        }
-      }
+      if (!turretObj) continue;
+
+      // Check if player is in range of turret
+      if (!turretObj.isInRange(playerPos)) continue;
+
+      // Use turretData directly for claim check to ensure we have latest state
+      // Can't claim destroyed turrets
+      if (turretData.isDestroyed) continue;
+      // Can't claim your own turret
+      if (turretData.ownerId === playerId) continue;
+
+      // Can claim neutral (-1) or enemy turrets
+      this.nearbyTurret = turretData;
+      break;
     }
   }
 
@@ -403,5 +412,52 @@ export class GameLoop {
 
   setUnitMeshes(meshes) {
     this.unitMeshes = meshes;
+  }
+
+  // Reset the game loop for a new game
+  reset() {
+    // Remove all unit meshes
+    for (const unitObj of this.unitMeshes.values()) {
+      unitObj.remove();
+    }
+    this.unitMeshes.clear();
+
+    // Remove all obstacle meshes
+    for (const obstacle of this.obstacleMeshes.values()) {
+      obstacle.remove();
+    }
+    this.obstacleMeshes.clear();
+
+    // Remove all projectile meshes
+    for (const projectile of this.projectileMeshes.values()) {
+      projectile.remove();
+    }
+    this.projectileMeshes.clear();
+
+    // Remove all buy zone meshes
+    for (const buyZone of this.buyZoneMeshes.values()) {
+      buyZone.remove();
+    }
+    this.buyZoneMeshes.clear();
+
+    // Remove all turret meshes
+    for (const turret of this.turretMeshes.values()) {
+      turret.remove();
+    }
+    this.turretMeshes.clear();
+
+    // Clear explosions
+    this.explosions = [];
+
+    // Reset initialization flags
+    this.obstaclesInitialized = false;
+    this.buyZonesInitialized = false;
+    this.turretsInitialized = false;
+
+    // Reset tracking
+    this.previousUnitIDs.clear();
+    this.nearbyBuyZone = null;
+    this.nearbyTurret = null;
+    this.elapsedTime = 0;
   }
 }

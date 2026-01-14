@@ -9,15 +9,16 @@ type Vector3 struct {
 
 // GameState represents the complete state of a game
 type GameState struct {
-	Timestamp   int64        `json:"timestamp"`
-	Players     [2]Player    `json:"players"`
-	Units       []Unit       `json:"units"`
-	Obstacles   []Obstacle   `json:"obstacles"`
-	Projectiles []Projectile `json:"projectiles"`
-	BuyZones    []BuyZone    `json:"buyZones"`
-	Turrets     []Turret     `json:"turrets"`
-	GameStatus  string       `json:"gameStatus"` // "waiting", "playing", "finished"
-	Winner      *int         `json:"winner"`
+	Timestamp     int64          `json:"timestamp"`
+	Players       [2]Player      `json:"players"`
+	Units         []Unit         `json:"units"`
+	Obstacles     []Obstacle     `json:"obstacles"`
+	Projectiles   []Projectile   `json:"projectiles"`
+	BuyZones      []BuyZone      `json:"buyZones"`
+	Turrets       []Turret       `json:"turrets"`
+	PendingSpawns []PendingSpawn `json:"pendingSpawns"`
+	GameStatus    string         `json:"gameStatus"` // "waiting", "playing", "finished"
+	Winner        *int           `json:"winner"`
 }
 
 // Obstacle represents a static obstacle in the arena
@@ -77,15 +78,24 @@ type Unit struct {
 
 // Turret represents a claimable turret that auto-attacks enemies
 type Turret struct {
-	ID              string  `json:"id"`
-	Position        Vector3 `json:"position"`
-	OwnerID         int     `json:"ownerId"`         // -1 = unclaimed, 0 = player 1, 1 = player 2
-	DefaultOwnerID  int     `json:"defaultOwnerId"`  // Owner when respawning (-1 for middle turrets)
-	Health          int     `json:"health"`
-	MaxHealth       int     `json:"maxHealth"`
-	IsDestroyed     bool    `json:"isDestroyed"`
-	RespawnTime     float64 `json:"respawnTime"`     // Seconds remaining until respawn
-	ClaimRadius     float64 `json:"claimRadius"`     // Radius for claiming
-	IsTracking      bool    `json:"isTracking"`      // Whether turret is tracking a target
+	ID               string  `json:"id"`
+	Position         Vector3 `json:"position"`
+	OwnerID          int     `json:"ownerId"`         // -1 = unclaimed, 0 = player 1, 1 = player 2
+	DefaultOwnerID   int     `json:"defaultOwnerId"`  // Owner when respawning (-1 for middle turrets)
+	Health           int     `json:"health"`
+	MaxHealth        int     `json:"maxHealth"`
+	IsDestroyed      bool    `json:"isDestroyed"`
+	RespawnTime      float64 `json:"respawnTime"`     // Seconds remaining until respawn
+	ClaimRadius      float64 `json:"claimRadius"`     // Radius for claiming
+	IsTracking       bool    `json:"isTracking"`      // Whether turret is tracking a target
 	TrackingProgress float64 `json:"trackingProgress"` // 0-1 progress to lock-on
+}
+
+// PendingSpawn represents a unit waiting to spawn
+type PendingSpawn struct {
+	UnitType  string  `json:"unitType"`  // "tank" or "airplane"
+	OwnerID   int     `json:"ownerId"`   // Player who purchased the unit
+	SpawnPos  Vector3 `json:"spawnPos"`  // Where the unit will spawn
+	QueuedAt  int64   `json:"queuedAt"`  // When the spawn was queued (Unix millis)
+	WaitTime  float64 `json:"waitTime"`  // Seconds the unit has been waiting
 }

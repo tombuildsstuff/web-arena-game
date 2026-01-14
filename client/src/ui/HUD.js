@@ -49,16 +49,25 @@ export class HUD {
     const nearbyZone = this.gameLoop.getNearbyBuyZone();
     const nearbyTurret = this.gameLoop.getNearbyTurret();
     const myPlayer = this.gameState.getMyPlayer();
+    const pendingCounts = this.gameState.getMyPendingSpawnCounts();
 
     // Priority: buy zones first
     if (nearbyZone && myPlayer) {
       const unitName = nearbyZone.unitType === 'tank' ? 'Tank' : 'Airplane';
       const cost = nearbyZone.cost;
       const canAfford = myPlayer.money >= cost;
+      const pendingCount = pendingCounts[nearbyZone.unitType] || 0;
 
-      this.buyZoneTextElement.innerHTML = canAfford
+      let promptText = canAfford
         ? `Press <span class="key">E</span> to buy ${unitName} ($${cost})`
         : `${unitName} ($${cost}) - Not enough money`;
+
+      // Show pending spawn count if any
+      if (pendingCount > 0) {
+        promptText += `<br><span class="pending-spawn">${pendingCount} ${unitName}${pendingCount > 1 ? 's' : ''} waiting to spawn...</span>`;
+      }
+
+      this.buyZoneTextElement.innerHTML = promptText;
 
       this.buyZonePromptElement.classList.remove('hidden');
       this.buyZonePromptElement.style.borderColor = canAfford

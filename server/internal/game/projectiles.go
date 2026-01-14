@@ -138,22 +138,23 @@ func (ps *ProjectileSystem) Update(state *State, deltaTime float64) {
 				target.TakeDamage(proj.Damage)
 				hit = true
 
-				// If target died from this hit, credit the kill
+				// If target died from this hit, credit the kill with type
 				if wasAlive && !target.IsAlive() {
+					targetType := target.GetType()
 					// Find the shooter (could be unit or turret)
 					shooter := state.GetUnitByID(proj.ShooterID)
 					if shooter != nil {
 						shooterOwner := state.GetPlayer(shooter.GetOwnerID())
 						if shooterOwner != nil {
-							shooterOwner.AddKill()
+							shooterOwner.AddKillByType(targetType)
 						}
 					} else {
 						// Check if shooter is a turret
 						turret := state.GetTurretByID(proj.ShooterID)
-						if turret != nil {
+						if turret != nil && turret.OwnerID >= 0 {
 							shooterOwner := state.GetPlayer(turret.OwnerID)
 							if shooterOwner != nil {
-								shooterOwner.AddKill()
+								shooterOwner.AddKillByType(targetType)
 							}
 						}
 					}
@@ -162,10 +163,22 @@ func (ps *ProjectileSystem) Update(state *State, deltaTime float64) {
 
 			// Try to apply damage to turret target
 			if !hit {
-				turret := state.GetTurretByID(proj.TargetID)
-				if turret != nil && turret.IsAlive() {
-					turret.TakeDamage(proj.Damage)
+				targetTurret := state.GetTurretByID(proj.TargetID)
+				if targetTurret != nil && targetTurret.IsAlive() {
+					wasAlive := targetTurret.IsAlive()
+					targetTurret.TakeDamage(proj.Damage)
 					hit = true
+
+					// If turret was destroyed, credit the kill
+					if wasAlive && !targetTurret.IsAlive() {
+						shooter := state.GetUnitByID(proj.ShooterID)
+						if shooter != nil {
+							shooterOwner := state.GetPlayer(shooter.GetOwnerID())
+							if shooterOwner != nil {
+								shooterOwner.AddKillByType("turret")
+							}
+						}
+					}
 				}
 			}
 

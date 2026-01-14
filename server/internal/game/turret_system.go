@@ -26,6 +26,11 @@ func (s *TurretSystem) Update(state *State, deltaTime float64) {
 		// Update respawn timers
 		turret.Update(deltaTime)
 
+		// Check for auto-claiming by tanks/helicopters passing by unclaimed turrets
+		if !turret.IsDestroyed && turret.OwnerID == -1 {
+			s.checkAutoClaimByUnits(turret, state)
+		}
+
 		// Skip combat if destroyed or unclaimed
 		if turret.IsDestroyed || turret.OwnerID == -1 {
 			continue
@@ -33,6 +38,29 @@ func (s *TurretSystem) Update(state *State, deltaTime float64) {
 
 		// Find and attack enemies
 		s.processTurretCombat(turret, state, now)
+	}
+}
+
+// checkAutoClaimByUnits checks if any tank or helicopter is near an unclaimed turret and claims it
+func (s *TurretSystem) checkAutoClaimByUnits(turret *Turret, state *State) {
+	for _, unit := range state.Units {
+		// Only tanks and airplanes can auto-claim
+		unitType := unit.GetType()
+		if unitType != "tank" && unitType != "airplane" {
+			continue
+		}
+
+		// Skip dead units
+		if !unit.IsAlive() {
+			continue
+		}
+
+		// Check if unit is in range
+		if turret.IsPlayerInRange(unit.GetPosition()) {
+			// Claim the turret for this unit's team
+			turret.Claim(unit.GetOwnerID())
+			return // Only one unit can claim per tick
+		}
 	}
 }
 

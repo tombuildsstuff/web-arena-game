@@ -7,8 +7,19 @@ export class GameOverScreen {
     this.message = document.getElementById('game-over-message');
     this.playAgainButton = document.getElementById('play-again-button');
     this.matchDuration = document.getElementById('match-duration');
-    this.yourKills = document.getElementById('your-kills');
-    this.enemyKills = document.getElementById('enemy-kills');
+
+    // Detailed stats elements
+    this.yourPoints = document.getElementById('your-points');
+    this.yourTankKills = document.getElementById('your-tank-kills');
+    this.yourAirplaneKills = document.getElementById('your-airplane-kills');
+    this.yourTurretKills = document.getElementById('your-turret-kills');
+    this.yourPlayerKills = document.getElementById('your-player-kills');
+
+    this.enemyPoints = document.getElementById('enemy-points');
+    this.enemyTankKills = document.getElementById('enemy-tank-kills');
+    this.enemyAirplaneKills = document.getElementById('enemy-airplane-kills');
+    this.enemyTurretKills = document.getElementById('enemy-turret-kills');
+    this.enemyPlayerKills = document.getElementById('enemy-player-kills');
 
     this.setupEventListeners();
   }
@@ -43,12 +54,28 @@ export class GameOverScreen {
       this.matchDuration.textContent = `Match Duration: ${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    // Display kills
+    // Display detailed stats
     if (stats) {
-      const myKills = myPlayerId === 0 ? stats.player1Kills : stats.player2Kills;
-      const theirKills = myPlayerId === 0 ? stats.player2Kills : stats.player1Kills;
-      this.yourKills.textContent = myKills;
-      this.enemyKills.textContent = theirKills;
+      const myStats = myPlayerId === 0 ? stats.player1Stats : stats.player2Stats;
+      const theirStats = myPlayerId === 0 ? stats.player2Stats : stats.player1Stats;
+
+      // Your stats
+      if (myStats) {
+        this.yourPoints.textContent = myStats.totalPoints || 0;
+        this.yourTankKills.textContent = myStats.tankKills || 0;
+        this.yourAirplaneKills.textContent = myStats.airplaneKills || 0;
+        this.yourTurretKills.textContent = myStats.turretKills || 0;
+        this.yourPlayerKills.textContent = myStats.playerKills || 0;
+      }
+
+      // Enemy stats
+      if (theirStats) {
+        this.enemyPoints.textContent = theirStats.totalPoints || 0;
+        this.enemyTankKills.textContent = theirStats.tankKills || 0;
+        this.enemyAirplaneKills.textContent = theirStats.airplaneKills || 0;
+        this.enemyTurretKills.textContent = theirStats.turretKills || 0;
+        this.enemyPlayerKills.textContent = theirStats.playerKills || 0;
+      }
     }
 
     this.screen.classList.remove('hidden');

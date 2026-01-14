@@ -21,6 +21,7 @@ type Unit interface {
 	GetAttackSpeed() float64
 	GetLastAttackTime() int64
 	SetLastAttackTime(time int64)
+	GetCollisionRadius() float64
 	ToType() types.Unit
 	IsAlive() bool
 	TakeDamage(amount int)
@@ -35,24 +36,36 @@ type Unit interface {
 	SetPatrolling(patrol bool)
 	GetPatrolCorner() int
 	SetPatrolCorner(corner int)
+	// Stuck detection support
+	GetLastPosition() types.Vector3
+	SetLastPosition(pos types.Vector3)
+	GetStuckTicks() int
+	SetStuckTicks(ticks int)
+	GetPathAttempts() int
+	SetPathAttempts(attempts int)
 }
 
 // BaseUnit provides common functionality for all units
 type BaseUnit struct {
-	ID             string
-	Type           string
-	OwnerID        int
-	Position       types.Vector3
-	Health         int
-	TargetPosition types.Vector3
-	Speed          float64
-	Damage         int
-	AttackRange    float64
-	AttackSpeed    float64
-	LastAttackTime int64 // Unix timestamp in milliseconds
+	ID              string
+	Type            string
+	OwnerID         int
+	Position        types.Vector3
+	Health          int
+	TargetPosition  types.Vector3
+	Speed           float64
+	Damage          int
+	AttackRange     float64
+	AttackSpeed     float64
+	LastAttackTime  int64   // Unix timestamp in milliseconds
+	CollisionRadius float64 // Radius for unit-to-unit collision
 	// Pathfinding fields
 	Waypoints       []types.Vector3
 	CurrentWaypoint int
+	// Stuck detection fields
+	LastPosition types.Vector3
+	StuckTicks   int
+	PathAttempts int // Number of path recalculations when stuck
 	// Patrol mode fields (for perimeter sweep)
 	Patrolling   bool
 	PatrolCorner int // Index of current patrol corner target (0-3)
@@ -118,6 +131,10 @@ func (u *BaseUnit) SetLastAttackTime(time int64) {
 	u.LastAttackTime = time
 }
 
+func (u *BaseUnit) GetCollisionRadius() float64 {
+	return u.CollisionRadius
+}
+
 func (u *BaseUnit) IsAlive() bool {
 	return u.Health > 0
 }
@@ -180,4 +197,30 @@ func (u *BaseUnit) GetPatrolCorner() int {
 
 func (u *BaseUnit) SetPatrolCorner(corner int) {
 	u.PatrolCorner = corner
+}
+
+// Stuck detection methods
+
+func (u *BaseUnit) GetLastPosition() types.Vector3 {
+	return u.LastPosition
+}
+
+func (u *BaseUnit) SetLastPosition(pos types.Vector3) {
+	u.LastPosition = pos
+}
+
+func (u *BaseUnit) GetStuckTicks() int {
+	return u.StuckTicks
+}
+
+func (u *BaseUnit) SetStuckTicks(ticks int) {
+	u.StuckTicks = ticks
+}
+
+func (u *BaseUnit) GetPathAttempts() int {
+	return u.PathAttempts
+}
+
+func (u *BaseUnit) SetPathAttempts(attempts int) {
+	u.PathAttempts = attempts
 }

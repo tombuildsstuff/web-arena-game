@@ -17,17 +17,18 @@ func NewAirplane(ownerID int, spawnPos types.Vector3, targetPos types.Vector3) *
 
 	return &Airplane{
 		BaseUnit: BaseUnit{
-			ID:             uuid.New().String(),
-			Type:           "airplane",
-			OwnerID:        ownerID,
-			Position:       spawnPos,
-			Health:         types.AirplaneHealth,
-			TargetPosition: targetPos,
-			Speed:          types.AirplaneSpeed,
-			Damage:         types.AirplaneDamage,
-			AttackRange:    types.AirplaneAttackRange,
-			AttackSpeed:    types.AirplaneAttackSpeed,
-			LastAttackTime: 0,
+			ID:              uuid.New().String(),
+			Type:            "airplane",
+			OwnerID:         ownerID,
+			Position:        spawnPos,
+			Health:          types.AirplaneHealth,
+			TargetPosition:  targetPos,
+			Speed:           types.AirplaneSpeed,
+			Damage:          types.AirplaneDamage,
+			AttackRange:     types.AirplaneAttackRange,
+			AttackSpeed:     types.AirplaneAttackSpeed,
+			LastAttackTime:  0,
+			CollisionRadius: types.AirplaneCollisionRadius,
 		},
 	}
 }

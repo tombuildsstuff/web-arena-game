@@ -128,6 +128,20 @@ body {
   margin: 0 4px;
 }
 
+#buy-zone-text .pending-spawn {
+  display: block;
+  font-size: 14px;
+  font-weight: normal;
+  color: rgba(251, 191, 36, 0.9);
+  margin-top: 8px;
+  animation: pendingPulse 1s infinite;
+}
+
+@keyframes pendingPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
 @keyframes buyZonePulse {
   0%, 100% { border-color: rgba(251, 191, 36, 0.6); }
   50% { border-color: rgba(251, 191, 36, 1); }
@@ -305,31 +319,53 @@ body {
   margin-bottom: 20px;
 }
 
-.stats-grid {
+.stats-columns {
   display: flex;
   justify-content: center;
   gap: 40px;
 }
 
+.stats-column {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 12px;
+  min-width: 200px;
+}
+
+.stats-column h3 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .stat-item {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 15px 30px;
-  border-radius: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
 }
 
 .stat-label {
   font-size: 14px;
   color: #94a3b8;
-  margin-bottom: 5px;
 }
 
 .stat-value {
-  font-size: 36px;
+  font-size: 18px;
   font-weight: bold;
   color: #fbbf24;
+}
+
+.stat-value.points {
+  font-size: 24px;
+  color: #22c55e;
 }
 
 #play-again-button {
@@ -350,4 +386,77 @@ body {
 
 .hidden {
   display: none;
+}
+
+/* Leaderboard */
+#leaderboard {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#leaderboard h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #fbbf24;
+}
+
+#leaderboard-loading,
+#leaderboard-empty {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+#leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+#leaderboard-table th {
+  padding: 12px 8px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#leaderboard-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+}
+
+#leaderboard-table tr:hover td {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#leaderboard-table .rank {
+  font-weight: bold;
+  width: 40px;
+}
+
+#leaderboard-table .rank.gold {
+  color: #fbbf24;
+}
+
+#leaderboard-table .rank.silver {
+  color: #94a3b8;
+}
+
+#leaderboard-table .rank.bronze {
+  color: #cd7f32;
+}
+
+#leaderboard-table .player-name {
+  font-weight: 500;
+}
+
+#leaderboard-table .points {
+  color: #22c55e;
+  font-weight: bold;
 }

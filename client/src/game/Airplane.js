@@ -16,10 +16,18 @@ export class Airplane {
   }
 
   create() {
-    // Create parent group for positioning
+    // Create parent group for positioning and yaw rotation
     this.mesh = new THREE.Group();
 
-    // Airplane body (fuselage)
+    // Create a yaw group (rotates around Y axis for heading)
+    this.yawGroup = new THREE.Group();
+    this.mesh.add(this.yawGroup);
+
+    // Create a pitch/bank group for tilting
+    this.bankGroup = new THREE.Group();
+    this.yawGroup.add(this.bankGroup);
+
+    // Airplane body (fuselage) - cone pointing along -Z axis
     const bodyGeometry = new THREE.ConeGeometry(0.8, 4, 8);
     const bodyMaterial = new THREE.MeshStandardMaterial({
       color: this.color,
@@ -28,22 +36,32 @@ export class Airplane {
     });
 
     this.bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    this.bodyMesh.rotation.x = Math.PI / 2; // Point forward
+    // Rotate cone to point forward (-Z direction): rotate -90 degrees around X
+    this.bodyMesh.rotation.x = -Math.PI / 2;
     this.bodyMesh.castShadow = true;
     this.bodyMesh.receiveShadow = true;
-    this.mesh.add(this.bodyMesh);
+    this.bankGroup.add(this.bodyMesh);
 
-    // Wings
-    const wingGeometry = new THREE.BoxGeometry(8, 0.2, 2);
+    // Wings - attached to body mesh
+    // After -90 degree X rotation: local Y points to +Z (forward), local Z points to +Y (up)
+    // Wings should be wide in X, thin in world Y (local Z), with depth in world Z (local -Y)
+    const wingGeometry = new THREE.BoxGeometry(8, 0.2, 2); // 8 wide (X), 0.2 thin (local Y->world Z), 2 depth (local Z->world Y)
     const wings = new THREE.Mesh(wingGeometry, bodyMaterial);
-    wings.position.z = -0.5;
+    wings.position.y = -0.5; // Local -Y = world +Z (slightly forward of center)
     this.bodyMesh.add(wings);
 
-    // Tail wing
+    // Tail wing - horizontal stabilizer
     const tailGeometry = new THREE.BoxGeometry(3, 0.2, 1);
     const tail = new THREE.Mesh(tailGeometry, bodyMaterial);
-    tail.position.z = -2;
+    tail.position.y = 1.8; // At the back of the fuselage (local +Y = world -Z)
     this.bodyMesh.add(tail);
+
+    // Vertical stabilizer (tail fin)
+    const finGeometry = new THREE.BoxGeometry(0.2, 1.5, 1);
+    const fin = new THREE.Mesh(finGeometry, bodyMaterial);
+    fin.position.y = 1.8;
+    fin.position.z = 0.5; // Local +Z = world +Y (pointing up)
+    this.bodyMesh.add(fin);
 
     // Create health bar above airplane (on parent group so it stays upright)
     this.healthBar = new HealthBar(this.maxHealth, 3, 0.35);
@@ -58,7 +76,7 @@ export class Airplane {
   }
 
   updatePosition(position) {
-    if (this.mesh && this.bodyMesh) {
+    if (this.mesh && this.yawGroup && this.bankGroup) {
       // Calculate rotation based on movement direction
       if (this.lastPosition) {
         const dx = position.x - this.lastPosition.x;
@@ -67,6 +85,8 @@ export class Airplane {
 
         // Only update rotation if we've moved significantly
         if (distanceMoved > 0.01) {
+          // Calculate target rotation to face movement direction
+          // atan2(dx, dz) gives angle from +Z axis, we want to face the movement direction
           const newTargetRotation = Math.atan2(dx, dz);
 
           // Calculate turn rate for banking effect
@@ -74,8 +94,8 @@ export class Airplane {
           while (turnRate > Math.PI) turnRate -= Math.PI * 2;
           while (turnRate < -Math.PI) turnRate += Math.PI * 2;
 
-          // Target bank angle based on turn rate
-          const targetBank = Math.max(-0.5, Math.min(0.5, turnRate * 2));
+          // Target bank angle based on turn rate (bank into turns)
+          const targetBank = Math.max(-0.5, Math.min(0.5, -turnRate * 2));
           this.currentBank += (targetBank - this.currentBank) * 0.1;
 
           this.targetRotation = newTargetRotation;
@@ -85,14 +105,14 @@ export class Airplane {
         }
       }
 
-      // Smoothly interpolate rotation (apply to body mesh, not parent group)
-      let rotationDiff = this.targetRotation - this.bodyMesh.rotation.y;
+      // Smoothly interpolate yaw rotation (apply to yaw group)
+      let rotationDiff = this.targetRotation - this.yawGroup.rotation.y;
       while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
       while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
-      this.bodyMesh.rotation.y += rotationDiff * 0.15;
+      this.yawGroup.rotation.y += rotationDiff * 0.15;
 
-      // Apply banking to body mesh
-      this.bodyMesh.rotation.z = this.currentBank;
+      // Apply banking to bank group (roll around local Z axis)
+      this.bankGroup.rotation.z = this.currentBank;
 
       // Store last position
       this.lastPosition = { x: position.x, y: position.y, z: position.z };

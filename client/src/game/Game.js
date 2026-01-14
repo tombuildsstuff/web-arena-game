@@ -9,6 +9,7 @@ import { HUD } from '../ui/HUD.js';
 import { GameOverScreen } from '../ui/GameOverScreen.js';
 import { PlayerInput } from '../input/PlayerInput.js';
 import { BuyZonePopup } from '../ui/BuyZonePopup.js';
+import { Leaderboard } from '../ui/Leaderboard.js';
 
 export class Game {
   constructor() {
@@ -23,6 +24,7 @@ export class Game {
     this.gameOverScreen = null;
     this.playerInput = null;
     this.buyZonePopup = null;
+    this.leaderboard = null;
   }
 
   init() {
@@ -53,6 +55,10 @@ export class Game {
     });
     this.buyZonePopup = new BuyZonePopup();
     this.buyZonePopup.setCamera(this.camera, this.renderer.getRenderer());
+    this.leaderboard = new Leaderboard();
+
+    // Fetch leaderboard on startup
+    this.leaderboard.fetch();
 
     // Give gameLoop access to the popup for position updates
     this.gameLoop.setBuyZonePopup(this.buyZonePopup);
@@ -198,11 +204,24 @@ export class Game {
   }
 
   resetGame() {
+    // Clear game state
     this.gameState.clear();
+
+    // Reset the game loop (clears all meshes and resets flags)
+    this.gameLoop.reset();
+
+    // Hide game over screen
     this.gameOverScreen.hide();
+
+    // Disable player input until new game starts
     this.playerInput.disable();
+
+    // Show queue screen
     document.getElementById('queue-screen').classList.remove('hidden');
     document.getElementById('join-queue-button').disabled = false;
     document.getElementById('queue-status').classList.add('hidden');
+
+    // Refresh leaderboard
+    this.leaderboard.fetch();
   }
 }

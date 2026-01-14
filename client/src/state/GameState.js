@@ -9,6 +9,7 @@ export class GameState {
     this.projectiles = [];
     this.buyZones = [];
     this.turrets = [];
+    this.pendingSpawns = [];
     this.gameStatus = 'waiting'; // 'waiting', 'playing', 'finished'
     this.winner = null;
     this.playerId = null;
@@ -23,6 +24,7 @@ export class GameState {
     this.projectiles = newState.projectiles || [];
     this.buyZones = newState.buyZones || this.buyZones;
     this.turrets = newState.turrets || this.turrets;
+    this.pendingSpawns = newState.pendingSpawns || [];
     this.gameStatus = newState.gameStatus || this.gameStatus;
     this.winner = newState.winner !== undefined ? newState.winner : this.winner;
   }
@@ -63,9 +65,27 @@ export class GameState {
     this.projectiles = [];
     this.buyZones = [];
     this.turrets = [];
+    this.pendingSpawns = [];
     this.gameStatus = 'waiting';
     this.winner = null;
     this.playerId = null;
     this.gameId = null;
+  }
+
+  // Get pending spawns for a specific player
+  getMyPendingSpawns() {
+    if (this.playerId === null) return [];
+    return this.pendingSpawns.filter(spawn => spawn.ownerId === this.playerId);
+  }
+
+  // Get count of pending spawns by type for the current player
+  getMyPendingSpawnCounts() {
+    const counts = { tank: 0, airplane: 0 };
+    for (const spawn of this.getMyPendingSpawns()) {
+      if (counts[spawn.unitType] !== undefined) {
+        counts[spawn.unitType]++;
+      }
+    }
+    return counts;
   }
 }

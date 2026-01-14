@@ -26,17 +26,18 @@ func NewPlayerUnit(ownerID int, basePosition types.Vector3) *PlayerUnit {
 
 	return &PlayerUnit{
 		BaseUnit: BaseUnit{
-			ID:             fmt.Sprintf("player_%d", playerUnitCounter),
-			Type:           "player",
-			OwnerID:        ownerID,
-			Position:       spawnPos,
-			Health:         types.PlayerUnitHealth,
-			TargetPosition: spawnPos, // Players don't have AI targets
-			Speed:          types.PlayerUnitSpeed,
-			Damage:         types.PlayerUnitDamage,
-			AttackRange:    types.PlayerUnitAttackRange,
-			AttackSpeed:    types.PlayerUnitAttackSpeed,
-			LastAttackTime: 0,
+			ID:              fmt.Sprintf("player_%d", playerUnitCounter),
+			Type:            "player",
+			OwnerID:         ownerID,
+			Position:        spawnPos,
+			Health:          types.PlayerUnitHealth,
+			TargetPosition:  spawnPos, // Players don't have AI targets
+			Speed:           types.PlayerUnitSpeed,
+			Damage:          types.PlayerUnitDamage,
+			AttackRange:     types.PlayerUnitAttackRange,
+			AttackSpeed:     types.PlayerUnitAttackSpeed,
+			LastAttackTime:  0,
+			CollisionRadius: types.PlayerCollisionRadius,
 		},
 		RespawnTime:   0,
 		IsRespawning:  false,

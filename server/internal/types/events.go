@@ -35,10 +35,21 @@ type GameOverPayload struct {
 	Stats         MatchStats `json:"stats"`
 }
 
+// PlayerStats contains detailed kill statistics for a player
+type PlayerStats struct {
+	TankKills     int `json:"tankKills"`
+	AirplaneKills int `json:"airplaneKills"`
+	TurretKills   int `json:"turretKills"`
+	PlayerKills   int `json:"playerKills"`
+	TotalPoints   int `json:"totalPoints"`
+}
+
 // MatchStats contains end-of-match statistics
 type MatchStats struct {
-	Player1Kills int `json:"player1Kills"`
-	Player2Kills int `json:"player2Kills"`
+	Player1Kills int         `json:"player1Kills"`
+	Player2Kills int         `json:"player2Kills"`
+	Player1Stats PlayerStats `json:"player1Stats"`
+	Player2Stats PlayerStats `json:"player2Stats"`
 }
 
 // ErrorPayload is sent when an error occurs

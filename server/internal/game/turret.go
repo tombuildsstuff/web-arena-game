@@ -198,28 +198,79 @@ func GetTurrets() []*Turret {
 		1, // Owned by player 2 by default
 	))
 
-	// Middle turrets (neutral, claimable)
-	// Courtyard area turrets
+	// ============================================================
+	// NEUTRAL TURRETS (claimable by either player)
+	// ============================================================
+
+	// Central corridor turrets (high value - control the middle)
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: 0, Y: 3, Z: -35},
+		types.Vector3{X: 0, Y: 3, Z: -50},
 		-1, // Unclaimed
 	))
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: 0, Y: 3, Z: 35},
+		types.Vector3{X: 0, Y: 3, Z: 50},
 		-1, // Unclaimed
 	))
 
-	// Side room turrets
+	// Mid-lane turrets (between bases and center)
+	// Left side mid turrets
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: -40, Y: 3, Z: 0},
+		types.Vector3{X: -50, Y: 3, Z: -40},
 		-1, // Unclaimed
 	))
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: 40, Y: 3, Z: 0},
+		types.Vector3{X: -50, Y: 3, Z: 40},
+		-1, // Unclaimed
+	))
+	// Right side mid turrets
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: 50, Y: 3, Z: -40},
+		-1, // Unclaimed
+	))
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: 50, Y: 3, Z: 40},
+		-1, // Unclaimed
+	))
+
+	// Center room turrets (control the middle lane)
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: -25, Y: 3, Z: 0},
+		-1, // Unclaimed
+	))
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: 25, Y: 3, Z: 0},
+		-1, // Unclaimed
+	))
+
+	// Corner room turrets (outer flanking positions)
+	// Top corners
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: -55, Y: 3, Z: -65},
+		-1, // Unclaimed
+	))
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: 55, Y: 3, Z: -65},
+		-1, // Unclaimed
+	))
+	// Bottom corners
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: -55, Y: 3, Z: 65},
+		-1, // Unclaimed
+	))
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: 55, Y: 3, Z: 65},
 		-1, // Unclaimed
 	))
 

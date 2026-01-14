@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"io/fs"
 	"log"
 	"net/http"
@@ -42,6 +43,14 @@ func main() {
 	// API Routes
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
+	})
+
+	r.Get("/api/leaderboard", func(w http.ResponseWriter, r *http.Request) {
+		leaderboard := gameManager.GetLeaderboard()
+		entries := leaderboard.GetTopPlayers(50) // Top 50 players
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(entries)
 	})
 
 	r.Get("/ws", func(w http.ResponseWriter, r *http.Request) {

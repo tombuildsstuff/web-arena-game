@@ -47,14 +47,52 @@
         <p id="game-over-message"></p>
         <div id="match-stats">
           <div id="match-duration"></div>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <span class="stat-label">Your Kills</span>
-              <span id="your-kills" class="stat-value">0</span>
+          <div class="stats-columns">
+            <div class="stats-column">
+              <h3>Your Stats</h3>
+              <div class="stat-item">
+                <span class="stat-label">Total Points</span>
+                <span id="your-points" class="stat-value points">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Tanks (10 pts)</span>
+                <span id="your-tank-kills" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Helicopters (20 pts)</span>
+                <span id="your-airplane-kills" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Turrets (20 pts)</span>
+                <span id="your-turret-kills" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Player (50 pts)</span>
+                <span id="your-player-kills" class="stat-value">0</span>
+              </div>
             </div>
-            <div class="stat-item">
-              <span class="stat-label">Enemy Kills</span>
-              <span id="enemy-kills" class="stat-value">0</span>
+            <div class="stats-column">
+              <h3>Enemy Stats</h3>
+              <div class="stat-item">
+                <span class="stat-label">Total Points</span>
+                <span id="enemy-points" class="stat-value points">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Tanks (10 pts)</span>
+                <span id="enemy-tank-kills" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Helicopters (20 pts)</span>
+                <span id="enemy-airplane-kills" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Turrets (20 pts)</span>
+                <span id="enemy-turret-kills" class="stat-value">0</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Player (50 pts)</span>
+                <span id="enemy-player-kills" class="stat-value">0</span>
+              </div>
             </div>
           </div>
         </div>
@@ -69,6 +107,27 @@
         <p>Real-time 3D multiplayer strategy</p>
         <button id="join-queue-button" disabled>Join Queue</button>
         <p id="queue-status" class="hidden">Waiting for opponent...</p>
+
+        <!-- Leaderboard -->
+        <div id="leaderboard">
+          <h2>Leaderboard</h2>
+          <div id="leaderboard-loading">Loading...</div>
+          <table id="leaderboard-table" class="hidden">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player</th>
+                <th>Points</th>
+                <th>Wins</th>
+                <th>Games</th>
+                <th>Play Time</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+            </tbody>
+          </table>
+          <p id="leaderboard-empty" class="hidden">No games played yet!</p>
+        </div>
       </div>
     </div>
   </div>

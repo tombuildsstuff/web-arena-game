@@ -14,17 +14,18 @@ type Tank struct {
 func NewTank(ownerID int, spawnPos types.Vector3, targetPos types.Vector3) *Tank {
 	return &Tank{
 		BaseUnit: BaseUnit{
-			ID:             uuid.New().String(),
-			Type:           "tank",
-			OwnerID:        ownerID,
-			Position:       spawnPos,
-			Health:         types.TankHealth,
-			TargetPosition: targetPos,
-			Speed:          types.TankSpeed,
-			Damage:         types.TankDamage,
-			AttackRange:    types.TankAttackRange,
-			AttackSpeed:    types.TankAttackSpeed,
-			LastAttackTime: 0,
+			ID:              uuid.New().String(),
+			Type:            "tank",
+			OwnerID:         ownerID,
+			Position:        spawnPos,
+			Health:          types.TankHealth,
+			TargetPosition:  targetPos,
+			Speed:           types.TankSpeed,
+			Damage:          types.TankDamage,
+			AttackRange:     types.TankAttackRange,
+			AttackSpeed:     types.TankAttackSpeed,
+			LastAttackTime:  0,
+			CollisionRadius: types.TankCollisionRadius,
 		},
 	}
 }

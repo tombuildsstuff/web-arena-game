@@ -9,6 +9,12 @@ import (
 	"github.com/tombuildsstuff/web-arena-game/server/internal/types"
 )
 
+// GameEndCallback is called when a game ends
+type GameEndCallback func(roomID string)
+
+// GameResultCallback is called with game results for leaderboard
+type GameResultCallback func(player1Name, player2Name string, winner int, matchDuration int, p1Stats, p2Stats types.PlayerStats)
+
 // GameRoom represents a single game instance
 type GameRoom struct {
 	ID                string
@@ -18,6 +24,8 @@ type GameRoom struct {
 	stopChan          chan bool
 	clientConnections map[int]ClientConnection // Map player ID to client connection
 	lastIncomeTime    time.Time
+	onGameEnd         GameEndCallback    // Callback when game ends
+	onGameResult      GameResultCallback // Callback for game results (leaderboard)
 
 	// Game systems
 	pathfindingSystem  *PathfindingSystem
@@ -67,6 +75,20 @@ func (r *GameRoom) SetClientConnection(playerID int, conn ClientConnection) {
 	r.clientConnections[playerID] = conn
 }
 
+// SetOnGameEnd sets the callback for when the game ends
+func (r *GameRoom) SetOnGameEnd(callback GameEndCallback) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.onGameEnd = callback
+}
+
+// SetOnGameResult sets the callback for game results (leaderboard)
+func (r *GameRoom) SetOnGameResult(callback GameResultCallback) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.onGameResult = callback
+}
+
 // Start starts the game room update loop
 func (r *GameRoom) Start() {
 	r.mu.Lock()
@@ -85,12 +107,20 @@ func (r *GameRoom) Start() {
 // Stop stops the game room
 func (r *GameRoom) Stop() {
 	r.mu.Lock()
-	defer r.mu.Unlock()
+	wasRunning := r.IsRunning
+	var callback GameEndCallback
 
 	if r.IsRunning {
 		r.IsRunning = false
 		close(r.stopChan)
+		callback = r.onGameEnd
 		log.Printf("Game room %s stopped", r.ID)
+	}
+	r.mu.Unlock()
+
+	// Call the callback outside of the lock to avoid deadlock
+	if wasRunning && callback != nil {
+		callback(r.ID)
 	}
 }
 
@@ -125,6 +155,15 @@ func (r *GameRoom) update() {
 
 	// Update movement
 	r.movementSystem.Update(r.State, deltaTime)
+
+	// Process spawn queue - spawn units when their spawn area is clear
+	if r.State.SpawnQueue != nil {
+		spawnedUnits := r.State.SpawnQueue.ProcessQueue(r.State)
+		for _, unit := range spawnedUnits {
+			r.State.AddUnit(unit)
+			log.Printf("Spawned queued %s for player %d", unit.GetType(), unit.GetOwnerID())
+		}
+	}
 
 	// Update combat
 	r.combatSystem.Update(r.State, deltaTime)
@@ -326,24 +365,20 @@ func (r *GameRoom) HandleBuyFromZone(playerID int, zoneID string, conn ClientCon
 	// Deduct cost
 	player.Spend(zone.Cost)
 
-	// Create unit at the buy zone position
-	var unit Unit
+	// Queue the spawn instead of creating immediately
 	spawnPos := zone.Position
 	targetPos := r.State.Players[1-playerID].BasePosition // Target enemy base
 
 	switch zone.UnitType {
 	case "tank":
 		spawnPos.Y = types.TankYPosition
-		unit = NewTank(playerID, spawnPos, targetPos)
 	case "airplane":
 		spawnPos.Y = types.AirplaneYPosition
-		unit = NewAirplane(playerID, spawnPos, targetPos)
 	}
 
-	if unit != nil {
-		r.State.AddUnit(unit)
-		log.Printf("Player %d purchased %s from zone %s (remaining: $%d)", playerID, zone.UnitType, zoneID, player.Money)
-	}
+	// Add to spawn queue
+	r.State.SpawnQueue.Add(zone.UnitType, playerID, spawnPos, targetPos, zoneID)
+	log.Printf("Player %d queued %s from zone %s (remaining: $%d)", playerID, zone.UnitType, zoneID, player.Money)
 }
 
 // HandleClaimTurret handles a turret claiming request
@@ -520,13 +555,27 @@ func (r *GameRoom) broadcastState() {
 // broadcastGameOver sends the game_over message to all players
 // Note: Caller must hold the lock (called from update() which holds r.mu.Lock())
 func (r *GameRoom) broadcastGameOver(winner int, reason string) {
+	p1Stats := r.State.Players[0].GetStats()
+	p2Stats := r.State.Players[1].GetStats()
+	matchDuration := r.State.GetMatchDuration()
+
+	// Add win bonus points (200 for winning the round)
+	const winBonus = 200
+	if winner == 0 {
+		p1Stats.TotalPoints += winBonus
+	} else if winner == 1 {
+		p2Stats.TotalPoints += winBonus
+	}
+
 	payload := types.GameOverPayload{
 		Winner:        winner,
 		Reason:        reason,
-		MatchDuration: r.State.GetMatchDuration(),
+		MatchDuration: matchDuration,
 		Stats: types.MatchStats{
 			Player1Kills: r.State.Players[0].Kills,
 			Player2Kills: r.State.Players[1].Kills,
+			Player1Stats: p1Stats,
+			Player2Stats: p2Stats,
 		},
 	}
 
@@ -534,9 +583,17 @@ func (r *GameRoom) broadcastGameOver(winner int, reason string) {
 		conn.SendMessage("game_over", payload)
 	}
 
-	log.Printf("Game %s ended: Player %d won (%s) - Duration: %ds, P1 Kills: %d, P2 Kills: %d",
-		r.ID, winner, reason, payload.MatchDuration,
-		payload.Stats.Player1Kills, payload.Stats.Player2Kills)
+	log.Printf("Game %s ended: Player %d won (%s) - Duration: %ds, P1: %d pts, P2: %d pts",
+		r.ID, winner, reason, matchDuration,
+		p1Stats.TotalPoints, p2Stats.TotalPoints)
+
+	// Record to leaderboard (using player names - for now "Player 1" and "Player 2")
+	// Later this will use SSO names
+	if r.onGameResult != nil {
+		// Call callback outside lock - use goroutine to avoid blocking
+		callback := r.onGameResult
+		go callback("Player 1", "Player 2", winner, matchDuration, p1Stats, p2Stats)
+	}
 }
 
 // GetState returns a copy of the current game state (thread-safe)
@@ -544,6 +601,20 @@ func (r *GameRoom) GetState() types.GameState {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return r.State.ToType()
+}
+
+// GetClientIDs returns the client IDs of both players
+func (r *GameRoom) GetClientIDs() []string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	clientIDs := make([]string, 0, 2)
+	for _, player := range r.State.Players {
+		if player.ClientID != "" {
+			clientIDs = append(clientIDs, player.ClientID)
+		}
+	}
+	return clientIDs
 }
 
 // Marshal game room to JSON (for debugging)
