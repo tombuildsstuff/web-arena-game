@@ -22,7 +22,10 @@
         <span id="player-health">Health: 5/5</span>
         <span id="respawn-timer" class="hidden">Respawning: 10s</span>
       </div>
-      <div id="controls-hint">WASD: Move | Click: Shoot | E: Buy | Right-drag: Rotate | Scroll: Zoom</div>
+      <div id="hud-bottom">
+        <div id="controls-hint">WASD: Move | Click: Shoot | E: Buy | Right-drag: Rotate | Scroll: Zoom</div>
+        <button id="mute-button" title="Mute sounds">🔊</button>
+      </div>
     </div>
 
     <!-- Buy Zone Prompt -->
@@ -175,6 +178,82 @@
           </table>
           <p id="leaderboard-empty" class="hidden">No games played yet!</p>
         </div>
+
+        <!-- Footer Links -->
+        <div id="footer-links">
+          <button id="about-button" class="footer-link">About</button>
+          <span class="footer-separator">|</span>
+          <button id="credits-button" class="footer-link">Credits</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div id="about-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content info-modal">
+      <h2>About Arena Game</h2>
+      <div class="info-modal-body">
+        <p>Arena Game is a real-time 3D multiplayer strategy game where two players battle for supremacy using tanks, helicopters, and turrets.</p>
+        <p>This entire game was coded by <strong>Claude Code</strong> (Anthropic's AI coding assistant), with prompts and direction provided by <a href="https://github.com/tombuildsstuff" target="_blank" rel="noopener">@tombuildsstuff</a>.</p>
+        <p>The project demonstrates what's possible when humans and AI collaborate on software development.</p>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" id="about-close" class="modal-button submit">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits Modal -->
+  <div id="credits-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content info-modal">
+      <h2>Credits</h2>
+      <div class="info-modal-body">
+        <h3>Development</h3>
+        <ul class="credits-list">
+          <li><strong>Code:</strong> <a href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener">Claude Code</a> by Anthropic</li>
+          <li><strong>Prompts &amp; Direction:</strong> <a href="https://github.com/tombuildsstuff" target="_blank" rel="noopener">@tombuildsstuff</a></li>
+        </ul>
+
+        <h3>Sound Effects</h3>
+        <p class="credits-note">All sounds sourced from <a href="https://freesound.org" target="_blank" rel="noopener">Freesound.org</a></p>
+        <ul class="credits-list sounds">
+          <li>
+            <span class="sound-name">Laser Gun Pew Pew</span>
+            <span class="sound-author">by OBXJohn</span>
+            <a href="https://freesound.org/s/365635/" target="_blank" rel="noopener">freesound.org/s/365635</a>
+            <span class="sound-license">CC0</span>
+          </li>
+          <li>
+            <span class="sound-name">Lazer Blast</span>
+            <span class="sound-author">by akelley6</span>
+            <a href="https://freesound.org/s/825582/" target="_blank" rel="noopener">freesound.org/s/825582</a>
+            <span class="sound-license">CC BY 4.0</span>
+          </li>
+          <li>
+            <span class="sound-name">explode3.ogg</span>
+            <span class="sound-author">by rendensh</span>
+            <a href="https://freesound.org/s/105411/" target="_blank" rel="noopener">freesound.org/s/105411</a>
+            <span class="sound-license">CC0</span>
+          </li>
+          <li>
+            <span class="sound-name">nooo-without_effects.wav</span>
+            <span class="sound-author">by hellkt</span>
+            <a href="https://freesound.org/s/80922/" target="_blank" rel="noopener">freesound.org/s/80922</a>
+            <span class="sound-license">CC BY 3.0</span>
+          </li>
+          <li>
+            <span class="sound-name">Victory Fanfare (8-bit Flag) 2</span>
+            <span class="sound-author">by SilverIllusionist</span>
+            <a href="https://freesound.org/s/840821/" target="_blank" rel="noopener">freesound.org/s/840821</a>
+            <span class="sound-license">CC BY 4.0</span>
+          </li>
+        </ul>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" id="credits-close" class="modal-button submit">Close</button>
       </div>
     </div>
   </div>

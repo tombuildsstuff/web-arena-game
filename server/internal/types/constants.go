@@ -44,7 +44,7 @@ const (
 
 	// Player unit stats
 	PlayerUnitSpeed       = 12.0
-	PlayerUnitHealth      = 10 // 10 hits before respawn
+	PlayerUnitHealth      = 80 // 8 hits before respawn (80 / 10 damage = 8)
 	PlayerUnitDamage      = 10
 	PlayerUnitAttackRange = 25.0
 	PlayerUnitAttackSpeed = 2.0 // attacks per second

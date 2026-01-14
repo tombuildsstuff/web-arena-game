@@ -86,12 +86,39 @@ body {
   50% { opacity: 0.5; }
 }
 
-#controls-hint {
+#hud-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#controls-hint {
   font-size: 12px;
   opacity: 0.6;
+}
+
+#mute-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+#mute-button:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Buy Zone Prompt */
@@ -213,8 +240,10 @@ body {
   height: 100%;
   background: rgba(0, 0, 0, 0.9);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  overflow-y: auto;
+  padding: 40px 20px;
 }
 
 #queue-screen.hidden {
@@ -224,6 +253,8 @@ body {
 .queue-content {
   text-align: center;
   color: white;
+  width: 100%;
+  max-width: 700px;
 }
 
 .queue-content h1 {
@@ -819,4 +850,121 @@ body {
 
 #stop-spectating-button:hover {
   background: rgba(0, 0, 0, 0.5);
+}
+
+/* Footer Links */
+#footer-links {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.footer-link {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 4px 8px;
+}
+
+.footer-link:hover {
+  color: #94a3b8;
+}
+
+.footer-separator {
+  color: #334155;
+}
+
+/* Info Modals (About/Credits) */
+.info-modal {
+  max-width: 500px;
+}
+
+.info-modal h2 {
+  margin-bottom: 20px;
+}
+
+.info-modal-body {
+  text-align: left;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+.info-modal-body p {
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.info-modal-body h3 {
+  color: #fbbf24;
+  font-size: 16px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.info-modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.info-modal-body a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.info-modal-body a:hover {
+  text-decoration: underline;
+}
+
+.credits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+}
+
+.credits-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+}
+
+.credits-list li:last-child {
+  border-bottom: none;
+}
+
+.credits-list.sounds li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.sound-name {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.sound-author {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.sound-license {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.credits-note {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 10px;
 }

@@ -14,4 +14,7 @@ Thumbs.db
 *.tmp
 *.temp
 
+
+server/leaderboard.json
+
 # Build artifacts are handled in subdirectory .gitignore files

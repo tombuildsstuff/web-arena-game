@@ -32,6 +32,12 @@ export class Camera {
     // Callback for when camera rotation changes (for updating movement direction)
     this.onRotationChange = null;
 
+    // Spectator free camera mode
+    this.isSpectatorMode = false;
+    this.spectatorTarget = new THREE.Vector3(0, 0, 0); // Center of arena
+    this.spectatorMoveSpeed = 80; // Units per second
+    this.spectatorKeys = { w: false, a: false, s: false, d: false };
+
     this.create();
     this.setupControls();
   }
@@ -106,6 +112,22 @@ export class Camera {
     canvas.addEventListener('contextmenu', (e) => {
       e.preventDefault();
     });
+
+    // Keyboard controls for spectator free camera
+    window.addEventListener('keydown', (e) => {
+      if (!this.isSpectatorMode) return;
+      const key = e.key.toLowerCase();
+      if (key in this.spectatorKeys) {
+        this.spectatorKeys[key] = true;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const key = e.key.toLowerCase();
+      if (key in this.spectatorKeys) {
+        this.spectatorKeys[key] = false;
+      }
+    });
   }
 
   // Calculate camera offset from spherical coordinates
@@ -128,7 +150,13 @@ export class Camera {
     }
   }
 
-  update() {
+  update(deltaTime = 1/60) {
+    // Handle spectator free camera mode
+    if (this.isSpectatorMode) {
+      this.updateSpectatorCamera(deltaTime);
+      return;
+    }
+
     if (this.target && this.target.position) {
       // Calculate offset based on current spherical coordinates
       const offset = this.calculateOffset();
@@ -147,6 +175,61 @@ export class Camera {
       this.currentLookAt.lerp(lookAtTarget, this.smoothing);
       this.camera.lookAt(this.currentLookAt);
     }
+  }
+
+  updateSpectatorCamera(deltaTime) {
+    // Move spectator target based on WASD input (camera-relative)
+    const forward = this.getForwardDirection();
+    const right = this.getRightDirection();
+
+    let moveX = 0;
+    let moveZ = 0;
+
+    if (this.spectatorKeys.w) {
+      moveX += forward.x;
+      moveZ += forward.z;
+    }
+    if (this.spectatorKeys.s) {
+      moveX -= forward.x;
+      moveZ -= forward.z;
+    }
+    if (this.spectatorKeys.d) {
+      moveX += right.x;
+      moveZ += right.z;
+    }
+    if (this.spectatorKeys.a) {
+      moveX -= right.x;
+      moveZ -= right.z;
+    }
+
+    // Normalize and apply speed
+    const length = Math.sqrt(moveX * moveX + moveZ * moveZ);
+    if (length > 0) {
+      const speed = this.spectatorMoveSpeed * deltaTime;
+      this.spectatorTarget.x += (moveX / length) * speed;
+      this.spectatorTarget.z += (moveZ / length) * speed;
+
+      // Clamp to arena bounds (roughly -150 to 150)
+      this.spectatorTarget.x = Math.max(-150, Math.min(150, this.spectatorTarget.x));
+      this.spectatorTarget.z = Math.max(-150, Math.min(150, this.spectatorTarget.z));
+    }
+
+    // Calculate offset based on current spherical coordinates
+    const offset = this.calculateOffset();
+
+    // Calculate desired camera position
+    this.targetPosition.copy(this.spectatorTarget).add(offset);
+
+    // Smoothly interpolate camera position
+    this.currentPosition.lerp(this.targetPosition, this.smoothing);
+    this.camera.position.copy(this.currentPosition);
+
+    // Calculate look-at target
+    const lookAtTarget = this.spectatorTarget.clone().add(this.lookAtOffset);
+
+    // Smoothly interpolate look-at
+    this.currentLookAt.lerp(lookAtTarget, this.smoothing);
+    this.camera.lookAt(this.currentLookAt);
   }
 
   handleResize() {
@@ -184,5 +267,18 @@ export class Camera {
   // Set callback for when camera rotation changes
   setRotationChangeCallback(callback) {
     this.onRotationChange = callback;
+  }
+
+  // Enable or disable spectator free camera mode
+  setSpectatorMode(enabled) {
+    this.isSpectatorMode = enabled;
+    if (enabled) {
+      // Reset spectator target to center of arena
+      this.spectatorTarget.set(0, 0, 0);
+      // Zoom out a bit for better overview
+      this.distance = Math.max(this.distance, 70);
+      // Clear any key states
+      this.spectatorKeys = { w: false, a: false, s: false, d: false };
+    }
   }
 }

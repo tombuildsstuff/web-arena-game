@@ -1,13 +1,42 @@
 export class HUD {
-  constructor(gameState, gameLoop) {
+  constructor(gameState, gameLoop, soundManager = null) {
     this.gameState = gameState;
     this.gameLoop = gameLoop;
+    this.soundManager = soundManager;
     this.playerIdElement = document.getElementById('player-id');
     this.playerMoneyElement = document.getElementById('player-money');
     this.playerHealthElement = document.getElementById('player-health');
     this.respawnTimerElement = document.getElementById('respawn-timer');
     this.buyZonePromptElement = document.getElementById('buy-zone-prompt');
     this.buyZoneTextElement = document.getElementById('buy-zone-text');
+    this.muteButton = document.getElementById('mute-button');
+
+    this.setupMuteButton();
+  }
+
+  setupMuteButton() {
+    if (!this.muteButton) return;
+
+    this.muteButton.addEventListener('click', () => {
+      if (this.soundManager) {
+        const isMuted = this.soundManager.toggleMute();
+        this.updateMuteButtonIcon(isMuted);
+      }
+    });
+
+    // Initialize icon state
+    this.updateMuteButtonIcon(this.soundManager?.getMuted() || false);
+  }
+
+  updateMuteButtonIcon(isMuted) {
+    if (!this.muteButton) return;
+    this.muteButton.textContent = isMuted ? '🔇' : '🔊';
+    this.muteButton.title = isMuted ? 'Unmute sounds' : 'Mute sounds';
+  }
+
+  setSoundManager(soundManager) {
+    this.soundManager = soundManager;
+    this.updateMuteButtonIcon(soundManager?.getMuted() || false);
   }
 
   update() {

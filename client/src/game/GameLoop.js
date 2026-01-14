@@ -9,11 +9,12 @@ import { Turret } from './Turret.js';
 import { PLAYER_COLORS } from '../utils/constants.js';
 
 export class GameLoop {
-  constructor(renderer, scene, camera, gameState) {
+  constructor(renderer, scene, camera, gameState, soundManager = null) {
     this.renderer = renderer;
     this.scene = scene;
     this.camera = camera;
     this.gameState = gameState;
+    this.soundManager = soundManager;
     this.isRunning = false;
     this.lastTime = 0;
     this.elapsedTime = 0; // Total elapsed time for animations
@@ -27,43 +28,57 @@ export class GameLoop {
     this.buyZonesInitialized = false;
     this.turretsInitialized = false;
     this.previousUnitIDs = new Set(); // Track unit IDs for death detection
+    this.previousProjectileIDs = new Set(); // Track projectile IDs for shot detection
+    this.previousTurretStates = new Map(); // Track turret states for sound triggers
+    this.previousRespawnStates = new Map(); // Track respawn states for sound triggers
     this.nearbyBuyZone = null; // The buy zone the player is currently near
     this.nearbyTurret = null; // The turret the player is currently near
     this.buyZonePopup = null; // Reference to the popup for position updates
     this.isSpectating = false; // Spectator mode flag
-    this.spectatorFollowIndex = 0; // Which player to follow in spectator mode
   }
 
   setBuyZonePopup(popup) {
     this.buyZonePopup = popup;
   }
 
-  setSpectatorMode(isSpectating) {
-    this.isSpectating = isSpectating;
-    this.spectatorFollowIndex = 0;
+  setSoundManager(soundManager) {
+    this.soundManager = soundManager;
   }
 
-  // Switch which player the spectator camera follows
-  cycleSpectatorFollow() {
-    if (!this.isSpectating) return;
-    this.spectatorFollowIndex = (this.spectatorFollowIndex + 1) % 2;
-    this.updateSpectatorCamera();
-  }
+  updateSoundListener() {
+    if (!this.soundManager) return;
 
-  // Update camera to follow the current spectator target
-  updateSpectatorCamera() {
-    if (!this.isSpectating) return;
+    // Get the player's position for the listener
+    const playerUnit = this.gameState.getMyPlayerUnit();
+    if (!playerUnit) return;
 
-    const stateUnits = this.gameState.units || [];
-    const playerUnits = stateUnits.filter(u => u.type === 'player');
+    const position = playerUnit.position;
 
-    if (playerUnits.length > 0) {
-      const targetUnit = playerUnits[this.spectatorFollowIndex % playerUnits.length];
-      const unitObj = this.unitMeshes.get(targetUnit.id);
-      if (unitObj && unitObj.mesh) {
-        this.camera.setTarget(unitObj.mesh);
+    // Get camera direction for listener orientation
+    const camera = this.camera.getCamera();
+    const forward = { x: 0, y: 0, z: -1 };
+    const up = { x: 0, y: 1, z: 0 };
+
+    // Extract forward direction from camera
+    if (camera && camera.getWorldDirection) {
+      try {
+        // getWorldDirection modifies the passed vector and returns it
+        const dir = camera.getWorldDirection(camera.position.clone());
+        forward.x = dir.x;
+        forward.y = dir.y;
+        forward.z = dir.z;
+      } catch (e) {
+        // Fallback to default forward direction
       }
     }
+
+    this.soundManager.updateListener(position, forward, up);
+  }
+
+  setSpectatorMode(isSpectating) {
+    this.isSpectating = isSpectating;
+    // Enable free camera mode for spectators
+    this.camera.setSpectatorMode(isSpectating);
   }
 
   start() {
@@ -94,7 +109,10 @@ export class GameLoop {
     this.elapsedTime += deltaTime;
 
     // Update camera controls
-    this.camera.update();
+    this.camera.update(deltaTime);
+
+    // Update sound listener position
+    this.updateSoundListener();
 
     // Sync obstacles (once at game start)
     this.syncObstacles();
@@ -205,8 +223,37 @@ export class GameLoop {
           const turretObj = new Turret(this.scene.getScene(), turret);
           this.turretMeshes.set(turret.id, turretObj);
         }
+        // Initialize previous state tracking
+        this.previousTurretStates.set(turret.id, {
+          ownerId: turret.ownerId,
+          isDestroyed: turret.isDestroyed || false
+        });
       }
       this.turretsInitialized = true;
+    }
+
+    // Check for turret state changes to trigger sounds
+    if (this.soundManager) {
+      for (const turret of stateTurrets) {
+        const prevState = this.previousTurretStates.get(turret.id);
+        if (!prevState) continue;
+
+        // Check for turret acquisition (ownership changed from -1 or different owner)
+        if (turret.ownerId !== -1 && turret.ownerId !== prevState.ownerId) {
+          this.soundManager.playPositional('turret_acquired', turret.position);
+        }
+
+        // Check for turret destruction
+        if (turret.isDestroyed && !prevState.isDestroyed) {
+          this.soundManager.playPositional('turret_destroyed', turret.position);
+        }
+
+        // Update previous state
+        this.previousTurretStates.set(turret.id, {
+          ownerId: turret.ownerId,
+          isDestroyed: turret.isDestroyed || false
+        });
+      }
     }
   }
 
@@ -264,6 +311,11 @@ export class GameLoop {
         if (unitObj.mesh) {
           const position = unitObj.mesh.position.clone();
           this.createExplosion(position);
+
+          // Play death sound at the unit's position
+          if (this.soundManager) {
+            this.soundManager.playPositional('player_death', position);
+          }
         }
         unitObj.remove();
         this.unitMeshes.delete(unitID);
@@ -280,6 +332,14 @@ export class GameLoop {
         if (playerObj && playerObj.setRespawning) {
           playerObj.setRespawning(unit.isRespawning || false);
         }
+
+        // Check for respawn sound trigger (was respawning, now not respawning)
+        const wasRespawning = this.previousRespawnStates.get(unit.id);
+        const isRespawning = unit.isRespawning || false;
+        if (wasRespawning && !isRespawning && this.soundManager) {
+          this.soundManager.playPositional('player_respawn', unit.position);
+        }
+        this.previousRespawnStates.set(unit.id, isRespawning);
       }
     }
 
@@ -316,11 +376,19 @@ export class GameLoop {
         }
         const projectile = new Projectile(this.scene.getScene(), proj, color);
         this.projectileMeshes.set(proj.id, projectile);
+
+        // Play shot sound at projectile's starting position (if new)
+        if (!this.previousProjectileIDs.has(proj.id) && this.soundManager) {
+          this.soundManager.playPositional('shot_fired', proj.position);
+        }
       } else {
         // Update position
         this.projectileMeshes.get(proj.id).updatePosition(proj.position);
       }
     }
+
+    // Update previous projectile IDs for next frame
+    this.previousProjectileIDs = stateProjectileIDs;
   }
 
   createExplosion(position) {
@@ -350,13 +418,8 @@ export class GameLoop {
       const displayName = playerData ? playerData.displayName : null;
       unitObj = new Player(this.scene.getScene(), unit, color, isLocalPlayer, displayName);
 
-      // Set camera to follow local player
+      // Set camera to follow local player (not in spectator mode - spectators use free camera)
       if (isLocalPlayer && unitObj.mesh) {
-        this.camera.setTarget(unitObj.mesh);
-      }
-
-      // In spectator mode, follow the first player created (player 0)
-      if (this.isSpectating && unit.ownerId === this.spectatorFollowIndex && unitObj.mesh) {
         this.camera.setTarget(unitObj.mesh);
       }
     }
@@ -494,12 +557,14 @@ export class GameLoop {
 
     // Reset tracking
     this.previousUnitIDs.clear();
+    this.previousProjectileIDs.clear();
+    this.previousTurretStates.clear();
+    this.previousRespawnStates.clear();
     this.nearbyBuyZone = null;
     this.nearbyTurret = null;
     this.elapsedTime = 0;
 
     // Reset spectator state
     this.isSpectating = false;
-    this.spectatorFollowIndex = 0;
   }
 }

@@ -11,6 +11,7 @@ import { PlayerInput } from '../input/PlayerInput.js';
 import { BuyZonePopup } from '../ui/BuyZonePopup.js';
 import { Leaderboard } from '../ui/Leaderboard.js';
 import { AuthService } from '../auth/AuthService.js';
+import { SoundManager } from '../audio/SoundManager.js';
 
 export class Game {
   constructor() {
@@ -27,6 +28,7 @@ export class Game {
     this.buyZonePopup = null;
     this.leaderboard = null;
     this.authService = null;
+    this.soundManager = null;
     this.isSpectating = false;
     this.lobbyStatusInterval = null;
   }
@@ -50,16 +52,21 @@ export class Game {
     // Initialize scene
     this.scene = new Scene();
 
+    // Initialize sound manager
+    this.soundManager = new SoundManager();
+    this.soundManager.init();
+
     // Initialize game loop
     this.gameLoop = new GameLoop(
       this.renderer,
       this.scene,
       this.camera,
-      this.gameState
+      this.gameState,
+      this.soundManager
     );
 
     // Initialize UI
-    this.hud = new HUD(this.gameState, this.gameLoop);
+    this.hud = new HUD(this.gameState, this.gameLoop, this.soundManager);
     this.gameOverScreen = new GameOverScreen(this.gameState, () => {
       this.resetGame();
     });
@@ -97,6 +104,9 @@ export class Game {
 
     // Setup queue screen
     this.setupQueueScreen();
+
+    // Setup info modals (About/Credits)
+    this.setupInfoModals();
   }
 
   setupWebSocket() {
@@ -127,6 +137,12 @@ export class Game {
 
       // Enable player input
       this.playerInput.enable();
+
+      // Play match start sound
+      if (this.soundManager) {
+        this.soundManager.resume();
+        this.soundManager.playGlobal('match_start');
+      }
     });
 
     // Add custom handler for game updates
@@ -143,6 +159,11 @@ export class Game {
       this.gameState.winner = payload.winner;
       this.gameState.gameStatus = 'finished';
       this.playerInput.disable();
+
+      // Play match end sound
+      if (this.soundManager) {
+        this.soundManager.playGlobal('match_end');
+      }
 
       if (this.isSpectating) {
         // Spectator - just show game over and return to lobby
@@ -495,5 +516,39 @@ export class Game {
         loggedInSection.classList.add('hidden');
       }
     });
+  }
+
+  setupInfoModals() {
+    // About modal
+    const aboutButton = document.getElementById('about-button');
+    const aboutModal = document.getElementById('about-modal');
+    const aboutClose = document.getElementById('about-close');
+    const aboutBackdrop = aboutModal?.querySelector('.modal-backdrop');
+
+    if (aboutButton && aboutModal) {
+      aboutButton.addEventListener('click', () => {
+        aboutModal.classList.remove('hidden');
+      });
+
+      const closeAbout = () => aboutModal.classList.add('hidden');
+      aboutClose?.addEventListener('click', closeAbout);
+      aboutBackdrop?.addEventListener('click', closeAbout);
+    }
+
+    // Credits modal
+    const creditsButton = document.getElementById('credits-button');
+    const creditsModal = document.getElementById('credits-modal');
+    const creditsClose = document.getElementById('credits-close');
+    const creditsBackdrop = creditsModal?.querySelector('.modal-backdrop');
+
+    if (creditsButton && creditsModal) {
+      creditsButton.addEventListener('click', () => {
+        creditsModal.classList.remove('hidden');
+      });
+
+      const closeCredits = () => creditsModal.classList.add('hidden');
+      creditsClose?.addEventListener('click', closeCredits);
+      creditsBackdrop?.addEventListener('click', closeCredits);
+    }
   }
 }
