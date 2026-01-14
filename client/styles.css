@@ -460,3 +460,250 @@ body {
   color: #22c55e;
   font-weight: bold;
 }
+
+/* Auth Section */
+#auth-section {
+  margin-bottom: 30px;
+}
+
+#auth-logged-out,
+#auth-logged-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+#auth-logged-in.hidden,
+#auth-logged-out.hidden {
+  display: none;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.auth-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.auth-button.github {
+  background: #24292e;
+}
+
+.auth-button.github:hover {
+  background: #2f363d;
+  transform: translateY(-2px);
+}
+
+.auth-button.bluesky {
+  background: #0085ff;
+}
+
+.auth-button.bluesky:hover {
+  background: #0073e6;
+  transform: translateY(-2px);
+}
+
+.auth-icon {
+  flex-shrink: 0;
+}
+
+.auth-hint {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 20px;
+  border-radius: 8px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+}
+
+.logout-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #94a3b8;
+  padding: 6px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+  position: relative;
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+  color: white;
+  margin-bottom: 10px;
+  font-size: 24px;
+}
+
+.modal-description {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  color: #e2e8f0;
+  font-size: 14px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  background: #0f172a;
+  color: white;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #0085ff;
+}
+
+.form-group input::placeholder {
+  color: #64748b;
+}
+
+.form-hint {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.form-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.form-error.hidden {
+  display: none;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.modal-button {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-button.cancel {
+  background: transparent;
+  border: 1px solid #334155;
+  color: #94a3b8;
+}
+
+.modal-button.cancel:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.modal-button.submit {
+  background: #0085ff;
+  border: none;
+  color: white;
+}
+
+.modal-button.submit:hover {
+  background: #0073e6;
+}
+
+.modal-button.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

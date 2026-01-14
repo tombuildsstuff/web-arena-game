@@ -51,6 +51,8 @@ type Player struct {
 	Money        int     `json:"money"`
 	BasePosition Vector3 `json:"basePosition"`
 	Color        string  `json:"color"`
+	DisplayName  string  `json:"displayName"`
+	IsGuest      bool    `json:"isGuest"`
 	Kills        int     `json:"kills"`
 }
 

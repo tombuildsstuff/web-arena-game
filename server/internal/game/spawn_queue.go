@@ -17,15 +17,23 @@ type PendingSpawn struct {
 	ZoneID     string        // Which buy zone this came from
 }
 
+// Spawn delay constants (in milliseconds)
+const (
+	TankSpawnDelay     = 2000 // 2 seconds between tank spawns
+	AirplaneSpawnDelay = 4000 // 4 seconds between airplane spawns
+)
+
 // SpawnQueue manages pending unit spawns
 type SpawnQueue struct {
-	Queue []*PendingSpawn
+	Queue         []*PendingSpawn
+	LastSpawnTime map[int]map[string]int64 // [playerID][unitType] -> last spawn time
 }
 
 // NewSpawnQueue creates a new spawn queue
 func NewSpawnQueue() *SpawnQueue {
 	return &SpawnQueue{
-		Queue: make([]*PendingSpawn, 0),
+		Queue:         make([]*PendingSpawn, 0),
+		LastSpawnTime: make(map[int]map[string]int64),
 	}
 }
 
@@ -68,8 +76,16 @@ func (q *SpawnQueue) GetPendingByType(playerID int) map[string]int {
 func (q *SpawnQueue) ProcessQueue(state *State) []Unit {
 	spawnedUnits := make([]Unit, 0)
 	remainingQueue := make([]*PendingSpawn, 0)
+	now := time.Now().UnixMilli()
 
 	for _, pending := range q.Queue {
+		// Check spawn delay for this unit type
+		if !q.canSpawnUnit(pending.OwnerID, pending.UnitType, now) {
+			// Still on cooldown, keep in queue
+			remainingQueue = append(remainingQueue, pending)
+			continue
+		}
+
 		// Check if spawn position is clear
 		if q.isSpawnPositionClear(pending, state.Units) {
 			// Create the unit
@@ -83,6 +99,8 @@ func (q *SpawnQueue) ProcessQueue(state *State) []Unit {
 
 			if unit != nil {
 				spawnedUnits = append(spawnedUnits, unit)
+				// Record spawn time for delay tracking
+				q.recordSpawn(pending.OwnerID, pending.UnitType, now)
 			}
 		} else {
 			// Keep in queue for next tick
@@ -92,6 +110,40 @@ func (q *SpawnQueue) ProcessQueue(state *State) []Unit {
 
 	q.Queue = remainingQueue
 	return spawnedUnits
+}
+
+// canSpawnUnit checks if enough time has passed since the last spawn of this type
+func (q *SpawnQueue) canSpawnUnit(playerID int, unitType string, now int64) bool {
+	playerSpawns, exists := q.LastSpawnTime[playerID]
+	if !exists {
+		return true // No previous spawns
+	}
+
+	lastSpawn, exists := playerSpawns[unitType]
+	if !exists {
+		return true // No previous spawn of this type
+	}
+
+	// Get the required delay for this unit type
+	var requiredDelay int64
+	switch unitType {
+	case "tank":
+		requiredDelay = TankSpawnDelay
+	case "airplane":
+		requiredDelay = AirplaneSpawnDelay
+	default:
+		requiredDelay = 1000 // Default 1 second
+	}
+
+	return now-lastSpawn >= requiredDelay
+}
+
+// recordSpawn records when a unit was spawned for delay tracking
+func (q *SpawnQueue) recordSpawn(playerID int, unitType string, now int64) {
+	if q.LastSpawnTime[playerID] == nil {
+		q.LastSpawnTime[playerID] = make(map[string]int64)
+	}
+	q.LastSpawnTime[playerID][unitType] = now
 }
 
 // isSpawnPositionClear checks if a spawn position is free of other units

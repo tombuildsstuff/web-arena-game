@@ -22,9 +22,9 @@ type State struct {
 }
 
 // NewState creates a new game state
-func NewState(player1ClientID, player2ClientID string) *State {
-	player1 := NewPlayer(0, player1ClientID)
-	player2 := NewPlayer(1, player2ClientID)
+func NewState(player1ClientID, player1DisplayName string, player1IsGuest bool, player2ClientID, player2DisplayName string, player2IsGuest bool) *State {
+	player1 := NewPlayer(0, player1ClientID, player1DisplayName, player1IsGuest)
+	player2 := NewPlayer(1, player2ClientID, player2DisplayName, player2IsGuest)
 
 	// Create player units at their bases
 	playerUnit1 := NewPlayerUnit(0, player1.BasePosition)

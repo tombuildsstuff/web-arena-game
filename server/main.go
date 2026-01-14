@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/tombuildsstuff/web-arena-game/server/internal/auth"
 	"github.com/tombuildsstuff/web-arena-game/server/internal/game"
 	"github.com/tombuildsstuff/web-arena-game/server/internal/websocket"
 )
@@ -18,6 +19,10 @@ import (
 var staticContent embed.FS
 
 func main() {
+	// Create auth handler
+	authConfig := auth.LoadConfig()
+	authHandler := auth.NewHandler(authConfig)
+
 	// Create game manager
 	gameManager := game.NewManager()
 
@@ -40,6 +45,13 @@ func main() {
 		AllowCredentials: true,
 	}))
 
+	// Auth routes
+	r.Get("/auth/github", authHandler.HandleLogin)
+	r.Get("/auth/github/callback", authHandler.HandleCallback)
+	r.Post("/auth/bluesky", authHandler.HandleBlueSkyLogin)
+	r.Post("/auth/logout", authHandler.HandleLogout)
+	r.Get("/api/me", authHandler.HandleMe)
+
 	// API Routes
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
@@ -54,7 +66,7 @@ func main() {
 	})
 
 	r.Get("/ws", func(w http.ResponseWriter, r *http.Request) {
-		websocket.HandleWebSocket(hub, w, r)
+		websocket.HandleWebSocket(hub, authHandler, w, r)
 	})
 
 	// Try to get the embedded filesystem

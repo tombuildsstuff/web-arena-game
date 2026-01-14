@@ -4,32 +4,32 @@ import "time"
 
 const (
 	// Arena settings
-	ArenaSize       = 200
-	ArenaHalfSize   = ArenaSize / 2
-	ArenaBoundary   = ArenaHalfSize - 5 // Units should stay within this boundary
-	BaseRadius      = 5
+	ArenaSize     = 200
+	ArenaHalfSize = ArenaSize / 2
+	ArenaBoundary = ArenaHalfSize - 5 // Units should stay within this boundary
+	BaseRadius    = 5
 
 	// Game loop settings
 	TickRate     = 20 // Updates per second
 	TickDuration = time.Second / TickRate
 
 	// Economy settings
-	StartingMoney          = 500
+	StartingMoney          = 1000
 	PassiveIncomePerSecond = 10
 
 	// Tank stats
-	TankCost         = 50
-	TankSpeed        = 5.0
-	TankHealth       = 30  // 3 hits to destroy (30 / 10 = 3)
-	TankDamage       = 10
-	TankAttackRange  = 10.0
-	TankAttackSpeed  = 1.0 // attacks per second
+	TankCost        = 50
+	TankSpeed       = 5.0
+	TankHealth      = 30 // 3 hits to destroy (30 / 10 = 3)
+	TankDamage      = 10
+	TankAttackRange = 10.0
+	TankAttackSpeed = 1.0 // attacks per second
 
 	// Airplane stats
 	AirplaneCost        = 80
 	AirplaneSpeed       = 15.0
-	AirplaneHealth      = 30  // 3 hits to destroy (30 / 10 = 3)
-	AirplaneDamage      = 10  // Same damage as tank for consistency
+	AirplaneHealth      = 30 // 3 hits to destroy (30 / 10 = 3)
+	AirplaneDamage      = 10 // Same damage as tank for consistency
 	AirplaneAttackRange = 20.0
 	AirplaneAttackSpeed = 1.0 // attacks per second
 
@@ -38,27 +38,27 @@ const (
 	AirplaneYPosition = 10.0
 
 	// Unit collision radii (for unit-to-unit collision)
-	TankCollisionRadius     = 2.0  // Tanks are ~3 units wide
-	AirplaneCollisionRadius = 1.5  // Airplanes are smaller
-	PlayerCollisionRadius   = 1.0  // Players are smallest
+	TankCollisionRadius     = 2.0 // Tanks are ~3 units wide
+	AirplaneCollisionRadius = 1.5 // Airplanes are smaller
+	PlayerCollisionRadius   = 1.0 // Players are smallest
 
 	// Player unit stats
 	PlayerUnitSpeed       = 12.0
-	PlayerUnitHealth      = 5   // 5 hits before respawn
+	PlayerUnitHealth      = 10 // 10 hits before respawn
 	PlayerUnitDamage      = 10
 	PlayerUnitAttackRange = 25.0
-	PlayerUnitAttackSpeed = 2.0  // attacks per second
+	PlayerUnitAttackSpeed = 2.0 // attacks per second
 	PlayerUnitYPosition   = 1.5
-	PlayerRespawnTime     = 10.0 // seconds
+	PlayerRespawnTime     = 5.0 // seconds
 
 	// Turret stats
-	TurretHealth       = 30   // 3 hits to destroy (30 / 10 = 3)
-	TurretDamage       = 10
-	TurretAttackRange  = 20.0 // ~4 squares, requires line of sight
-	TurretAttackSpeed  = 1.5  // attacks per second
+	TurretHealth       = 30 // 3 hits to destroy (30 / 10 = 3)
+	TurretDamage       = 5  // 2 hits to kill a player (10 / 5 = 2)
+	TurretAttackRange  = 10.0
+	TurretAttackSpeed  = 0.5  // attacks per second
 	TurretRespawnTime  = 10.0 // seconds
-	TurretClaimRadius  = 7.5  // radius for claiming (3x3 squares)
-	TurretTrackingTime = 1000 // milliseconds to lock on before firing
+	TurretClaimRadius  = 15   // radius for claiming (3x3 squares)
+	TurretTrackingTime = 1500 // milliseconds to lock on before firing
 )
 
 var (

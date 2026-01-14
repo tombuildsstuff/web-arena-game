@@ -113,7 +113,7 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 
 // handleJoinQueue adds a client to the matchmaking queue
 func (h *Hub) handleJoinQueue(client *Client) {
-	h.gameManager.AddToQueue(client.ID, client)
+	h.gameManager.AddToQueue(client.ID, client, client.DisplayName, client.IsGuest)
 }
 
 // handlePurchaseUnit processes a unit purchase request

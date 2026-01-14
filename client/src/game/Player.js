@@ -2,18 +2,19 @@ import * as THREE from 'three';
 import { HealthBar } from './HealthBar.js';
 
 export class Player {
-  constructor(scene, unit, color, isLocalPlayer = false) {
+  constructor(scene, unit, color, isLocalPlayer = false, displayName = null) {
     this.scene = scene;
     this.unit = unit;
     this.color = color;
     this.isLocalPlayer = isLocalPlayer;
+    this.displayName = displayName || `Player ${unit.ownerId + 1}`;
     this.mesh = null;
     this.lastPosition = null;
     this.targetRotation = 0;
     this.respawnOverlay = null;
     this.nametagSprite = null;
     this.healthBar = null;
-    this.maxHealth = 5; // PlayerUnitHealth from server
+    this.maxHealth = 10; // PlayerUnitHealth from server
     this.create();
   }
 
@@ -171,8 +172,7 @@ export class Player {
 
   // Create a floating nametag sprite
   createNametag() {
-    const playerNumber = this.unit.ownerId + 1;
-    const name = `Player ${playerNumber}`;
+    const name = this.displayName;
 
     // Create canvas for the nametag
     const canvas = document.createElement('canvas');

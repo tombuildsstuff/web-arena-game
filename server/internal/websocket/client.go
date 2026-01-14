@@ -25,19 +25,23 @@ const (
 
 // Client represents a WebSocket client connection
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
-	ID   string
+	hub         *Hub
+	conn        *websocket.Conn
+	send        chan []byte
+	ID          string
+	DisplayName string // GitHub username or "Guest_XXXX"
+	IsGuest     bool
 }
 
 // NewClient creates a new client
-func NewClient(hub *Hub, conn *websocket.Conn, id string) *Client {
+func NewClient(hub *Hub, conn *websocket.Conn, id string, displayName string, isGuest bool) *Client {
 	return &Client{
-		hub:  hub,
-		conn: conn,
-		send: make(chan []byte, 256),
-		ID:   id,
+		hub:         hub,
+		conn:        conn,
+		send:        make(chan []byte, 256),
+		ID:          id,
+		DisplayName: displayName,
+		IsGuest:     isGuest,
 	}
 }
 

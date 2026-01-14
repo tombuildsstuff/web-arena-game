@@ -11,6 +11,8 @@ type Player struct {
 	BasePosition  types.Vector3
 	Color         string
 	ClientID      string // WebSocket client ID
+	DisplayName   string // GitHub username or "Guest_XXXX"
+	IsGuest       bool   // Whether this is a guest player
 	Kills         int    // Total number of enemy units destroyed
 	TankKills     int    // Tanks destroyed
 	AirplaneKills int    // Airplanes destroyed
@@ -19,7 +21,7 @@ type Player struct {
 }
 
 // NewPlayer creates a new player
-func NewPlayer(id int, clientID string) *Player {
+func NewPlayer(id int, clientID string, displayName string, isGuest bool) *Player {
 	basePos := types.Base1Position
 	if id == 1 {
 		basePos = types.Base2Position
@@ -31,6 +33,8 @@ func NewPlayer(id int, clientID string) *Player {
 		BasePosition: basePos,
 		Color:        types.PlayerColors[id],
 		ClientID:     clientID,
+		DisplayName:  displayName,
+		IsGuest:      isGuest,
 	}
 }
 
@@ -41,6 +45,8 @@ func (p *Player) ToType() types.Player {
 		Money:        p.Money,
 		BasePosition: p.BasePosition,
 		Color:        p.Color,
+		DisplayName:  p.DisplayName,
+		IsGuest:      p.IsGuest,
 		Kills:        p.Kills,
 	}
 }

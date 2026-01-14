@@ -10,6 +10,7 @@ import { GameOverScreen } from '../ui/GameOverScreen.js';
 import { PlayerInput } from '../input/PlayerInput.js';
 import { BuyZonePopup } from '../ui/BuyZonePopup.js';
 import { Leaderboard } from '../ui/Leaderboard.js';
+import { AuthService } from '../auth/AuthService.js';
 
 export class Game {
   constructor() {
@@ -25,11 +26,18 @@ export class Game {
     this.playerInput = null;
     this.buyZonePopup = null;
     this.leaderboard = null;
+    this.authService = null;
   }
 
   init() {
     // Get container
     const container = document.getElementById('game-container');
+
+    // Initialize auth service
+    this.authService = new AuthService();
+    this.setupAuthUI();
+    this.authService.handleAuthCallback();
+    this.authService.checkAuth();
 
     // Initialize renderer
     this.renderer = new Renderer(container);
@@ -223,5 +231,106 @@ export class Game {
 
     // Refresh leaderboard
     this.leaderboard.fetch();
+  }
+
+  setupAuthUI() {
+    const githubLoginButton = document.getElementById('github-login-button');
+    const blueskyLoginButton = document.getElementById('bluesky-login-button');
+    const logoutButton = document.getElementById('logout-button');
+    const loggedOutSection = document.getElementById('auth-logged-out');
+    const loggedInSection = document.getElementById('auth-logged-in');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+
+    // BlueSky modal elements
+    const blueskyModal = document.getElementById('bluesky-modal');
+    const blueskyForm = document.getElementById('bluesky-login-form');
+    const blueskyHandle = document.getElementById('bluesky-handle');
+    const blueskyAppPassword = document.getElementById('bluesky-app-password');
+    const blueskyError = document.getElementById('bluesky-error');
+    const blueskyCancel = document.getElementById('bluesky-cancel');
+    const blueskySubmit = document.getElementById('bluesky-submit');
+    const blueskyBackdrop = blueskyModal.querySelector('.modal-backdrop');
+
+    // GitHub login button click
+    githubLoginButton.addEventListener('click', () => {
+      this.authService.loginWithGitHub();
+    });
+
+    // BlueSky login button click - show modal
+    blueskyLoginButton.addEventListener('click', () => {
+      blueskyModal.classList.remove('hidden');
+      blueskyHandle.focus();
+    });
+
+    // Close modal on cancel or backdrop click
+    const closeBlueskyModal = () => {
+      blueskyModal.classList.add('hidden');
+      blueskyForm.reset();
+      blueskyError.classList.add('hidden');
+    };
+
+    blueskyCancel.addEventListener('click', closeBlueskyModal);
+    blueskyBackdrop.addEventListener('click', closeBlueskyModal);
+
+    // Handle BlueSky form submit
+    blueskyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const handle = blueskyHandle.value.trim();
+      const appPassword = blueskyAppPassword.value.trim();
+
+      if (!handle || !appPassword) {
+        blueskyError.textContent = 'Please enter both handle and app password';
+        blueskyError.classList.remove('hidden');
+        return;
+      }
+
+      // Disable submit button while logging in
+      blueskySubmit.disabled = true;
+      blueskySubmit.textContent = 'Logging in...';
+      blueskyError.classList.add('hidden');
+
+      const result = await this.authService.loginWithBlueSky(handle, appPassword);
+
+      if (result.success) {
+        closeBlueskyModal();
+        // Reconnect WebSocket to pick up new auth identity
+        if (this.ws) {
+          this.ws.reconnect();
+        }
+      } else {
+        blueskyError.textContent = result.error;
+        blueskyError.classList.remove('hidden');
+      }
+
+      blueskySubmit.disabled = false;
+      blueskySubmit.textContent = 'Login';
+    });
+
+    // Logout button click
+    logoutButton.addEventListener('click', async () => {
+      await this.authService.logout();
+    });
+
+    // Listen for auth state changes
+    this.authService.onAuthChange((user) => {
+      if (user && !user.isGuest) {
+        // User is logged in
+        loggedOutSection.classList.add('hidden');
+        loggedInSection.classList.remove('hidden');
+        userName.textContent = user.displayName;
+        if (user.avatarUrl) {
+          userAvatar.src = user.avatarUrl;
+        } else {
+          // Default avatar for users without one
+          userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=random`;
+        }
+      } else {
+        // User is logged out or guest
+        loggedOutSection.classList.remove('hidden');
+        loggedInSection.classList.add('hidden');
+      }
+    });
   }
 }

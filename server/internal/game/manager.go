@@ -25,8 +25,10 @@ type Manager struct {
 
 // PlayerQueueEntry represents a player in the matchmaking queue
 type PlayerQueueEntry struct {
-	ClientID   string
-	Connection ClientConnection
+	ClientID    string
+	Connection  ClientConnection
+	DisplayName string
+	IsGuest     bool
 }
 
 // NewManager creates a new game manager
@@ -45,7 +47,7 @@ func (m *Manager) GetLeaderboard() *Leaderboard {
 }
 
 // AddToQueue adds a player to the matchmaking queue
-func (m *Manager) AddToQueue(clientID string, conn ClientConnection) {
+func (m *Manager) AddToQueue(clientID string, conn ClientConnection, displayName string, isGuest bool) {
 	m.queueMutex.Lock()
 	defer m.queueMutex.Unlock()
 
@@ -57,11 +59,13 @@ func (m *Manager) AddToQueue(clientID string, conn ClientConnection) {
 
 	// Add to queue
 	m.queue[clientID] = &PlayerQueueEntry{
-		ClientID:   clientID,
-		Connection: conn,
+		ClientID:    clientID,
+		Connection:  conn,
+		DisplayName: displayName,
+		IsGuest:     isGuest,
 	}
 
-	log.Printf("Client %s added to queue (queue size: %d)", clientID, len(m.queue))
+	log.Printf("Client %s (%s) added to queue (queue size: %d)", clientID, displayName, len(m.queue))
 
 	// Try to match players
 	m.tryMatchPlayers()
@@ -103,9 +107,12 @@ func (m *Manager) tryMatchPlayers() {
 	delete(m.queue, player1.ClientID)
 	delete(m.queue, player2.ClientID)
 
-	// Create game room
+	// Create game room with display names
 	gameID := uuid.New().String()
-	room := NewGameRoom(gameID, player1.ClientID, player2.ClientID)
+	room := NewGameRoom(gameID,
+		player1.ClientID, player1.DisplayName, player1.IsGuest,
+		player2.ClientID, player2.DisplayName, player2.IsGuest,
+	)
 
 	// Set client connections
 	room.SetClientConnection(0, player1.Connection)
@@ -124,7 +131,7 @@ func (m *Manager) tryMatchPlayers() {
 	m.clientToRoom[player2.ClientID] = gameID
 	m.roomsMutex.Unlock()
 
-	log.Printf("Created game room %s with players %s (P1) and %s (P2)", gameID, player1.ClientID, player2.ClientID)
+	log.Printf("Created game room %s with players %s/%s (P1) and %s/%s (P2)", gameID, player1.ClientID, player1.DisplayName, player2.ClientID, player2.DisplayName)
 
 	// Start the game
 	room.Start()

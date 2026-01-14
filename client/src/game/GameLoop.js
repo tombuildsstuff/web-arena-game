@@ -315,7 +315,10 @@ export class GameLoop {
       unitObj = new Airplane(this.scene.getScene(), unit, color);
     } else if (unit.type === 'player') {
       const isLocalPlayer = unit.ownerId === this.gameState.playerId;
-      unitObj = new Player(this.scene.getScene(), unit, color, isLocalPlayer);
+      // Get display name from player data
+      const playerData = this.gameState.players[unit.ownerId];
+      const displayName = playerData ? playerData.displayName : null;
+      unitObj = new Player(this.scene.getScene(), unit, color, isLocalPlayer, displayName);
 
       // Set camera to follow local player
       if (isLocalPlayer && unitObj.mesh) {

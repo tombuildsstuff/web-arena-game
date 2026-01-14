@@ -105,6 +105,35 @@
       <div class="queue-content">
         <h1>Arena Game</h1>
         <p>Real-time 3D multiplayer strategy</p>
+
+        <!-- Auth Section -->
+        <div id="auth-section">
+          <div id="auth-logged-out">
+            <div class="auth-buttons">
+              <button id="github-login-button" class="auth-button github">
+                <svg class="auth-icon" viewBox="0 0 16 16" width="20" height="20">
+                  <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                </svg>
+                GitHub
+              </button>
+              <button id="bluesky-login-button" class="auth-button bluesky">
+                <svg class="auth-icon" viewBox="0 0 600 530" width="20" height="20">
+                  <path fill="currentColor" d="m135.72 44.03c66.496 49.921 138.02 151.14 164.28 205.46 26.262-54.316 97.782-155.54 164.28-205.46 47.98-36.021 125.72-63.892 125.72 24.795 0 17.712-10.155 148.79-16.111 170.07-20.703 73.984-96.144 92.854-163.25 81.433 117.3 19.964 147.14 86.092 82.697 152.22-122.39 125.59-175.91-31.511-189.63-71.766-2.514-7.3797-3.6904-10.832-3.7077-7.8964-0.0174-2.9357-1.1937 0.51669-3.7077 7.8964-13.714 40.255-67.233 197.36-189.63 71.766-64.444-66.128-34.605-132.26 82.697-152.22-67.108 11.421-142.55-7.4491-163.25-81.433-5.9562-21.282-16.111-152.36-16.111-170.07 0-88.687 77.742-60.816 125.72-24.795z"/>
+                </svg>
+                BlueSky
+              </button>
+            </div>
+            <p class="auth-hint">Or play as guest</p>
+          </div>
+          <div id="auth-logged-in" class="hidden">
+            <div class="user-info">
+              <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
+              <span id="user-name" class="user-name"></span>
+            </div>
+            <button id="logout-button" class="logout-button">Logout</button>
+          </div>
+        </div>
+
         <button id="join-queue-button" disabled>Join Queue</button>
         <p id="queue-status" class="hidden">Waiting for opponent...</p>
 
@@ -129,6 +158,31 @@
           <p id="leaderboard-empty" class="hidden">No games played yet!</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- BlueSky Login Modal -->
+  <div id="bluesky-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <h2>Login with BlueSky</h2>
+      <p class="modal-description">Enter your BlueSky handle and an app password to login.</p>
+      <form id="bluesky-login-form">
+        <div class="form-group">
+          <label for="bluesky-handle">Handle</label>
+          <input type="text" id="bluesky-handle" placeholder="@username.bsky.social" required>
+        </div>
+        <div class="form-group">
+          <label for="bluesky-app-password">App Password</label>
+          <input type="password" id="bluesky-app-password" placeholder="xxxx-xxxx-xxxx-xxxx" required>
+          <p class="form-hint">Create an app password in BlueSky Settings &gt; Privacy and Security &gt; App Passwords</p>
+        </div>
+        <div id="bluesky-error" class="form-error hidden"></div>
+        <div class="modal-buttons">
+          <button type="button" id="bluesky-cancel" class="modal-button cancel">Cancel</button>
+          <button type="submit" id="bluesky-submit" class="modal-button submit">Login</button>
+        </div>
+      </form>
     </div>
   </div>
 

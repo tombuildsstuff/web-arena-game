@@ -659,16 +659,14 @@ func (s *MovementSystem) updateDirectMovement(unit Unit, deltaTime float64) {
 
 	// Check if we've reached the target (within a small threshold)
 	distanceToTarget := calculateDistance(newPos, target)
-	if distanceToTarget < 1.0 {
-		// Snap to target if very close
-		newPos = target
-	}
+	reachedTarget := distanceToTarget < 5.0
 
 	// Update position
 	unit.SetPosition(newPos)
 
-	// If we hit the boundary, switch to perimeter patrol mode
-	if hitBoundary {
+	// If we hit the boundary OR reached target, switch to perimeter patrol mode
+	// Airplanes should never stop - they always patrol when they reach their destination
+	if hitBoundary || reachedTarget {
 		// Find the nearest corner to start patrolling towards
 		nearestCorner := s.findNearestPatrolCorner(newPos)
 		unit.SetPatrolling(true)

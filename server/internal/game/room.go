@@ -43,8 +43,8 @@ type ClientConnection interface {
 }
 
 // NewGameRoom creates a new game room
-func NewGameRoom(id string, player1ClientID, player2ClientID string) *GameRoom {
-	state := NewState(player1ClientID, player2ClientID)
+func NewGameRoom(id string, player1ClientID, player1DisplayName string, player1IsGuest bool, player2ClientID, player2DisplayName string, player2IsGuest bool) *GameRoom {
+	state := NewState(player1ClientID, player1DisplayName, player1IsGuest, player2ClientID, player2DisplayName, player2IsGuest)
 
 	// Initialize spatial systems
 	spatialGrid := NewSpatialGrid(state.Obstacles)
@@ -104,24 +104,29 @@ func (r *GameRoom) Start() {
 	go r.gameLoop()
 }
 
-// Stop stops the game room
+// Stop stops the game room (called externally)
 func (r *GameRoom) Stop() {
 	r.mu.Lock()
-	wasRunning := r.IsRunning
-	var callback GameEndCallback
-
-	if r.IsRunning {
-		r.IsRunning = false
-		close(r.stopChan)
-		callback = r.onGameEnd
-		log.Printf("Game room %s stopped", r.ID)
-	}
+	callback := r.stopInternal()
 	r.mu.Unlock()
 
 	// Call the callback outside of the lock to avoid deadlock
-	if wasRunning && callback != nil {
+	if callback != nil {
 		callback(r.ID)
 	}
+}
+
+// stopInternal stops the game room - must be called with r.mu held
+// Returns the callback to call (if any) after releasing the lock
+func (r *GameRoom) stopInternal() GameEndCallback {
+	if !r.IsRunning {
+		return nil
+	}
+
+	r.IsRunning = false
+	close(r.stopChan)
+	log.Printf("Game room %s stopped", r.ID)
+	return r.onGameEnd
 }
 
 // gameLoop is the main game loop running at 20 TPS
@@ -141,8 +146,17 @@ func (r *GameRoom) gameLoop() {
 
 // update updates the game state for one tick
 func (r *GameRoom) update() {
+	// Use a variable to store any callback that needs to be called after releasing the lock
+	var endCallback GameEndCallback
+
 	r.mu.Lock()
-	defer r.mu.Unlock()
+	defer func() {
+		r.mu.Unlock()
+		// Call the game end callback outside the lock to avoid deadlock with manager
+		if endCallback != nil {
+			endCallback(r.ID)
+		}
+	}()
 
 	if r.State.GameStatus != "playing" {
 		return
@@ -179,7 +193,8 @@ func (r *GameRoom) update() {
 		r.State.GameStatus = "finished"
 		r.State.Winner = &winnerID
 		r.broadcastGameOver(winnerID, reason)
-		r.Stop()
+		// Use stopInternal since we already hold the lock, and capture the callback
+		endCallback = r.stopInternal()
 		return
 	}
 
@@ -587,12 +602,13 @@ func (r *GameRoom) broadcastGameOver(winner int, reason string) {
 		r.ID, winner, reason, matchDuration,
 		p1Stats.TotalPoints, p2Stats.TotalPoints)
 
-	// Record to leaderboard (using player names - for now "Player 1" and "Player 2")
-	// Later this will use SSO names
+	// Record to leaderboard using display names (GitHub username or Guest_XXXX)
 	if r.onGameResult != nil {
 		// Call callback outside lock - use goroutine to avoid blocking
 		callback := r.onGameResult
-		go callback("Player 1", "Player 2", winner, matchDuration, p1Stats, p2Stats)
+		p1Name := r.State.Players[0].DisplayName
+		p2Name := r.State.Players[1].DisplayName
+		go callback(p1Name, p2Name, winner, matchDuration, p1Stats, p2Stats)
 	}
 }
 

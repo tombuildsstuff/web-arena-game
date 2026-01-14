@@ -67,6 +67,19 @@ export class WebSocketClient {
     }
   }
 
+  // Reconnect to pick up new auth state (e.g., after login)
+  reconnect() {
+    this.isIntentionallyClosed = true;
+    if (this.ws) {
+      this.ws.close();
+    }
+    // Small delay to ensure close completes
+    setTimeout(() => {
+      this.reconnectAttempts = 0;
+      this.connect();
+    }, 100);
+  }
+
   isConnected() {
     return this.ws && this.ws.readyState === WebSocket.OPEN;
   }

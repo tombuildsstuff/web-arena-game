@@ -15,7 +15,9 @@ export class HUD {
     const myPlayerUnit = this.gameState.getMyPlayerUnit();
 
     if (myPlayer) {
-      this.playerIdElement.textContent = `Player ${this.gameState.playerId + 1}`;
+      // Use displayName if available, fallback to "Player X"
+      const displayName = myPlayer.displayName || `Player ${this.gameState.playerId + 1}`;
+      this.playerIdElement.textContent = displayName;
       this.playerMoneyElement.textContent = `Money: $${myPlayer.money}`;
     } else {
       this.playerIdElement.textContent = 'Player: -';
@@ -24,7 +26,7 @@ export class HUD {
 
     // Update player unit health and respawn status
     if (myPlayerUnit) {
-      this.playerHealthElement.textContent = `Health: ${myPlayerUnit.health}/5`;
+      this.playerHealthElement.textContent = `Health: ${myPlayerUnit.health}/10`;
 
       if (myPlayerUnit.isRespawning && myPlayerUnit.respawnTime > 0) {
         this.respawnTimerElement.textContent = `Respawning: ${Math.ceil(myPlayerUnit.respawnTime)}s`;

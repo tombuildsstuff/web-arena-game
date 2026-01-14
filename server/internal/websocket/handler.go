@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/tombuildsstuff/web-arena-game/server/internal/auth"
 )
 
 var upgrader = websocket.Upgrader{
@@ -19,7 +20,7 @@ var upgrader = websocket.Upgrader{
 }
 
 // HandleWebSocket upgrades HTTP connections to WebSocket
-func HandleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func HandleWebSocket(hub *Hub, authHandler *auth.Handler, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("error upgrading connection: %v", err)
@@ -29,8 +30,17 @@ func HandleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// Generate a unique ID for this client
 	clientID := uuid.New().String()
 
-	client := NewClient(hub, conn, clientID)
+	// Get user info from auth token (if present)
+	userInfo := authHandler.GetUserFromRequest(r)
+	if userInfo == nil {
+		// No auth token - create guest user
+		userInfo = auth.GenerateGuestUser()
+	}
+
+	client := NewClient(hub, conn, clientID, userInfo.DisplayName, userInfo.IsGuest)
 	hub.Register <- client
+
+	log.Printf("Client connected: %s (%s, guest=%v)", clientID, userInfo.DisplayName, userInfo.IsGuest)
 
 	// Start client goroutines
 	go client.WritePump()
