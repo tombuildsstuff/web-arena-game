@@ -64,6 +64,7 @@ export class Game {
       (direction) => this.sendPlayerMove(direction),
       (targetX, targetZ) => this.sendPlayerShoot(targetX, targetZ),
       (zoneId) => this.sendBuyFromZone(zoneId),
+      (turretId) => this.sendClaimTurret(turretId),
       this.gameLoop
     );
 
@@ -179,6 +180,12 @@ export class Game {
   sendBuyFromZone(zoneId) {
     if (this.ws.isConnected() && this.gameState.gameStatus === 'playing') {
       this.ws.send('buy_from_zone', { zoneId });
+    }
+  }
+
+  sendClaimTurret(turretId) {
+    if (this.ws.isConnected() && this.gameState.gameStatus === 'playing') {
+      this.ws.send('claim_turret', { turretId });
     }
   }
 

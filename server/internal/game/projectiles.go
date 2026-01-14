@@ -79,6 +79,11 @@ func (p *Projectile) ToType() types.Projectile {
 	}
 }
 
+// generateProjectileID generates a unique ID for a projectile
+func generateProjectileID() string {
+	return uuid.New().String()
+}
+
 // ProjectileSystem handles projectile movement and hit detection
 type ProjectileSystem struct{}
 
@@ -106,24 +111,46 @@ func (ps *ProjectileSystem) Update(state *State, deltaTime float64) {
 		// Check if reached target (within 2 units)
 		distToTarget := calculateDistance(proj.Position, proj.EndPos)
 		if distToTarget < 2.0 {
-			// Apply damage to target
+			hit := false
+
+			// Try to apply damage to unit target
 			target := state.GetUnitByID(proj.TargetID)
 			if target != nil && target.IsAlive() {
 				wasAlive := target.IsAlive()
 				target.TakeDamage(proj.Damage)
+				hit = true
 
 				// If target died from this hit, credit the kill
 				if wasAlive && !target.IsAlive() {
-					// Find the shooter unit to get owner ID
+					// Find the shooter (could be unit or turret)
 					shooter := state.GetUnitByID(proj.ShooterID)
 					if shooter != nil {
 						shooterOwner := state.GetPlayer(shooter.GetOwnerID())
 						if shooterOwner != nil {
 							shooterOwner.AddKill()
 						}
+					} else {
+						// Check if shooter is a turret
+						turret := state.GetTurretByID(proj.ShooterID)
+						if turret != nil {
+							shooterOwner := state.GetPlayer(turret.OwnerID)
+							if shooterOwner != nil {
+								shooterOwner.AddKill()
+							}
+						}
 					}
 				}
 			}
+
+			// Try to apply damage to turret target
+			if !hit {
+				turret := state.GetTurretByID(proj.TargetID)
+				if turret != nil && turret.IsAlive() {
+					turret.TakeDamage(proj.Damage)
+					hit = true
+				}
+			}
+
 			toRemove = append(toRemove, proj.ID)
 		}
 

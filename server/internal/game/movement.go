@@ -119,6 +119,7 @@ func (s *MovementSystem) isPositionWalkable(pos types.Vector3) bool {
 // updateTankMovement handles waypoint-based movement for tanks
 func (s *MovementSystem) updateTankMovement(unit Unit, deltaTime float64) {
 	waypoints := unit.GetWaypoints()
+	boundary := float64(types.ArenaBoundary)
 
 	// Calculate path if no waypoints
 	if len(waypoints) == 0 {
@@ -161,6 +162,10 @@ func (s *MovementSystem) updateTankMovement(unit Unit, deltaTime float64) {
 		Z: pos.Z + direction.Z*distance,
 	}
 
+	// Clamp to arena boundary
+	newPos.X = clamp(newPos.X, -boundary, boundary)
+	newPos.Z = clamp(newPos.Z, -boundary, boundary)
+
 	// Check if we've reached the current waypoint
 	distanceToWaypoint := calculateDistance2D(newPos, currentWaypoint)
 	if distanceToWaypoint < 2.0 {
@@ -177,9 +182,25 @@ func (s *MovementSystem) updateTankMovement(unit Unit, deltaTime float64) {
 	unit.SetPosition(newPos)
 }
 
+// Arena boundary for perimeter patrol
+var patrolCorners = []types.Vector3{
+	{X: -types.ArenaBoundary, Y: types.AirplaneYPosition, Z: -types.ArenaBoundary}, // NW
+	{X: types.ArenaBoundary, Y: types.AirplaneYPosition, Z: -types.ArenaBoundary},  // NE
+	{X: types.ArenaBoundary, Y: types.AirplaneYPosition, Z: types.ArenaBoundary},   // SE
+	{X: -types.ArenaBoundary, Y: types.AirplaneYPosition, Z: types.ArenaBoundary},  // SW
+}
+
 // updateDirectMovement handles direct line movement (for airplanes)
 func (s *MovementSystem) updateDirectMovement(unit Unit, deltaTime float64) {
 	pos := unit.GetPosition()
+	boundary := float64(types.ArenaBoundary)
+
+	// Check if unit is patrolling
+	if unit.IsPatrolling() {
+		s.updatePatrolMovement(unit, deltaTime, boundary)
+		return
+	}
+
 	target := unit.GetTargetPosition()
 
 	// Calculate direction to target
@@ -195,6 +216,16 @@ func (s *MovementSystem) updateDirectMovement(unit Unit, deltaTime float64) {
 		Z: pos.Z + direction.Z*distance,
 	}
 
+	// Check if we hit or would exceed the arena boundary
+	hitBoundary := false
+	if newPos.X <= -boundary || newPos.X >= boundary ||
+		newPos.Z <= -boundary || newPos.Z >= boundary {
+		hitBoundary = true
+		// Clamp position to boundary
+		newPos.X = clamp(newPos.X, -boundary, boundary)
+		newPos.Z = clamp(newPos.Z, -boundary, boundary)
+	}
+
 	// Check if we've reached the target (within a small threshold)
 	distanceToTarget := calculateDistance(newPos, target)
 	if distanceToTarget < 1.0 {
@@ -203,6 +234,48 @@ func (s *MovementSystem) updateDirectMovement(unit Unit, deltaTime float64) {
 	}
 
 	// Update position
+	unit.SetPosition(newPos)
+
+	// If we hit the boundary, switch to perimeter patrol mode
+	if hitBoundary {
+		// Find the nearest corner to start patrolling towards
+		nearestCorner := s.findNearestPatrolCorner(newPos)
+		unit.SetPatrolling(true)
+		unit.SetPatrolCorner(nearestCorner)
+	}
+}
+
+// updatePatrolMovement handles perimeter sweep movement
+func (s *MovementSystem) updatePatrolMovement(unit Unit, deltaTime float64, boundary float64) {
+	pos := unit.GetPosition()
+	cornerIdx := unit.GetPatrolCorner()
+	target := patrolCorners[cornerIdx]
+
+	// Calculate direction to current patrol corner
+	direction := normalize(subtract(target, pos))
+
+	// Calculate movement distance
+	distance := unit.GetSpeed() * deltaTime
+
+	// Calculate new position
+	newPos := types.Vector3{
+		X: pos.X + direction.X*distance,
+		Y: pos.Y, // Keep Y constant for patrol
+		Z: pos.Z + direction.Z*distance,
+	}
+
+	// Clamp to boundary (stay on perimeter)
+	newPos.X = clamp(newPos.X, -boundary, boundary)
+	newPos.Z = clamp(newPos.Z, -boundary, boundary)
+
+	// Check if we've reached the current corner
+	distanceToCorner := calculateDistance2D(newPos, target)
+	if distanceToCorner < 3.0 {
+		// Move to next corner (clockwise)
+		nextCorner := (cornerIdx + 1) % 4
+		unit.SetPatrolCorner(nextCorner)
+	}
+
 	unit.SetPosition(newPos)
 }
 
@@ -239,4 +312,21 @@ func calculateDistance2D(a, b types.Vector3) float64 {
 	dx := b.X - a.X
 	dz := b.Z - a.Z
 	return math.Sqrt(dx*dx + dz*dz)
+}
+
+// findNearestPatrolCorner finds the index of the nearest patrol corner to start sweeping
+func (s *MovementSystem) findNearestPatrolCorner(pos types.Vector3) int {
+	nearestIdx := 0
+	nearestDist := math.MaxFloat64
+
+	for i, corner := range patrolCorners {
+		dist := calculateDistance2D(pos, corner)
+		if dist < nearestDist {
+			nearestDist = dist
+			nearestIdx = i
+		}
+	}
+
+	// Return the NEXT corner (so we start moving, not staying in place)
+	return (nearestIdx + 1) % 4
 }

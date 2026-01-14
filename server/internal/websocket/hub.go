@@ -97,6 +97,9 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 	case "buy_from_zone":
 		h.handleBuyFromZone(client, msg.Payload)
 
+	case "claim_turret":
+		h.handleClaimTurret(client, msg.Payload)
+
 	case "leave_game":
 		h.handleLeaveGame(client)
 
@@ -238,6 +241,35 @@ func (h *Hub) handleBuyFromZone(client *Client, payload interface{}) {
 
 	// Forward to game room
 	room.HandleBuyFromZone(playerID, buy.ZoneID, client)
+}
+
+// handleClaimTurret processes a turret claiming request
+func (h *Hub) handleClaimTurret(client *Client, payload interface{}) {
+	// Parse payload
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	var claim types.ClaimTurretPayload
+	if err := json.Unmarshal(data, &claim); err != nil {
+		return
+	}
+
+	// Get the game room for this client
+	room := h.gameManager.GetRoomByClient(client.ID)
+	if room == nil {
+		return
+	}
+
+	// Get player ID
+	playerID := h.gameManager.GetPlayerIDInRoom(client.ID)
+	if playerID < 0 {
+		return
+	}
+
+	// Forward to game room
+	room.HandleClaimTurret(playerID, claim.TurretID, client)
 }
 
 // handleLeaveGame removes a client from their current game

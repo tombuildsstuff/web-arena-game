@@ -15,6 +15,7 @@ type GameState struct {
 	Obstacles   []Obstacle   `json:"obstacles"`
 	Projectiles []Projectile `json:"projectiles"`
 	BuyZones    []BuyZone    `json:"buyZones"`
+	Turrets     []Turret     `json:"turrets"`
 	GameStatus  string       `json:"gameStatus"` // "waiting", "playing", "finished"
 	Winner      *int         `json:"winner"`
 }
@@ -72,4 +73,17 @@ type Unit struct {
 	TargetPosition Vector3 `json:"targetPosition"`
 	IsRespawning   bool    `json:"isRespawning,omitempty"`
 	RespawnTime    float64 `json:"respawnTime,omitempty"` // Seconds remaining until respawn
+}
+
+// Turret represents a claimable turret that auto-attacks enemies
+type Turret struct {
+	ID              string  `json:"id"`
+	Position        Vector3 `json:"position"`
+	OwnerID         int     `json:"ownerId"`         // -1 = unclaimed, 0 = player 1, 1 = player 2
+	DefaultOwnerID  int     `json:"defaultOwnerId"`  // Owner when respawning (-1 for middle turrets)
+	Health          int     `json:"health"`
+	MaxHealth       int     `json:"maxHealth"`
+	IsDestroyed     bool    `json:"isDestroyed"`
+	RespawnTime     float64 `json:"respawnTime"`     // Seconds remaining until respawn
+	ClaimRadius     float64 `json:"claimRadius"`     // Radius for claiming
 }

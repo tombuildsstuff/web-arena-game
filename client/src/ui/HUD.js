@@ -47,8 +47,10 @@ export class HUD {
     if (!this.gameLoop || !this.buyZonePromptElement) return;
 
     const nearbyZone = this.gameLoop.getNearbyBuyZone();
+    const nearbyTurret = this.gameLoop.getNearbyTurret();
     const myPlayer = this.gameState.getMyPlayer();
 
+    // Priority: buy zones first
     if (nearbyZone && myPlayer) {
       const unitName = nearbyZone.unitType === 'tank' ? 'Tank' : 'Airplane';
       const cost = nearbyZone.cost;
@@ -62,6 +64,13 @@ export class HUD {
       this.buyZonePromptElement.style.borderColor = canAfford
         ? 'rgba(251, 191, 36, 0.6)'
         : 'rgba(239, 68, 68, 0.6)';
+    } else if (nearbyTurret) {
+      // Show turret claiming prompt
+      const ownerText = nearbyTurret.ownerId === -1 ? 'Unclaimed' : 'Enemy';
+      this.buyZoneTextElement.innerHTML = `Press <span class="key">E</span> to claim ${ownerText} Turret`;
+
+      this.buyZonePromptElement.classList.remove('hidden');
+      this.buyZonePromptElement.style.borderColor = 'rgba(139, 92, 246, 0.6)'; // Purple for turrets
     } else {
       this.buyZonePromptElement.classList.add('hidden');
     }

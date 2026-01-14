@@ -5,6 +5,7 @@ import { Obstacle } from './Obstacle.js';
 import { Projectile } from './Projectile.js';
 import { Explosion } from './Explosion.js';
 import { BuyZone } from './BuyZone.js';
+import { Turret } from './Turret.js';
 import { PLAYER_COLORS } from '../utils/constants.js';
 
 export class GameLoop {
@@ -20,11 +21,14 @@ export class GameLoop {
     this.obstacleMeshes = new Map(); // Map of obstacle ID to Obstacle object
     this.projectileMeshes = new Map(); // Map of projectile ID to Projectile object
     this.buyZoneMeshes = new Map(); // Map of buy zone ID to BuyZone object
+    this.turretMeshes = new Map(); // Map of turret ID to Turret object
     this.explosions = []; // Active explosions
     this.obstaclesInitialized = false;
     this.buyZonesInitialized = false;
+    this.turretsInitialized = false;
     this.previousUnitIDs = new Set(); // Track unit IDs for death detection
     this.nearbyBuyZone = null; // The buy zone the player is currently near
+    this.nearbyTurret = null; // The turret the player is currently near
     this.buyZonePopup = null; // Reference to the popup for position updates
   }
 
@@ -68,6 +72,9 @@ export class GameLoop {
     // Sync buy zones (once at game start)
     this.syncBuyZones();
 
+    // Sync turrets (once at game start, then update)
+    this.syncTurrets();
+
     // Sync units from game state (with death detection)
     this.syncUnits();
 
@@ -79,6 +86,9 @@ export class GameLoop {
 
     // Update buy zone animations and check proximity
     this.updateBuyZones();
+
+    // Update turret animations and check proximity
+    this.updateTurrets();
 
     // Update unit positions with interpolation
     this.updateUnitPositions(deltaTime);
@@ -154,6 +164,55 @@ export class GameLoop {
     return this.nearbyBuyZone;
   }
 
+  syncTurrets() {
+    const stateTurrets = this.gameState.turrets || [];
+    if (stateTurrets.length === 0) return;
+
+    // Initialize turrets once
+    if (!this.turretsInitialized) {
+      for (const turret of stateTurrets) {
+        if (!this.turretMeshes.has(turret.id)) {
+          const turretObj = new Turret(this.scene.getScene(), turret);
+          this.turretMeshes.set(turret.id, turretObj);
+        }
+      }
+      this.turretsInitialized = true;
+    }
+  }
+
+  updateTurrets() {
+    const stateTurrets = this.gameState.turrets || [];
+
+    // Update turret states
+    for (const turretData of stateTurrets) {
+      const turretObj = this.turretMeshes.get(turretData.id);
+      if (turretObj) {
+        turretObj.update(turretData, this.elapsedTime);
+      }
+    }
+
+    // Check if player is near any turret
+    this.nearbyTurret = null;
+    const playerUnit = this.gameState.getMyPlayerUnit();
+    if (!playerUnit || playerUnit.isRespawning) return;
+
+    const playerPos = playerUnit.position;
+    for (const turretData of stateTurrets) {
+      const turretObj = this.turretMeshes.get(turretData.id);
+      if (turretObj && turretObj.isInRange(playerPos)) {
+        // Check if can be claimed
+        if (turretObj.canBeClaimed(this.gameState.playerId)) {
+          this.nearbyTurret = turretData;
+          break;
+        }
+      }
+    }
+  }
+
+  getNearbyTurret() {
+    return this.nearbyTurret;
+  }
+
   syncUnits() {
     const stateUnits = this.gameState.units || [];
     const currentUnitIDs = new Set(stateUnits.map(u => u.id));
@@ -203,9 +262,18 @@ export class GameLoop {
     // Add new projectiles and update existing
     for (const proj of stateProjectiles) {
       if (!this.projectileMeshes.has(proj.id)) {
-        // Find shooter to get color
+        // Find shooter to get color - could be unit or turret
+        let color = 0xffffff;
         const shooter = (this.gameState.units || []).find(u => u.id === proj.shooterId);
-        const color = shooter ? PLAYER_COLORS[shooter.ownerId] : 0xffffff;
+        if (shooter) {
+          color = PLAYER_COLORS[shooter.ownerId];
+        } else {
+          // Check if shooter is a turret
+          const turret = (this.gameState.turrets || []).find(t => t.id === proj.shooterId);
+          if (turret && turret.ownerId !== -1) {
+            color = PLAYER_COLORS[turret.ownerId];
+          }
+        }
         const projectile = new Projectile(this.scene.getScene(), proj, color);
         this.projectileMeshes.set(proj.id, projectile);
       } else {

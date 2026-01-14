@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 
 export class PlayerInput {
-  constructor(camera, renderer, onMove, onShoot, onBuyFromZone, gameLoop) {
+  constructor(camera, renderer, onMove, onShoot, onBuyFromZone, onClaimTurret, gameLoop) {
     this.camera = camera;
     this.renderer = renderer;
     this.onMove = onMove;
     this.onShoot = onShoot;
     this.onBuyFromZone = onBuyFromZone;
+    this.onClaimTurret = onClaimTurret;
     this.gameLoop = gameLoop;
 
     // Movement keys state
@@ -69,18 +70,25 @@ export class PlayerInput {
       this.sendMovement();
     }
 
-    // E key for buying from zones
+    // E key for buying from zones or claiming turrets
     if (key === 'e') {
-      this.handleBuyFromZone();
+      this.handleInteraction();
     }
   }
 
-  handleBuyFromZone() {
-    if (!this.gameLoop || !this.onBuyFromZone) return;
+  handleInteraction() {
+    if (!this.gameLoop) return;
 
+    // Priority: buy zones first, then turrets
     const nearbyZone = this.gameLoop.getNearbyBuyZone();
-    if (nearbyZone) {
+    if (nearbyZone && this.onBuyFromZone) {
       this.onBuyFromZone(nearbyZone.id);
+      return;
+    }
+
+    const nearbyTurret = this.gameLoop.getNearbyTurret();
+    if (nearbyTurret && this.onClaimTurret) {
+      this.onClaimTurret(nearbyTurret.id);
     }
   }
 

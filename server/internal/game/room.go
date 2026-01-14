@@ -25,6 +25,7 @@ type GameRoom struct {
 	losSystem          *LOSSystem
 	movementSystem     *MovementSystem
 	combatSystem       *CombatSystem
+	turretSystem       *TurretSystem
 	winConditionSystem *WinConditionSystem
 }
 
@@ -54,6 +55,7 @@ func NewGameRoom(id string, player1ClientID, player2ClientID string) *GameRoom {
 		losSystem:          losSystem,
 		movementSystem:     NewMovementSystem(pathfindingSystem),
 		combatSystem:       NewCombatSystem(losSystem),
+		turretSystem:       NewTurretSystem(losSystem),
 		winConditionSystem: NewWinConditionSystem(),
 	}
 }
@@ -126,6 +128,9 @@ func (r *GameRoom) update() {
 
 	// Update combat
 	r.combatSystem.Update(r.State, deltaTime)
+
+	// Update turrets (combat and respawns)
+	r.turretSystem.Update(r.State, deltaTime)
 
 	// Check player respawns
 	r.checkPlayerRespawns()
@@ -339,6 +344,60 @@ func (r *GameRoom) HandleBuyFromZone(playerID int, zoneID string, conn ClientCon
 		r.State.AddUnit(unit)
 		log.Printf("Player %d purchased %s from zone %s (remaining: $%d)", playerID, zone.UnitType, zoneID, player.Money)
 	}
+}
+
+// HandleClaimTurret handles a turret claiming request
+func (r *GameRoom) HandleClaimTurret(playerID int, turretID string, conn ClientConnection) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.State.GameStatus != "playing" {
+		return
+	}
+
+	// Find the turret
+	turret := r.State.GetTurretByID(turretID)
+	if turret == nil {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Invalid turret",
+		})
+		return
+	}
+
+	// Get the player unit
+	playerUnit := r.State.GetPlayerUnit(playerID)
+	if playerUnit == nil || !playerUnit.IsAlive() {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "You must be alive to claim a turret",
+		})
+		return
+	}
+
+	// Check if player is near the turret
+	if !turret.IsPlayerInRange(playerUnit.GetPosition()) {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Get closer to the turret",
+		})
+		return
+	}
+
+	// Check if turret can be claimed
+	if !turret.CanBeClaimed(playerID) {
+		if turret.IsDestroyed {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "Turret is destroyed",
+			})
+		} else {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "You already own this turret",
+			})
+		}
+		return
+	}
+
+	// Claim the turret
+	turret.Claim(playerID)
+	log.Printf("Player %d claimed turret %s", playerID, turretID)
 }
 
 // HandlePlayerShoot handles player shoot command

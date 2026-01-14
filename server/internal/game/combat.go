@@ -30,6 +30,11 @@ func (s *CombatSystem) Update(state *State, deltaTime float64) {
 			continue
 		}
 
+		// Players don't auto-fire - they use manual shooting
+		if attacker.GetType() == "player" {
+			continue
+		}
+
 		// Find enemies in range
 		for j := range state.Units {
 			if i == j {

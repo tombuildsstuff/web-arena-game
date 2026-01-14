@@ -61,3 +61,8 @@ type PlayerShootPayload struct {
 type BuyFromZonePayload struct {
 	ZoneID string `json:"zoneId"` // ID of the buy zone to purchase from
 }
+
+// ClaimTurretPayload represents a request to claim a turret
+type ClaimTurretPayload struct {
+	TurretID string `json:"turretId"` // ID of the turret to claim
+}

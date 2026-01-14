@@ -131,16 +131,21 @@ func GetSymmetricObstacles() []*Obstacle {
 			types.Vector3{X: 15, Y: wallHeight, Z: wallThickness}, 0),
 	)
 
-	// Vertical wall between Room1/Room6 and Room2/Room7
+	// Horizontal wall in front of Player 1 base (provides cover for spawned units)
+	// Runs east-west with openings at top and bottom for passage
 	obstacles = append(obstacles,
+		// Center section (main cover wall)
+		NewObstacle(nextID(), ObstacleWall,
+			types.Vector3{X: leftRoomX, Y: 0, Z: 0},
+			types.Vector3{X: 35, Y: wallHeight, Z: wallThickness}, 0),
 		// Top section
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: leftRoomX, Y: 0, Z: -55},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 50}, 0),
+			types.Vector3{X: leftRoomX, Y: 0, Z: -50},
+			types.Vector3{X: 35, Y: wallHeight, Z: wallThickness}, 0),
 		// Bottom section
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: leftRoomX, Y: 0, Z: 55},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 50}, 0),
+			types.Vector3{X: leftRoomX, Y: 0, Z: 50},
+			types.Vector3{X: 35, Y: wallHeight, Z: wallThickness}, 0),
 	)
 
 	// Wall between left rooms and courtyard approach
@@ -173,16 +178,21 @@ func GetSymmetricObstacles() []*Obstacle {
 			types.Vector3{X: 15, Y: wallHeight, Z: wallThickness}, 0),
 	)
 
-	// Vertical wall between Room4/Room8 and Room5/Room9
+	// Horizontal wall in front of Player 2 base (provides cover for spawned units)
+	// Runs east-west with openings at top and bottom for passage
 	obstacles = append(obstacles,
+		// Center section (main cover wall)
+		NewObstacle(nextID(), ObstacleWall,
+			types.Vector3{X: rightRoomX, Y: 0, Z: 0},
+			types.Vector3{X: 35, Y: wallHeight, Z: wallThickness}, 0),
 		// Top section
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: rightRoomX, Y: 0, Z: -55},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 50}, 0),
+			types.Vector3{X: rightRoomX, Y: 0, Z: -50},
+			types.Vector3{X: 35, Y: wallHeight, Z: wallThickness}, 0),
 		// Bottom section
 		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: rightRoomX, Y: 0, Z: 55},
-			types.Vector3{X: wallThickness, Y: wallHeight, Z: 50}, 0),
+			types.Vector3{X: rightRoomX, Y: 0, Z: 50},
+			types.Vector3{X: 35, Y: wallHeight, Z: wallThickness}, 0),
 	)
 
 	// Wall between right rooms and courtyard approach
@@ -310,15 +320,14 @@ func GetSymmetricObstacles() []*Obstacle {
 
 	// ============================================================
 	// BASE PERIMETER WALLS
-	// Each base has walls on 3 sides with a horizontal front wall (with opening)
+	// Each base has walls on 3 sides (back, north, south) with open front
 	// ============================================================
 
 	baseWallHeight := 4.0
 	baseWallThickness := 2.0
-	baseSize := 25.0     // Size of the base enclosure
-	frontOpening := 10.0 // Width of opening in front wall
+	baseSize := 25.0 // Size of the base enclosure
 
-	// Player 1 base perimeter (at X=-90, opening faces right/positive X)
+	// Player 1 base perimeter (at X=-90, open front facing the arena)
 	obstacles = append(obstacles,
 		// Back wall (west side, vertical running north-south)
 		NewObstacle(nextID(), ObstacleWall,
@@ -332,17 +341,9 @@ func GetSymmetricObstacles() []*Obstacle {
 		NewObstacle(nextID(), ObstacleWall,
 			types.Vector3{X: -90, Y: 0, Z: baseSize / 2},
 			types.Vector3{X: baseSize, Y: baseWallHeight, Z: baseWallThickness}, 0),
-		// Front wall - left section (horizontal, running north-south at front of base)
-		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -90 + baseSize/2, Y: 0, Z: -baseSize/4 - frontOpening/4},
-			types.Vector3{X: baseWallThickness, Y: baseWallHeight, Z: baseSize/2 - frontOpening/2}, 0),
-		// Front wall - right section
-		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: -90 + baseSize/2, Y: 0, Z: baseSize/4 + frontOpening/4},
-			types.Vector3{X: baseWallThickness, Y: baseWallHeight, Z: baseSize/2 - frontOpening/2}, 0),
 	)
 
-	// Player 2 base perimeter (at X=90, opening faces left/negative X)
+	// Player 2 base perimeter (at X=90, open front facing the arena)
 	obstacles = append(obstacles,
 		// Back wall (east side, vertical running north-south)
 		NewObstacle(nextID(), ObstacleWall,
@@ -356,14 +357,6 @@ func GetSymmetricObstacles() []*Obstacle {
 		NewObstacle(nextID(), ObstacleWall,
 			types.Vector3{X: 90, Y: 0, Z: baseSize / 2},
 			types.Vector3{X: baseSize, Y: baseWallHeight, Z: baseWallThickness}, 0),
-		// Front wall - left section (horizontal, running north-south at front of base)
-		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 90 - baseSize/2, Y: 0, Z: -baseSize/4 - frontOpening/4},
-			types.Vector3{X: baseWallThickness, Y: baseWallHeight, Z: baseSize/2 - frontOpening/2}, 0),
-		// Front wall - right section
-		NewObstacle(nextID(), ObstacleWall,
-			types.Vector3{X: 90 - baseSize/2, Y: 0, Z: baseSize/4 + frontOpening/4},
-			types.Vector3{X: baseWallThickness, Y: baseWallHeight, Z: baseSize/2 - frontOpening/2}, 0),
 	)
 
 	return obstacles

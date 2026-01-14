@@ -14,6 +14,7 @@ type Unit interface {
 	GetHealth() int
 	SetHealth(health int)
 	GetTargetPosition() types.Vector3
+	SetTargetPosition(pos types.Vector3)
 	GetSpeed() float64
 	GetDamage() int
 	GetAttackRange() float64
@@ -29,6 +30,11 @@ type Unit interface {
 	GetCurrentWaypoint() int
 	SetCurrentWaypoint(index int)
 	ClearWaypoints()
+	// Patrol mode support (for perimeter sweep)
+	IsPatrolling() bool
+	SetPatrolling(patrol bool)
+	GetPatrolCorner() int
+	SetPatrolCorner(corner int)
 }
 
 // BaseUnit provides common functionality for all units
@@ -47,6 +53,9 @@ type BaseUnit struct {
 	// Pathfinding fields
 	Waypoints       []types.Vector3
 	CurrentWaypoint int
+	// Patrol mode fields (for perimeter sweep)
+	Patrolling   bool
+	PatrolCorner int // Index of current patrol corner target (0-3)
 }
 
 func (u *BaseUnit) GetID() string {
@@ -79,6 +88,10 @@ func (u *BaseUnit) SetHealth(health int) {
 
 func (u *BaseUnit) GetTargetPosition() types.Vector3 {
 	return u.TargetPosition
+}
+
+func (u *BaseUnit) SetTargetPosition(pos types.Vector3) {
+	u.TargetPosition = pos
 }
 
 func (u *BaseUnit) GetSpeed() float64 {
@@ -149,4 +162,22 @@ func (u *BaseUnit) SetCurrentWaypoint(index int) {
 func (u *BaseUnit) ClearWaypoints() {
 	u.Waypoints = nil
 	u.CurrentWaypoint = 0
+}
+
+// Patrol mode methods
+
+func (u *BaseUnit) IsPatrolling() bool {
+	return u.Patrolling
+}
+
+func (u *BaseUnit) SetPatrolling(patrol bool) {
+	u.Patrolling = patrol
+}
+
+func (u *BaseUnit) GetPatrolCorner() int {
+	return u.PatrolCorner
+}
+
+func (u *BaseUnit) SetPatrolCorner(corner int) {
+	u.PatrolCorner = corner
 }

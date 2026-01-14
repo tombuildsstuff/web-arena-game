@@ -8,6 +8,7 @@ export class GameState {
     this.obstacles = [];
     this.projectiles = [];
     this.buyZones = [];
+    this.turrets = [];
     this.gameStatus = 'waiting'; // 'waiting', 'playing', 'finished'
     this.winner = null;
     this.playerId = null;
@@ -21,6 +22,7 @@ export class GameState {
     this.obstacles = newState.obstacles || this.obstacles;
     this.projectiles = newState.projectiles || [];
     this.buyZones = newState.buyZones || this.buyZones;
+    this.turrets = newState.turrets || this.turrets;
     this.gameStatus = newState.gameStatus || this.gameStatus;
     this.winner = newState.winner !== undefined ? newState.winner : this.winner;
   }
@@ -60,6 +62,7 @@ export class GameState {
     this.obstacles = [];
     this.projectiles = [];
     this.buyZones = [];
+    this.turrets = [];
     this.gameStatus = 'waiting';
     this.winner = null;
     this.playerId = null;

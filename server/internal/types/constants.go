@@ -4,8 +4,10 @@ import "time"
 
 const (
 	// Arena settings
-	ArenaSize  = 200
-	BaseRadius = 5
+	ArenaSize       = 200
+	ArenaHalfSize   = ArenaSize / 2
+	ArenaBoundary   = ArenaHalfSize - 5 // Units should stay within this boundary
+	BaseRadius      = 5
 
 	// Game loop settings
 	TickRate     = 20 // Updates per second
@@ -43,6 +45,14 @@ const (
 	PlayerUnitAttackSpeed = 2.0  // attacks per second
 	PlayerUnitYPosition   = 1.5
 	PlayerRespawnTime     = 10.0 // seconds
+
+	// Turret stats
+	TurretHealth      = 30   // 3 hits to destroy (30 / 10 = 3)
+	TurretDamage      = 10
+	TurretAttackRange = 30.0
+	TurretAttackSpeed = 1.5  // attacks per second
+	TurretRespawnTime = 10.0 // seconds
+	TurretClaimRadius = 5.0  // radius for claiming
 )
 
 var (

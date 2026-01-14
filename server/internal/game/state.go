@@ -14,6 +14,7 @@ type State struct {
 	Obstacles      []*Obstacle
 	Projectiles    []*Projectile
 	BuyZones       []*BuyZone
+	Turrets        []*Turret
 	GameStatus     string // "waiting", "playing", "finished"
 	Winner         *int
 	MatchStartTime int64 // Unix timestamp when match started
@@ -39,6 +40,7 @@ func NewState(player1ClientID, player2ClientID string) *State {
 		Obstacles:      GetSymmetricObstacles(),
 		Projectiles:    make([]*Projectile, 0),
 		BuyZones:       GetBuyZones(),
+		Turrets:        GetTurrets(),
 		GameStatus:     "playing",
 		Winner:         nil,
 		MatchStartTime: now,
@@ -67,6 +69,11 @@ func (s *State) ToType() types.GameState {
 		buyZonesData[i] = zone.ToType()
 	}
 
+	turretsData := make([]types.Turret, len(s.Turrets))
+	for i, turret := range s.Turrets {
+		turretsData[i] = turret.ToType()
+	}
+
 	return types.GameState{
 		Timestamp:   s.Timestamp,
 		Players:     [2]types.Player{s.Players[0].ToType(), s.Players[1].ToType()},
@@ -74,6 +81,7 @@ func (s *State) ToType() types.GameState {
 		Obstacles:   obstaclesData,
 		Projectiles: projectilesData,
 		BuyZones:    buyZonesData,
+		Turrets:     turretsData,
 		GameStatus:  s.GameStatus,
 		Winner:      s.Winner,
 	}
@@ -166,4 +174,19 @@ func (s *State) GetPlayerUnit(playerID int) *PlayerUnit {
 		}
 	}
 	return nil
+}
+
+// GetTurretByID returns a turret by ID
+func (s *State) GetTurretByID(id string) *Turret {
+	for _, turret := range s.Turrets {
+		if turret.ID == id {
+			return turret
+		}
+	}
+	return nil
+}
+
+// GetTurrets returns all turrets
+func (s *State) GetTurrets() []*Turret {
+	return s.Turrets
 }
