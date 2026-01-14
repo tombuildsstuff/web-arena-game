@@ -182,12 +182,13 @@ export class GameLoop {
 
   updateTurrets() {
     const stateTurrets = this.gameState.turrets || [];
+    const stateUnits = this.gameState.units || [];
 
-    // Update turret states
+    // Update turret states and pass units for target tracking
     for (const turretData of stateTurrets) {
       const turretObj = this.turretMeshes.get(turretData.id);
       if (turretObj) {
-        turretObj.update(turretData, this.elapsedTime);
+        turretObj.update(turretData, this.elapsedTime, stateUnits);
       }
     }
 
@@ -321,6 +322,7 @@ export class GameLoop {
   updateUnitPositions(deltaTime) {
     const stateUnits = this.gameState.units || [];
     const stateProjectiles = this.gameState.projectiles || [];
+    const camera = this.camera.getCamera();
 
     // Build a map of shooter ID to target position (from projectiles)
     const shooterTargets = new Map();
@@ -345,6 +347,11 @@ export class GameLoop {
 
         // Update unit's internal state for rotation
         unitObj.updatePosition(unit.position);
+
+        // Update health bar (show when damaged)
+        if (unitObj.updateHealth && unit.health !== undefined) {
+          unitObj.updateHealth(unit.health, camera);
+        }
 
         // Update turret targeting for tanks
         if (unit.type === 'tank' && unitObj.setTarget) {

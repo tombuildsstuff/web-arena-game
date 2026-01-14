@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { HealthBar } from './HealthBar.js';
 
 export class Player {
   constructor(scene, unit, color, isLocalPlayer = false) {
@@ -10,6 +11,9 @@ export class Player {
     this.lastPosition = null;
     this.targetRotation = 0;
     this.respawnOverlay = null;
+    this.nametagSprite = null;
+    this.healthBar = null;
+    this.maxHealth = 5; // PlayerUnitHealth from server
     this.create();
   }
 
@@ -88,6 +92,16 @@ export class Player {
       bodyGroup.add(indicator);
     }
 
+    // Create floating nametag
+    this.nametagSprite = this.createNametag();
+    this.nametagSprite.position.y = 4.5; // Above the head
+    bodyGroup.add(this.nametagSprite);
+
+    // Create health bar (between head and nametag)
+    this.healthBar = new HealthBar(this.maxHealth, 2.5, 0.3);
+    this.healthBar.getGroup().position.y = 3.8;
+    bodyGroup.add(this.healthBar.getGroup());
+
     this.mesh = bodyGroup;
 
     // Set initial position
@@ -148,7 +162,78 @@ export class Player {
     }
   }
 
+  // Update health bar
+  updateHealth(health, camera) {
+    if (this.healthBar) {
+      this.healthBar.update(health, camera);
+    }
+  }
+
+  // Create a floating nametag sprite
+  createNametag() {
+    const playerNumber = this.unit.ownerId + 1;
+    const name = `Player ${playerNumber}`;
+
+    // Create canvas for the nametag
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+
+    // Set canvas size
+    canvas.width = 256;
+    canvas.height = 64;
+
+    // Get background color from player color
+    const bgColor = typeof this.color === 'string' ? this.color : `#${this.color.toString(16).padStart(6, '0')}`;
+
+    // Draw rounded rectangle background
+    const padding = 10;
+    const radius = 12;
+    context.fillStyle = bgColor;
+    context.beginPath();
+    context.roundRect(padding, padding, canvas.width - padding * 2, canvas.height - padding * 2, radius);
+    context.fill();
+
+    // Add slight border
+    context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    context.lineWidth = 2;
+    context.stroke();
+
+    // Draw text
+    context.fillStyle = '#ffffff';
+    context.font = 'bold 28px Arial, sans-serif';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(name, canvas.width / 2, canvas.height / 2);
+
+    // Create texture from canvas
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+
+    // Create sprite material
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false, // Always render on top
+      depthWrite: false
+    });
+
+    // Create sprite
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.set(4, 1, 1); // Scale to match aspect ratio
+
+    return sprite;
+  }
+
   remove() {
+    if (this.nametagSprite) {
+      if (this.nametagSprite.material.map) {
+        this.nametagSprite.material.map.dispose();
+      }
+      this.nametagSprite.material.dispose();
+    }
+    if (this.healthBar) {
+      this.healthBar.dispose();
+    }
     if (this.mesh) {
       this.scene.remove(this.mesh);
     }

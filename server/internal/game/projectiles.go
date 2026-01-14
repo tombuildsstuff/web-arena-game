@@ -64,6 +64,24 @@ func NewProjectileFromPlayer(shooter *PlayerUnit, targetPos types.Vector3, targe
 	}
 }
 
+// NewProjectileFromPlayerToTurret creates a projectile from a player to a turret
+func NewProjectileFromPlayerToTurret(shooter *PlayerUnit, turret *Turret, timestamp int64) *Projectile {
+	shooterPos := shooter.GetPosition()
+	targetPos := turret.Position
+
+	return &Projectile{
+		ID:        uuid.New().String(),
+		ShooterID: shooter.GetID(),
+		TargetID:  turret.ID,
+		Position:  shooterPos,
+		StartPos:  shooterPos,
+		EndPos:    targetPos,
+		Speed:     ProjectileSpeed,
+		Damage:    shooter.GetDamage(),
+		CreatedAt: timestamp,
+	}
+}
+
 // ToType converts Projectile to types.Projectile for JSON serialization
 func (p *Projectile) ToType() types.Projectile {
 	return types.Projectile{

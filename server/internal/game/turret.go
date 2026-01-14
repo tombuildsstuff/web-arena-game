@@ -22,6 +22,9 @@ type Turret struct {
 	AttackRange    float64
 	AttackSpeed    float64
 	Damage         int
+	// Tracking delay fields
+	CurrentTargetID   string // ID of the unit being tracked
+	TargetAcquiredAt  int64  // When the turret started tracking this target
 }
 
 // NewTurret creates a new turret
@@ -45,16 +48,30 @@ func NewTurret(id string, position types.Vector3, defaultOwnerID int) *Turret {
 
 // ToType converts Turret to types.Turret for JSON serialization
 func (t *Turret) ToType() types.Turret {
+	// Calculate tracking progress
+	isTracking := t.CurrentTargetID != ""
+	trackingProgress := 0.0
+	if isTracking && t.TargetAcquiredAt > 0 {
+		now := time.Now().UnixMilli()
+		elapsed := float64(now - t.TargetAcquiredAt)
+		trackingProgress = elapsed / float64(types.TurretTrackingTime)
+		if trackingProgress > 1.0 {
+			trackingProgress = 1.0
+		}
+	}
+
 	return types.Turret{
-		ID:             t.ID,
-		Position:       t.Position,
-		OwnerID:        t.OwnerID,
-		DefaultOwnerID: t.DefaultOwnerID,
-		Health:         t.Health,
-		MaxHealth:      t.MaxHealth,
-		IsDestroyed:    t.IsDestroyed,
-		RespawnTime:    t.RespawnTime,
-		ClaimRadius:    t.ClaimRadius,
+		ID:               t.ID,
+		Position:         t.Position,
+		OwnerID:          t.OwnerID,
+		DefaultOwnerID:   t.DefaultOwnerID,
+		Health:           t.Health,
+		MaxHealth:        t.MaxHealth,
+		IsDestroyed:      t.IsDestroyed,
+		RespawnTime:      t.RespawnTime,
+		ClaimRadius:      t.ClaimRadius,
+		IsTracking:       isTracking,
+		TrackingProgress: trackingProgress,
 	}
 }
 
@@ -116,6 +133,8 @@ func (t *Turret) Respawn() {
 	t.RespawnTime = 0
 	t.OwnerID = t.DefaultOwnerID
 	t.LastAttackTime = 0
+	t.CurrentTargetID = ""
+	t.TargetAcquiredAt = 0
 }
 
 // IsAlive returns true if the turret is not destroyed

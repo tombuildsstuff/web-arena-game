@@ -47,12 +47,13 @@ const (
 	PlayerRespawnTime     = 10.0 // seconds
 
 	// Turret stats
-	TurretHealth      = 30   // 3 hits to destroy (30 / 10 = 3)
-	TurretDamage      = 10
-	TurretAttackRange = 30.0
-	TurretAttackSpeed = 1.5  // attacks per second
-	TurretRespawnTime = 10.0 // seconds
-	TurretClaimRadius = 5.0  // radius for claiming
+	TurretHealth       = 30   // 3 hits to destroy (30 / 10 = 3)
+	TurretDamage       = 10
+	TurretAttackRange  = 20.0 // ~4 squares, requires line of sight
+	TurretAttackSpeed  = 1.5  // attacks per second
+	TurretRespawnTime  = 10.0 // seconds
+	TurretClaimRadius  = 5.0  // radius for claiming
+	TurretTrackingTime = 1000 // milliseconds to lock on before firing
 )
 
 var (

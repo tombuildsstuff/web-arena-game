@@ -459,8 +459,32 @@ func (r *GameRoom) HandlePlayerShoot(playerID int, targetX, targetZ float64) {
 		}
 	}
 
+	// Check if there's a turret at the target position (enemy turrets only)
+	var targetTurret *Turret
+	if targetUnit == nil {
+		for _, turret := range r.State.Turrets {
+			if turret.OwnerID == playerID {
+				continue // Don't shoot own turrets
+			}
+			if !turret.IsAlive() {
+				continue
+			}
+
+			distToTarget := calculateDistance(turret.Position, targetPos)
+			if distToTarget < 4.0 { // Close enough to target position (turrets are bigger)
+				targetTurret = turret
+				break
+			}
+		}
+	}
+
 	// Create projectile
-	projectile := NewProjectileFromPlayer(playerUnit, targetPos, targetUnit, now)
+	var projectile *Projectile
+	if targetTurret != nil {
+		projectile = NewProjectileFromPlayerToTurret(playerUnit, targetTurret, now)
+	} else {
+		projectile = NewProjectileFromPlayer(playerUnit, targetPos, targetUnit, now)
+	}
 	r.State.AddProjectile(projectile)
 	playerUnit.SetLastAttackTime(now)
 }

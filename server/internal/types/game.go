@@ -86,4 +86,6 @@ type Turret struct {
 	IsDestroyed     bool    `json:"isDestroyed"`
 	RespawnTime     float64 `json:"respawnTime"`     // Seconds remaining until respawn
 	ClaimRadius     float64 `json:"claimRadius"`     // Radius for claiming
+	IsTracking      bool    `json:"isTracking"`      // Whether turret is tracking a target
+	TrackingProgress float64 `json:"trackingProgress"` // 0-1 progress to lock-on
 }

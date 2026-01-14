@@ -10,12 +10,24 @@ export class PlayerInput {
     this.onClaimTurret = onClaimTurret;
     this.gameLoop = gameLoop;
 
-    // Movement keys state
+    // Movement keys state (using key codes for reliability across keyboard layouts)
     this.keys = {
-      w: false,
-      a: false,
-      s: false,
-      d: false
+      up: false,    // W or ArrowUp
+      down: false,  // S or ArrowDown
+      left: false,  // A or ArrowLeft
+      right: false  // D or ArrowRight
+    };
+
+    // Map key codes to movement directions
+    this.keyMap = {
+      'KeyW': 'up',
+      'KeyS': 'down',
+      'KeyA': 'left',
+      'KeyD': 'right',
+      'ArrowUp': 'up',
+      'ArrowDown': 'down',
+      'ArrowLeft': 'left',
+      'ArrowRight': 'right'
     };
 
     // Raycaster for mouse position
@@ -29,6 +41,7 @@ export class PlayerInput {
     this.handleKeyUp = this.handleKeyUp.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleBlur = this.handleBlur.bind(this);
 
     // Last sent direction (to avoid spamming)
     this.lastDirection = { x: 0, z: 0 };
@@ -47,6 +60,7 @@ export class PlayerInput {
     window.addEventListener('keyup', this.handleKeyUp);
     window.addEventListener('mousemove', this.handleMouseMove);
     window.addEventListener('mousedown', this.handleMouseDown);
+    window.addEventListener('blur', this.handleBlur);
   }
 
   disable() {
@@ -57,21 +71,35 @@ export class PlayerInput {
     window.removeEventListener('keyup', this.handleKeyUp);
     window.removeEventListener('mousemove', this.handleMouseMove);
     window.removeEventListener('mousedown', this.handleMouseDown);
+    window.removeEventListener('blur', this.handleBlur);
 
     // Reset keys
-    this.keys = { w: false, a: false, s: false, d: false };
+    this.resetKeys();
+    this.sendMovement();
+  }
+
+  // Reset all keys (used when window loses focus)
+  resetKeys() {
+    this.keys = { up: false, down: false, left: false, right: false };
+  }
+
+  // Handle window losing focus
+  handleBlur() {
+    this.resetKeys();
     this.sendMovement();
   }
 
   handleKeyDown(event) {
-    const key = event.key.toLowerCase();
-    if (this.keys.hasOwnProperty(key) && !this.keys[key]) {
-      this.keys[key] = true;
+    // Check for movement keys using key codes
+    const direction = this.keyMap[event.code];
+    if (direction && !this.keys[direction]) {
+      event.preventDefault(); // Prevent page scrolling with arrow keys
+      this.keys[direction] = true;
       this.sendMovement();
     }
 
     // E key for buying from zones or claiming turrets
-    if (key === 'e') {
+    if (event.code === 'KeyE') {
       this.handleInteraction();
     }
   }
@@ -93,9 +121,11 @@ export class PlayerInput {
   }
 
   handleKeyUp(event) {
-    const key = event.key.toLowerCase();
-    if (this.keys.hasOwnProperty(key) && this.keys[key]) {
-      this.keys[key] = false;
+    // Check for movement keys using key codes
+    const direction = this.keyMap[event.code];
+    if (direction && this.keys[direction]) {
+      event.preventDefault();
+      this.keys[direction] = false;
       this.sendMovement();
     }
   }
@@ -133,14 +163,14 @@ export class PlayerInput {
   }
 
   sendMovement() {
-    // Calculate movement direction from WASD keys
+    // Calculate movement direction from keys
     let dx = 0;
     let dz = 0;
 
-    if (this.keys.w) dz -= 1;
-    if (this.keys.s) dz += 1;
-    if (this.keys.a) dx -= 1;
-    if (this.keys.d) dx += 1;
+    if (this.keys.up) dz -= 1;
+    if (this.keys.down) dz += 1;
+    if (this.keys.left) dx -= 1;
+    if (this.keys.right) dx += 1;
 
     // Normalize if moving diagonally
     if (dx !== 0 && dz !== 0) {

@@ -2,6 +2,8 @@ package game
 
 import (
 	"time"
+
+	"github.com/tombuildsstuff/web-arena-game/server/internal/types"
 )
 
 // TurretSystem handles turret combat and updates
@@ -36,11 +38,7 @@ func (s *TurretSystem) Update(state *State, deltaTime float64) {
 
 // processTurretCombat handles a single turret's combat logic
 func (s *TurretSystem) processTurretCombat(turret *Turret, state *State, now int64) {
-	if !turret.CanAttack() {
-		return
-	}
-
-	// Find the closest enemy unit in range
+	// Find the closest enemy unit in range with LOS
 	var closestTarget Unit
 	closestDistance := turret.AttackRange + 1 // Start beyond range
 
@@ -70,12 +68,39 @@ func (s *TurretSystem) processTurretCombat(turret *Turret, state *State, now int
 		}
 	}
 
-	// Attack the closest target
-	if closestTarget != nil {
-		projectile := s.createTurretProjectile(turret, closestTarget, now)
-		state.AddProjectile(projectile)
-		turret.LastAttackTime = now
+	// Handle target tracking
+	if closestTarget == nil {
+		// No target - clear tracking
+		turret.CurrentTargetID = ""
+		turret.TargetAcquiredAt = 0
+		return
 	}
+
+	targetID := closestTarget.GetID()
+
+	// Check if this is a new target
+	if turret.CurrentTargetID != targetID {
+		// New target - start tracking
+		turret.CurrentTargetID = targetID
+		turret.TargetAcquiredAt = now
+		return // Don't fire yet, need to track first
+	}
+
+	// Check if we've tracked long enough
+	trackingDuration := now - turret.TargetAcquiredAt
+	if trackingDuration < types.TurretTrackingTime {
+		return // Still tracking, don't fire yet
+	}
+
+	// Check attack cooldown
+	if !turret.CanAttack() {
+		return
+	}
+
+	// Fire at the target
+	projectile := s.createTurretProjectile(turret, closestTarget, now)
+	state.AddProjectile(projectile)
+	turret.LastAttackTime = now
 }
 
 // createTurretProjectile creates a projectile from a turret

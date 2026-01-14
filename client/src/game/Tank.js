@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { HealthBar } from './HealthBar.js';
 
 export class Tank {
   constructor(scene, unit, color) {
@@ -11,6 +12,8 @@ export class Tank {
     this.targetRotation = 0;
     this.turretTargetRotation = 0;
     this.currentTurretRotation = 0;
+    this.healthBar = null;
+    this.maxHealth = 30; // TankHealth from server
     this.create();
   }
 
@@ -43,6 +46,11 @@ export class Tank {
     cannon.rotation.z = Math.PI / 2;
     cannon.position.set(1.5, 0, 0); // Relative to turret group
     this.turretGroup.add(cannon);
+
+    // Create health bar above tank
+    this.healthBar = new HealthBar(this.maxHealth, 3, 0.35);
+    this.healthBar.getGroup().position.y = 3.5;
+    this.mesh.add(this.healthBar.getGroup());
 
     // Set initial position
     this.mesh.position.set(this.unit.position.x, this.unit.position.y, this.unit.position.z);
@@ -111,7 +119,17 @@ export class Tank {
     }
   }
 
+  // Update health bar
+  updateHealth(health, camera) {
+    if (this.healthBar) {
+      this.healthBar.update(health, camera);
+    }
+  }
+
   remove() {
+    if (this.healthBar) {
+      this.healthBar.dispose();
+    }
     if (this.mesh) {
       this.scene.remove(this.mesh);
     }
