@@ -2,6 +2,7 @@ package game
 
 import (
 	"log"
+	"os"
 	"sync"
 
 	"github.com/google/uuid"
@@ -36,12 +37,17 @@ type PlayerQueueEntry struct {
 
 // NewManager creates a new game manager
 func NewManager() *Manager {
+	leaderboardFile := os.Getenv("LEADERBOARD_FILE")
+	if leaderboardFile == "" {
+		leaderboardFile = "leaderboard.json"
+	}
+
 	return &Manager{
 		rooms:           make(map[string]*GameRoom),
 		queue:           make(map[string]*PlayerQueueEntry),
 		clientToRoom:    make(map[string]string),
 		spectatorToRoom: make(map[string]string),
-		leaderboard:     NewLeaderboard("leaderboard.json"),
+		leaderboard:     NewLeaderboard(leaderboardFile),
 	}
 }
 
