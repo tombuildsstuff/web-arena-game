@@ -93,6 +93,10 @@ func (t *Turret) CanBeClaimed(playerID int) bool {
 	if t.OwnerID == playerID {
 		return false
 	}
+	// Can only claim neutral turrets - must destroy enemy turrets first
+	if t.OwnerID != -1 {
+		return false
+	}
 	return true
 }
 

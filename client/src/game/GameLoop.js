@@ -289,8 +289,10 @@ export class GameLoop {
       if (turretData.isDestroyed) continue;
       // Can't claim your own turret
       if (turretData.ownerId === playerId) continue;
+      // Can only claim neutral turrets - must destroy enemy turrets first
+      if (turretData.ownerId !== -1) continue;
 
-      // Can claim neutral (-1) or enemy turrets
+      // Can claim neutral turrets
       this.nearbyTurret = turretData;
       break;
     }

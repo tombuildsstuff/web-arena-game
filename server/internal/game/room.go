@@ -471,9 +471,13 @@ func (r *GameRoom) HandleClaimTurret(playerID int, turretID string, conn ClientC
 			conn.SendMessage("error", types.ErrorPayload{
 				Message: "Turret is destroyed",
 			})
-		} else {
+		} else if turret.OwnerID == playerID {
 			conn.SendMessage("error", types.ErrorPayload{
 				Message: "You already own this turret",
+			})
+		} else {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "Destroy enemy turret first",
 			})
 		}
 		return
