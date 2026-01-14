@@ -1,0 +1,17 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.claude
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build artifacts are handled in subdirectory .gitignore files

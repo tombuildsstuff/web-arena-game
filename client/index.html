@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arena Game</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Three.js canvas will be injected here -->
+  <div id="game-container"></div>
+
+  <!-- UI Overlay -->
+  <div id="ui-overlay">
+    <!-- HUD -->
+    <div id="hud">
+      <div id="player-info">
+        <span id="player-id">Player: -</span>
+        <span id="player-money">Money: $0</span>
+      </div>
+      <div id="player-status">
+        <span id="player-health">Health: 5/5</span>
+        <span id="respawn-timer" class="hidden">Respawning: 10s</span>
+      </div>
+      <div id="controls-hint">WASD: Move | Click: Shoot | E: Buy | Right-drag: Rotate | Scroll: Zoom</div>
+    </div>
+
+    <!-- Buy Zone Prompt -->
+    <div id="buy-zone-prompt" class="hidden">
+      <div id="buy-zone-text">Press E to buy Tank ($50)</div>
+    </div>
+
+    <!-- Buy Zone Popup (for error messages) -->
+    <div id="buyzone-popup" class="hidden">
+      <span id="buyzone-popup-text"></span>
+    </div>
+
+    <!-- Connection Status -->
+    <div id="connection-status">
+      <span id="status-text">Connecting...</span>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="hidden">
+      <div class="game-over-content">
+        <h1 id="game-over-title">Game Over</h1>
+        <p id="game-over-message"></p>
+        <div id="match-stats">
+          <div id="match-duration"></div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <span class="stat-label">Your Kills</span>
+              <span id="your-kills" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Enemy Kills</span>
+              <span id="enemy-kills" class="stat-value">0</span>
+            </div>
+          </div>
+        </div>
+        <button id="play-again-button">Play Again</button>
+      </div>
+    </div>
+
+    <!-- Queue Screen -->
+    <div id="queue-screen">
+      <div class="queue-content">
+        <h1>Arena Game</h1>
+        <p>Real-time 3D multiplayer strategy</p>
+        <button id="join-queue-button" disabled>Join Queue</button>
+        <p id="queue-status" class="hidden">Waiting for opponent...</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

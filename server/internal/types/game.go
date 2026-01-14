@@ -1,0 +1,75 @@
+package types
+
+// Vector3 represents a 3D position
+type Vector3 struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+	Z float64 `json:"z"`
+}
+
+// GameState represents the complete state of a game
+type GameState struct {
+	Timestamp   int64        `json:"timestamp"`
+	Players     [2]Player    `json:"players"`
+	Units       []Unit       `json:"units"`
+	Obstacles   []Obstacle   `json:"obstacles"`
+	Projectiles []Projectile `json:"projectiles"`
+	BuyZones    []BuyZone    `json:"buyZones"`
+	GameStatus  string       `json:"gameStatus"` // "waiting", "playing", "finished"
+	Winner      *int         `json:"winner"`
+}
+
+// Obstacle represents a static obstacle in the arena
+type Obstacle struct {
+	ID             string  `json:"id"`
+	Type           string  `json:"type"` // "wall", "pillar", "cover", "ramp"
+	Position       Vector3 `json:"position"`
+	Size           Vector3 `json:"size"`               // Width (X), Height (Y), Depth (Z)
+	Rotation       float64 `json:"rotation"`           // Y-axis rotation in radians
+	ElevationStart float64 `json:"elevationStart,omitempty"`
+	ElevationEnd   float64 `json:"elevationEnd,omitempty"`
+}
+
+// Projectile represents a traveling projectile
+type Projectile struct {
+	ID        string  `json:"id"`
+	ShooterID string  `json:"shooterId"`
+	TargetID  string  `json:"targetId"`
+	Position  Vector3 `json:"position"`
+	StartPos  Vector3 `json:"startPos"`
+	EndPos    Vector3 `json:"endPos"`
+	Speed     float64 `json:"speed"`
+	Damage    int     `json:"damage"`
+	CreatedAt int64   `json:"createdAt"`
+}
+
+// Player represents a player in the game
+type Player struct {
+	ID           int     `json:"id"`
+	Money        int     `json:"money"`
+	BasePosition Vector3 `json:"basePosition"`
+	Color        string  `json:"color"`
+	Kills        int     `json:"kills"`
+}
+
+// BuyZone represents a location where players can purchase units
+type BuyZone struct {
+	ID       string  `json:"id"`
+	OwnerID  int     `json:"ownerId"`  // Which player owns this buy zone
+	UnitType string  `json:"unitType"` // "tank" or "airplane"
+	Position Vector3 `json:"position"`
+	Radius   float64 `json:"radius"` // Interaction radius
+	Cost     int     `json:"cost"`
+}
+
+// Unit represents a unit (tank, airplane, or player) in the game
+type Unit struct {
+	ID             string  `json:"id"`
+	Type           string  `json:"type"` // "tank", "airplane", or "player"
+	OwnerID        int     `json:"ownerId"`
+	Position       Vector3 `json:"position"`
+	Health         int     `json:"health"`
+	TargetPosition Vector3 `json:"targetPosition"`
+	IsRespawning   bool    `json:"isRespawning,omitempty"`
+	RespawnTime    float64 `json:"respawnTime,omitempty"` // Seconds remaining until respawn
+}
