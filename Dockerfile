@@ -16,12 +16,12 @@ COPY client/ ./
 RUN bun run build
 
 # Stage 2: Build the server
-FROM golang:1.25-alpine AS server-builder
+FROM golang:1.25.5-alpine AS server-builder
 
 WORKDIR /app/server
 
 # Install build dependencies
-RUN apk add --no-cache make
+RUN apk add --no-cache git make
 
 # Copy go mod files first for caching
 COPY server/go.mod server/go.sum ./
