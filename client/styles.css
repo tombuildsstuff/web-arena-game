@@ -1091,7 +1091,21 @@ body {
 #active-games h3 {
   font-size: 14px;
   color: #94a3b8;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
+}
+
+.spectate-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 10px 0;
+}
+
+.no-active-games {
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+  margin: 0;
+  padding: 8px 0;
 }
 
 #active-games-list {

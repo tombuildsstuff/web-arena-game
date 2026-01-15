@@ -282,11 +282,11 @@ export class Game {
     }
 
     // Update active games
-    const activeGamesEl = document.getElementById('active-games');
     const activeGamesListEl = document.getElementById('active-games-list');
+    const noActiveGamesEl = document.getElementById('no-active-games');
 
     if (activeGames && activeGames.length > 0) {
-      activeGamesEl.classList.remove('hidden');
+      noActiveGamesEl.classList.add('hidden');
       activeGamesListEl.innerHTML = activeGames.map(game => `
         <div class="active-game-item">
           <span class="game-players">
@@ -309,7 +309,8 @@ export class Game {
         });
       });
     } else {
-      activeGamesEl.classList.add('hidden');
+      activeGamesListEl.innerHTML = '';
+      noActiveGamesEl.classList.remove('hidden');
     }
   }
 
