@@ -1430,6 +1430,30 @@ body.mobile #mobile-controls {
   pointer-events: auto;
 }
 
+#shoot-btn {
+  position: absolute;
+  bottom: 290px;
+  right: 50px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(239, 68, 68, 0.6);
+  color: #ef4444;
+  font-size: 24px;
+  font-weight: bold;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#shoot-btn:active {
+  background: rgba(239, 68, 68, 0.3);
+  transform: scale(0.95);
+}
+
 #interact-btn {
   position: absolute;
   bottom: 220px;
@@ -1481,6 +1505,11 @@ body.mobile #buy-zone-prompt {
   body.mobile #joystick-right {
     bottom: calc(80px + env(safe-area-inset-bottom));
     right: calc(30px + env(safe-area-inset-right));
+  }
+
+  body.mobile #shoot-btn {
+    bottom: calc(290px + env(safe-area-inset-bottom));
+    right: calc(50px + env(safe-area-inset-right));
   }
 
   body.mobile #interact-btn {

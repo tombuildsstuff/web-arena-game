@@ -30,6 +30,7 @@ export class TouchControls {
     };
 
     this.enabled = false;
+    this.boundHandleShoot = this.handleShootButton.bind(this);
     this.boundHandleInteract = this.handleInteract.bind(this);
     this.boundHandleCameraTouchStart = this.handleCameraTouchStart.bind(this);
     this.boundHandleCameraTouchMove = this.handleCameraTouchMove.bind(this);
@@ -42,6 +43,7 @@ export class TouchControls {
 
     document.body.classList.add('mobile');
     this.createJoysticks();
+    this.setupShootButton();
     this.setupInteractButton();
     this.setupCameraTouch();
   }
@@ -52,6 +54,7 @@ export class TouchControls {
 
     document.body.classList.remove('mobile');
     this.destroyJoysticks();
+    this.removeShootButton();
     this.removeInteractButton();
     this.removeCameraTouch();
     this.stopFiring();
@@ -165,6 +168,36 @@ export class TouchControls {
     const range = 50;
     const targetX = player.position.x + this.aimDirection.x * range;
     const targetZ = player.position.z + this.aimDirection.z * range;
+
+    this.onShoot(targetX, targetZ);
+  }
+
+  setupShootButton() {
+    const btn = document.getElementById('shoot-btn');
+    if (btn) {
+      btn.addEventListener('touchstart', this.boundHandleShoot, { passive: false });
+    }
+  }
+
+  removeShootButton() {
+    const btn = document.getElementById('shoot-btn');
+    if (btn) {
+      btn.removeEventListener('touchstart', this.boundHandleShoot);
+    }
+  }
+
+  handleShootButton(e) {
+    e.preventDefault();
+    if (!this.enabled || !this.onShoot) return;
+
+    const player = this.gameState?.getMyPlayer();
+    if (!player) return;
+
+    // Shoot in the direction the camera is facing
+    const camForward = this.camera.getForwardDirection();
+    const range = 50;
+    const targetX = player.position.x + camForward.x * range;
+    const targetZ = player.position.z + camForward.z * range;
 
     this.onShoot(targetX, targetZ);
   }
