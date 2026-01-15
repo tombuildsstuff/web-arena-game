@@ -35,7 +35,7 @@ export class Game {
     this.lobbyStatusInterval = null;
   }
 
-  init() {
+  async init() {
     // Get container
     const container = document.getElementById('game-container');
 
@@ -43,7 +43,9 @@ export class Game {
     this.authService = new AuthService();
     this.setupAuthUI();
     this.authService.handleAuthCallback();
-    this.authService.checkAuth();
+
+    // Wait for auth check to complete (ensures guest cookie is set before WebSocket connects)
+    await this.authService.checkAuth();
 
     // Initialize renderer
     this.renderer = new Renderer(container);
@@ -485,8 +487,9 @@ export class Game {
     const githubLoginButton = document.getElementById('github-login-button');
     const blueskyLoginButton = document.getElementById('bluesky-login-button');
     const logoutButton = document.getElementById('logout-button');
-    const loggedOutSection = document.getElementById('auth-logged-out');
+    const guestSection = document.getElementById('auth-guest');
     const loggedInSection = document.getElementById('auth-logged-in');
+    const guestName = document.getElementById('guest-name');
     const userAvatar = document.getElementById('user-avatar');
     const userName = document.getElementById('user-name');
 
@@ -564,8 +567,8 @@ export class Game {
     // Listen for auth state changes
     this.authService.onAuthChange((user) => {
       if (user && !user.isGuest) {
-        // User is logged in
-        loggedOutSection.classList.add('hidden');
+        // User is logged in with GitHub/BlueSky
+        guestSection.classList.add('hidden');
         loggedInSection.classList.remove('hidden');
         userName.textContent = user.displayName;
         if (user.avatarUrl) {
@@ -574,9 +577,14 @@ export class Game {
           // Default avatar for users without one
           userAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=random`;
         }
+      } else if (user && user.isGuest) {
+        // User is a guest
+        guestSection.classList.remove('hidden');
+        loggedInSection.classList.add('hidden');
+        guestName.textContent = user.displayName;
       } else {
-        // User is logged out or guest
-        loggedOutSection.classList.remove('hidden');
+        // No user (loading state)
+        guestSection.classList.add('hidden');
         loggedInSection.classList.add('hidden');
       }
     });
@@ -613,6 +621,22 @@ export class Game {
       const closeCredits = () => creditsModal.classList.add('hidden');
       creditsClose?.addEventListener('click', closeCredits);
       creditsBackdrop?.addEventListener('click', closeCredits);
+    }
+
+    // How It Was Built modal
+    const howBuiltButton = document.getElementById('how-built-button');
+    const howBuiltModal = document.getElementById('how-built-modal');
+    const howBuiltClose = document.getElementById('how-built-close');
+    const howBuiltBackdrop = howBuiltModal?.querySelector('.modal-backdrop');
+
+    if (howBuiltButton && howBuiltModal) {
+      howBuiltButton.addEventListener('click', () => {
+        howBuiltModal.classList.remove('hidden');
+      });
+
+      const closeHowBuilt = () => howBuiltModal.classList.add('hidden');
+      howBuiltClose?.addEventListener('click', closeHowBuilt);
+      howBuiltBackdrop?.addEventListener('click', closeHowBuilt);
     }
   }
 }

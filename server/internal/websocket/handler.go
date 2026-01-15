@@ -33,8 +33,13 @@ func HandleWebSocket(hub *Hub, authHandler *auth.Handler, w http.ResponseWriter,
 	// Get user info from auth token (if present)
 	userInfo := authHandler.GetUserFromRequest(r)
 	if userInfo == nil {
-		// No auth token - create guest user
+		// No auth token - check for guest token
+		userInfo = authHandler.GetGuestFromRequest(r)
+	}
+	if userInfo == nil {
+		// No guest token either - create ephemeral guest (shouldn't happen if /api/me was called)
 		userInfo = auth.GenerateGuestUser()
+		log.Printf("Warning: WebSocket connected without guest session, created ephemeral guest")
 	}
 
 	client := NewClient(hub, conn, clientID, userInfo.DisplayName, userInfo.IsGuest)

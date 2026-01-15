@@ -143,77 +143,72 @@
         <h1>Arena Game</h1>
         <p>Real-time 3D multiplayer strategy</p>
 
-        <!-- Auth Section -->
-        <div id="auth-section">
-          <div id="auth-logged-out">
-            <div class="auth-buttons">
-              <button id="github-login-button" class="auth-button github">
-                <svg class="auth-icon" viewBox="0 0 16 16" width="20" height="20">
-                  <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-                </svg>
-                GitHub
-              </button>
-              <button id="bluesky-login-button" class="auth-button bluesky">
-                <svg class="auth-icon" viewBox="0 0 600 530" width="20" height="20">
-                  <path fill="currentColor" d="m135.72 44.03c66.496 49.921 138.02 151.14 164.28 205.46 26.262-54.316 97.782-155.54 164.28-205.46 47.98-36.021 125.72-63.892 125.72 24.795 0 17.712-10.155 148.79-16.111 170.07-20.703 73.984-96.144 92.854-163.25 81.433 117.3 19.964 147.14 86.092 82.697 152.22-122.39 125.59-175.91-31.511-189.63-71.766-2.514-7.3797-3.6904-10.832-3.7077-7.8964-0.0174-2.9357-1.1937 0.51669-3.7077 7.8964-13.714 40.255-67.233 197.36-189.63 71.766-64.444-66.128-34.605-132.26 82.697-152.22-67.108 11.421-142.55-7.4491-163.25-81.433-5.9562-21.282-16.111-152.36-16.111-170.07 0-88.687 77.742-60.816 125.72-24.795z"/>
-                </svg>
-                BlueSky
-              </button>
-            </div>
-            <p class="auth-hint">Or play as guest</p>
-          </div>
-          <div id="auth-logged-in" class="hidden">
-            <div class="user-info">
-              <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
-              <span id="user-name" class="user-name"></span>
-            </div>
-            <button id="logout-button" class="logout-button">Logout</button>
-          </div>
-        </div>
+        <!-- Game Mode Selection -->
+        <div class="game-mode-panels">
+          <!-- Multiplayer Panel -->
+          <div class="game-mode-panel multiplayer-panel">
+            <h2>Multiplayer</h2>
 
-        <button id="join-queue-button" disabled>Join Queue</button>
-        <p id="queue-status" class="hidden">Waiting for opponent...</p>
+            <!-- Auth Section -->
+            <div id="auth-section">
+              <div id="auth-guest" class="hidden">
+                <div class="guest-info">
+                  <span id="guest-name" class="guest-name">Guest_xxxx</span>
+                </div>
+                <p class="auth-hint">Login to save your stats</p>
+                <div class="auth-buttons">
+                  <button id="github-login-button" class="auth-button github">
+                    <svg class="auth-icon" viewBox="0 0 16 16" width="20" height="20">
+                      <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                    GitHub
+                  </button>
+                  <button id="bluesky-login-button" class="auth-button bluesky">
+                    <svg class="auth-icon" viewBox="0 0 600 530" width="20" height="20">
+                      <path fill="currentColor" d="m135.72 44.03c66.496 49.921 138.02 151.14 164.28 205.46 26.262-54.316 97.782-155.54 164.28-205.46 47.98-36.021 125.72-63.892 125.72 24.795 0 17.712-10.155 148.79-16.111 170.07-20.703 73.984-96.144 92.854-163.25 81.433 117.3 19.964 147.14 86.092 82.697 152.22-122.39 125.59-175.91-31.511-189.63-71.766-2.514-7.3797-3.6904-10.832-3.7077-7.8964-0.0174-2.9357-1.1937 0.51669-3.7077 7.8964-13.714 40.255-67.233 197.36-189.63 71.766-64.444-66.128-34.605-132.26 82.697-152.22-67.108 11.421-142.55-7.4491-163.25-81.433-5.9562-21.282-16.111-152.36-16.111-170.07 0-88.687 77.742-60.816 125.72-24.795z"/>
+                    </svg>
+                    BlueSky
+                  </button>
+                </div>
+              </div>
+              <div id="auth-logged-in" class="hidden">
+                <div class="user-info">
+                  <img id="user-avatar" src="" alt="Avatar" class="user-avatar">
+                  <span id="user-name" class="user-name"></span>
+                </div>
+                <button id="logout-button" class="logout-button">Logout</button>
+              </div>
+            </div>
 
-        <div id="vs-ai-section">
-          <span class="or-divider">or</span>
-          <div class="ai-controls">
-            <select id="ai-difficulty">
-              <option value="easy">Easy</option>
-              <option value="medium" selected>Medium</option>
-              <option value="hard">Hard</option>
-            </select>
+            <button id="join-queue-button" disabled>Join Queue</button>
+            <p id="queue-status" class="hidden">Waiting for opponent...</p>
+
+            <!-- Lobby Status -->
+            <div id="lobby-status">
+              <p id="players-waiting" class="hidden">0 players waiting</p>
+              <div id="active-games" class="hidden">
+                <h3>Live Games</h3>
+                <div id="active-games-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VS AI Panel -->
+          <div class="game-mode-panel ai-panel">
+            <h2>Practice</h2>
+            <p class="panel-description">Play against AI to practice your skills</p>
+
+            <div class="ai-difficulty-section">
+              <label for="ai-difficulty">Difficulty</label>
+              <select id="ai-difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+
             <button id="play-vs-ai-button" disabled>Play vs AI</button>
           </div>
-        </div>
-
-        <!-- Lobby Status -->
-        <div id="lobby-status">
-          <p id="players-waiting" class="hidden">0 players waiting</p>
-          <div id="active-games" class="hidden">
-            <h3>Live Games</h3>
-            <div id="active-games-list"></div>
-          </div>
-        </div>
-
-        <!-- Leaderboard -->
-        <div id="leaderboard">
-          <h2>Leaderboard</h2>
-          <div id="leaderboard-loading">Loading...</div>
-          <table id="leaderboard-table" class="hidden">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Player</th>
-                <th>Points</th>
-                <th>Wins</th>
-                <th>Games</th>
-                <th>Play Time</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboard-body">
-            </tbody>
-          </table>
-          <p id="leaderboard-empty" class="hidden">No games played yet!</p>
         </div>
 
         <!-- Controls Summary -->
@@ -229,9 +224,20 @@
           </div>
         </div>
 
+        <!-- Leaderboard (Top 3) -->
+        <div id="leaderboard">
+          <h3>Top Players</h3>
+          <div id="leaderboard-loading">Loading...</div>
+          <div id="leaderboard-top3" class="hidden"></div>
+          <button id="leaderboard-view-more" class="hidden">View Full Leaderboard</button>
+          <p id="leaderboard-empty" class="hidden">No games played yet!</p>
+        </div>
+
         <!-- Footer Links -->
         <div id="footer-links">
           <button id="about-button" class="footer-link">About</button>
+          <span class="footer-separator">|</span>
+          <button id="how-built-button" class="footer-link">How It Was Built</button>
           <span class="footer-separator">|</span>
           <button id="credits-button" class="footer-link">Credits</button>
         </div>
@@ -255,9 +261,49 @@
         <p>Arena Game is a real-time 3D multiplayer strategy game where two players battle for supremacy using tanks, helicopters, and turrets.</p>
         <p>This entire game was coded by <strong>Claude Code</strong> (Anthropic's AI coding assistant), with prompts and direction provided by <a href="https://github.com/tombuildsstuff" target="_blank" rel="noopener">@tombuildsstuff</a>.</p>
         <p>The project demonstrates what's possible when humans and AI collaborate on software development.</p>
+        <p>View the source code on <a href="https://github.com/tombuildsstuff/web-arena-game" target="_blank" rel="noopener"><strong>GitHub</strong></a>.</p>
+        <h3>Inspiration</h3>
+        <p>This game is inspired by the "Precinct Assault" mode from <a href="https://en.wikipedia.org/wiki/Future_Cop:_LAPD" target="_blank" rel="noopener"><strong>Future Cop: LAPD</strong></a> (1998), developed by EA Redwood Shores and published by Electronic Arts. All rights to Future Cop: LAPD are reserved by Electronic Arts.</p>
       </div>
       <div class="modal-buttons">
         <button type="button" id="about-close" class="modal-button submit">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- How It Was Built Modal -->
+  <div id="how-built-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content info-modal">
+      <h2>How It Was Built</h2>
+      <div class="info-modal-body">
+        <p>This project is a collaboration between a human and an AI. Here's how the work was divided:</p>
+
+        <h3>Claude Code (AI)</h3>
+        <ul class="credits-list">
+          <li><strong>All source code:</strong> Go server, JavaScript client, HTML, CSS</li>
+          <li><strong>Game design:</strong> Mechanics, balancing, unit stats, economy system</li>
+          <li><strong>3D rendering:</strong> Three.js scene setup, models, effects, animations</li>
+          <li><strong>Networking:</strong> WebSocket protocol, state sync, client prediction</li>
+          <li><strong>AI opponents:</strong> Behavior trees, difficulty scaling</li>
+          <li><strong>Authentication:</strong> OAuth flows for GitHub and BlueSky</li>
+          <li><strong>Documentation:</strong> README, code comments</li>
+          <li><strong>Sound research:</strong> Finding and suggesting sounds from Freesound.org</li>
+        </ul>
+
+        <h3>Human (<a href="https://github.com/tombuildsstuff" target="_blank" rel="noopener">@tombuildsstuff</a>)</h3>
+        <ul class="credits-list">
+          <li><strong>Prompting &amp; direction:</strong> Describing features, requesting changes, guiding development</li>
+          <li><strong>GitHub OAuth app:</strong> Creating and configuring the GitHub application for SSO</li>
+          <li><strong>Sound selection:</strong> Listening to suggested sounds and picking the final choices</li>
+          <li><strong>Deployment:</strong> Configuring the Railway hosting platform</li>
+          <li><strong>DNS:</strong> Setting up the arena.ibuildstuff.eu domain</li>
+        </ul>
+
+        <p class="credits-note">View the source code on <a href="https://github.com/tombuildsstuff/web-arena-game" target="_blank" rel="noopener">GitHub</a></p>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" id="how-built-close" class="modal-button submit">Close</button>
       </div>
     </div>
   </div>
@@ -272,6 +318,13 @@
         <ul class="credits-list">
           <li><strong>Code:</strong> <a href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener">Claude Code</a> by Anthropic</li>
           <li><strong>Prompts &amp; Direction:</strong> <a href="https://github.com/tombuildsstuff" target="_blank" rel="noopener">@tombuildsstuff</a></li>
+        </ul>
+
+        <h3>Inspiration</h3>
+        <ul class="credits-list">
+          <li><strong><a href="https://en.wikipedia.org/wiki/Future_Cop:_LAPD" target="_blank" rel="noopener">Future Cop: LAPD</a></strong> (1998) - "Precinct Assault" mode</li>
+          <li>Developed by EA Redwood Shores, published by Electronic Arts</li>
+          <li class="credits-note">All rights reserved by Electronic Arts</li>
         </ul>
 
         <h3>Sound Effects</h3>
@@ -337,6 +390,33 @@
           <button type="submit" id="bluesky-submit" class="modal-button submit">Login</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboard-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content info-modal leaderboard-modal">
+      <h2>Leaderboard</h2>
+      <div class="info-modal-body">
+        <table id="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Points</th>
+              <th>Wins</th>
+              <th>Games</th>
+              <th>Play Time</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" id="leaderboard-close" class="modal-button submit">Close</button>
+      </div>
     </div>
   </div>
 

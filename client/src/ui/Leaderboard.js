@@ -1,15 +1,45 @@
 export class Leaderboard {
   constructor() {
     this.loading = document.getElementById('leaderboard-loading');
+    this.top3Container = document.getElementById('leaderboard-top3');
+    this.viewMoreButton = document.getElementById('leaderboard-view-more');
+    this.empty = document.getElementById('leaderboard-empty');
+
+    // Modal elements
+    this.modal = document.getElementById('leaderboard-modal');
+    this.modalBackdrop = this.modal?.querySelector('.modal-backdrop');
     this.table = document.getElementById('leaderboard-table');
     this.tbody = document.getElementById('leaderboard-body');
-    this.empty = document.getElementById('leaderboard-empty');
+    this.closeButton = document.getElementById('leaderboard-close');
+
+    // Store entries for modal
+    this.entries = [];
+
+    this.setupEventListeners();
+  }
+
+  setupEventListeners() {
+    // View more button
+    if (this.viewMoreButton) {
+      this.viewMoreButton.addEventListener('click', () => this.showModal());
+    }
+
+    // Close button
+    if (this.closeButton) {
+      this.closeButton.addEventListener('click', () => this.hideModal());
+    }
+
+    // Backdrop click
+    if (this.modalBackdrop) {
+      this.modalBackdrop.addEventListener('click', () => this.hideModal());
+    }
   }
 
   async fetch() {
     try {
       this.loading.classList.remove('hidden');
-      this.table.classList.add('hidden');
+      this.top3Container.classList.add('hidden');
+      this.viewMoreButton.classList.add('hidden');
       this.empty.classList.add('hidden');
 
       const response = await fetch('/api/leaderboard');
@@ -17,27 +47,63 @@ export class Leaderboard {
         throw new Error('Failed to fetch leaderboard');
       }
 
-      const entries = await response.json();
-      this.render(entries);
+      this.entries = await response.json();
+      this.render();
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       this.loading.textContent = 'Failed to load leaderboard';
     }
   }
 
-  render(entries) {
+  render() {
     this.loading.classList.add('hidden');
 
-    if (!entries || entries.length === 0) {
+    if (!this.entries || this.entries.length === 0) {
       this.empty.classList.remove('hidden');
       return;
     }
 
+    // Render compact top 3 view
+    this.renderTop3();
+
+    // Show "View More" if there are more than 3 entries
+    if (this.entries.length > 3) {
+      this.viewMoreButton.classList.remove('hidden');
+    }
+
+    // Render full table in modal
+    this.renderFullTable();
+  }
+
+  renderTop3() {
+    const top3 = this.entries.slice(0, 3);
+    this.top3Container.innerHTML = '';
+
+    const medals = ['gold', 'silver', 'bronze'];
+    const medalEmojis = ['🥇', '🥈', '🥉'];
+
+    top3.forEach((entry, index) => {
+      const item = document.createElement('div');
+      item.className = `top3-item ${medals[index]}`;
+
+      item.innerHTML = `
+        <span class="top3-rank">${medalEmojis[index]}</span>
+        <span class="top3-name">${this.escapeHtml(entry.playerName)}</span>
+        <span class="top3-points">${entry.totalPoints.toLocaleString()} pts</span>
+      `;
+
+      this.top3Container.appendChild(item);
+    });
+
+    this.top3Container.classList.remove('hidden');
+  }
+
+  renderFullTable() {
     // Clear existing rows
     this.tbody.innerHTML = '';
 
     // Add rows for each entry
-    entries.forEach((entry, index) => {
+    this.entries.forEach((entry, index) => {
       const row = document.createElement('tr');
 
       // Rank
@@ -78,8 +144,18 @@ export class Leaderboard {
 
       this.tbody.appendChild(row);
     });
+  }
 
-    this.table.classList.remove('hidden');
+  showModal() {
+    if (this.modal) {
+      this.modal.classList.remove('hidden');
+    }
+  }
+
+  hideModal() {
+    if (this.modal) {
+      this.modal.classList.add('hidden');
+    }
   }
 
   formatPlayTime(seconds) {
@@ -94,5 +170,11 @@ export class Leaderboard {
       const mins = Math.floor((seconds % 3600) / 60);
       return `${hours}h ${mins}m`;
     }
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 }

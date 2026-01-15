@@ -179,15 +179,31 @@ func (h *Handler) HandleCallback(w http.ResponseWriter, r *http.Request) {
 
 // HandleLogout clears the auth cookie and removes session
 func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
-	// Remove session from server
+	// Remove auth session from server
 	if cookie, err := r.Cookie("auth_token"); err == nil {
 		h.sessionsMu.Lock()
 		delete(h.sessions, cookie.Value)
 		h.sessionsMu.Unlock()
 	}
 
+	// Remove guest session from server
+	if cookie, err := r.Cookie("guest_token"); err == nil {
+		h.sessionsMu.Lock()
+		delete(h.sessions, cookie.Value)
+		h.sessionsMu.Unlock()
+	}
+
+	// Clear auth cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:   "auth_token",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
+
+	// Clear guest cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:   "guest_token",
 		Value:  "",
 		Path:   "/",
 		MaxAge: -1,
@@ -197,17 +213,20 @@ func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"success": true}`))
 }
 
-// HandleMe returns the current user info
+// HandleMe returns the current user info (creates guest session if needed)
 func (h *Handler) HandleMe(w http.ResponseWriter, r *http.Request) {
+	// First check for authenticated user
 	userInfo := h.GetUserFromRequest(r)
-	if userInfo == nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"error": "not authenticated"}`))
+	if userInfo != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(userInfo)
 		return
 	}
 
+	// Check for existing guest or create new one
+	guestInfo := h.GetOrCreateGuestUser(r, w)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(userInfo)
+	json.NewEncoder(w).Encode(guestInfo)
 }
 
 // GetUserFromRequest extracts user info from the request (auth token cookie)
@@ -245,6 +264,63 @@ func GenerateGuestUser() *UserInfo {
 		DisplayName: GenerateGuestName(),
 		IsGuest:     true,
 	}
+}
+
+// GetOrCreateGuestUser returns existing guest user from cookie or creates a new one
+func (h *Handler) GetOrCreateGuestUser(r *http.Request, w http.ResponseWriter) *UserInfo {
+	// Check for existing guest token
+	cookie, err := r.Cookie("guest_token")
+	if err == nil && cookie.Value != "" {
+		h.sessionsMu.RLock()
+		userInfo, exists := h.sessions[cookie.Value]
+		h.sessionsMu.RUnlock()
+
+		if exists && userInfo.IsGuest {
+			return userInfo
+		}
+	}
+
+	// Create new guest user
+	guestUser := GenerateGuestUser()
+
+	// Generate guest token and store session
+	guestToken := uuid.New().String()
+	h.sessionsMu.Lock()
+	h.sessions[guestToken] = guestUser
+	h.sessionsMu.Unlock()
+
+	// Set guest token cookie (persists for 30 days)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "guest_token",
+		Value:    guestToken,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		MaxAge:   2592000, // 30 days
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	log.Printf("Created new guest user: %s (%s)", guestUser.DisplayName, guestUser.UserID)
+
+	return guestUser
+}
+
+// GetGuestFromRequest extracts guest info from the request (guest token cookie)
+func (h *Handler) GetGuestFromRequest(r *http.Request) *UserInfo {
+	cookie, err := r.Cookie("guest_token")
+	if err != nil {
+		return nil
+	}
+
+	h.sessionsMu.RLock()
+	defer h.sessionsMu.RUnlock()
+
+	userInfo, exists := h.sessions[cookie.Value]
+	if !exists || !userInfo.IsGuest {
+		return nil
+	}
+
+	return userInfo
 }
 
 // BlueSkyLoginRequest represents the request body for BlueSky login

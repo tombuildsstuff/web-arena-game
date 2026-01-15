@@ -1,11 +1,11 @@
 import { Game } from './game/Game.js';
 
 // Initialize the game when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('Initializing Arena Game...');
 
   const game = new Game();
-  game.init();
+  await game.init();
 
   console.log('Game initialized!');
 });

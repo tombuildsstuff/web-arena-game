@@ -407,40 +407,79 @@ body {
   color: #fbbf24;
 }
 
-/* VS AI Section */
-#vs-ai-section {
-  margin-top: 20px;
+/* Game Mode Panels */
+.game-mode-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.game-mode-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.game-mode-panel h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: white;
+}
+
+.game-mode-panel .panel-description {
+  font-size: 14px;
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+/* Multiplayer Panel */
+.multiplayer-panel {
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.multiplayer-panel h2 {
+  color: #60a5fa;
+}
+
+/* AI Panel */
+.ai-panel {
+  border-color: rgba(139, 92, 246, 0.3);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
 }
 
-.or-divider {
-  color: rgba(255, 255, 255, 0.5);
+.ai-panel h2 {
+  color: #a78bfa;
+}
+
+.ai-difficulty-section {
+  margin-bottom: 20px;
+}
+
+.ai-difficulty-section label {
+  display: block;
   font-size: 14px;
-  text-transform: uppercase;
-}
-
-.ai-controls {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+  color: #94a3b8;
+  margin-bottom: 8px;
 }
 
 #ai-difficulty {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 10px 15px;
+  padding: 12px 20px;
   font-size: 16px;
   border-radius: 8px;
   cursor: pointer;
+  width: 100%;
 }
 
 #ai-difficulty:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #8b5cf6;
 }
 
 #ai-difficulty option {
@@ -452,11 +491,12 @@ body {
   background: linear-gradient(to right, #8b5cf6, #7c3aed);
   border: none;
   color: white;
-  padding: 12px 25px;
+  padding: 15px 30px;
   font-size: 16px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  margin-top: auto;
 }
 
 #play-vs-ai-button:hover:not(:disabled) {
@@ -467,6 +507,13 @@ body {
 #play-vs-ai-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Responsive: Stack panels on mobile */
+@media (max-width: 600px) {
+  .game-mode-panels {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Game Over Screen */
@@ -589,26 +636,105 @@ body {
   display: none;
 }
 
-/* Leaderboard */
+/* Leaderboard (compact top 3) */
 #leaderboard {
-  margin-top: 40px;
-  padding-top: 30px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-top: 30px;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
 }
 
-#leaderboard h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
-  color: #fbbf24;
+#leaderboard h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  opacity: 0.8;
 }
 
 #leaderboard-loading,
 #leaderboard-empty {
   color: #94a3b8;
-  font-size: 14px;
+  font-size: 13px;
+}
+
+/* Top 3 compact view */
+#leaderboard-top3 {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.top3-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.top3-item.gold {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.top3-item.silver {
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.top3-item.bronze {
+  background: rgba(205, 127, 50, 0.1);
+  border: 1px solid rgba(205, 127, 50, 0.2);
+}
+
+.top3-rank {
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+}
+
+.top3-name {
+  flex: 1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top3-points {
+  color: #22c55e;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+#leaderboard-view-more {
+  margin-top: 10px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  padding: 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#leaderboard-view-more:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Leaderboard Modal */
+.leaderboard-modal {
+  max-width: 600px;
+}
+
+.leaderboard-modal .info-modal-body {
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 #leaderboard-table {
@@ -664,10 +790,10 @@ body {
 
 /* Auth Section */
 #auth-section {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
-#auth-logged-out,
+#auth-guest,
 #auth-logged-in {
   display: flex;
   flex-direction: column;
@@ -675,9 +801,43 @@ body {
   gap: 10px;
 }
 
+.multiplayer-panel #join-queue-button {
+  width: 100%;
+}
+
 #auth-logged-in.hidden,
-#auth-logged-out.hidden {
+#auth-guest.hidden {
   display: none;
+}
+
+/* Guest info display */
+.guest-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.guest-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+#auth-guest .auth-hint {
+  margin-bottom: 8px;
+}
+
+#auth-guest .auth-buttons {
+  gap: 8px;
+}
+
+#auth-guest .auth-button {
+  padding: 8px 16px;
+  font-size: 14px;
 }
 
 .auth-buttons {
@@ -800,6 +960,9 @@ body {
   padding: 30px;
   max-width: 400px;
   width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
@@ -911,18 +1074,22 @@ body {
 
 /* Lobby Status */
 #lobby-status {
-  margin-top: 20px;
+  margin-top: 16px;
   text-align: center;
+}
+
+#lobby-status:empty {
+  display: none;
 }
 
 #players-waiting {
   color: #fbbf24;
-  font-size: 16px;
-  margin-bottom: 15px;
+  font-size: 14px;
+  margin-bottom: 12px;
 }
 
 #active-games h3 {
-  font-size: 18px;
+  font-size: 14px;
   color: #94a3b8;
   margin-bottom: 10px;
 }
@@ -931,8 +1098,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: 400px;
-  margin: 0 auto;
 }
 
 .active-game-item {
@@ -940,8 +1105,8 @@ body {
   justify-content: space-between;
   align-items: center;
   background: rgba(255, 255, 255, 0.05);
-  padding: 12px 16px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -950,8 +1115,13 @@ body {
 }
 
 .game-players {
-  font-size: 14px;
+  font-size: 13px;
   color: #e2e8f0;
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .game-players .vs {
@@ -1084,12 +1254,20 @@ body {
 
 .info-modal h2 {
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .info-modal-body {
   text-align: left;
   color: #e2e8f0;
   line-height: 1.6;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.info-modal .modal-buttons {
+  flex-shrink: 0;
 }
 
 .info-modal-body p {

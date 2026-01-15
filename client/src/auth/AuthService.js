@@ -7,6 +7,7 @@ export class AuthService {
   }
 
   // Check if user is logged in by fetching /api/me
+  // This will also create a persistent guest session if not authenticated
   async checkAuth() {
     try {
       const response = await fetch('/api/me', {
@@ -28,6 +29,11 @@ export class AuthService {
       this.notifyListeners();
       return null;
     }
+  }
+
+  // Check if user is a guest
+  isGuest() {
+    return this.user !== null && this.user.isGuest;
   }
 
   // Redirect to GitHub OAuth login
