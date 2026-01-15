@@ -15,6 +15,7 @@ const DefaultMapID = "classic"
 func init() {
 	// Register all maps
 	Register(ClassicMap())
+	Register(TheDivideMap())
 }
 
 // Register adds a map to the registry
