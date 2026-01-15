@@ -482,6 +482,102 @@ func (r *GameRoom) HandleBuyFromZone(playerID int, zoneID string, conn ClientCon
 	r.State.SpawnQueue.Add(zone.UnitType, playerID, spawnPos, targetPos, zoneID)
 }
 
+// HandleBulkBuyFromZone handles a bulk purchase of 10 units at 10% discount
+func (r *GameRoom) HandleBulkBuyFromZone(playerID int, zoneID string, conn ClientConnection) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.State.GameStatus != "playing" {
+		return
+	}
+
+	// Find the buy zone
+	var zone *BuyZone
+	for _, z := range r.State.BuyZones {
+		if z.ID == zoneID {
+			zone = z
+			break
+		}
+	}
+
+	if zone == nil {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Invalid buy zone",
+		})
+		return
+	}
+
+	// Check if zone belongs to this player
+	if zone.OwnerID != playerID {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "This is not your buy zone",
+		})
+		return
+	}
+
+	// Bulk buy only available for regular tanks and helicopters, not super units
+	if zone.UnitType != "tank" && zone.UnitType != "airplane" {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Bulk purchase only available for tanks and helicopters",
+		})
+		return
+	}
+
+	// Get the player
+	player := r.State.GetPlayer(playerID)
+	if player == nil {
+		return
+	}
+
+	// Get the player unit
+	playerUnit := r.State.GetPlayerUnit(playerID)
+	if playerUnit == nil || !playerUnit.IsAlive() {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "You must be alive to purchase",
+		})
+		return
+	}
+
+	// Check if player is near the buy zone
+	if !zone.IsPlayerInRange(playerUnit.GetPosition()) {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Get closer to the buy zone",
+		})
+		return
+	}
+
+	// Calculate bulk price with 10% discount
+	quantity := types.BulkBuyQuantity
+	totalCost := int(float64(zone.Cost*quantity) * (1.0 - types.BulkBuyDiscount))
+
+	// Check if player can afford
+	if !player.CanAfford(totalCost) {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: fmt.Sprintf("Not enough money! Need $%d for %d units", totalCost, quantity),
+		})
+		return
+	}
+
+	// Deduct cost
+	player.Spend(totalCost)
+
+	// Queue all spawns
+	spawnPos := zone.Position
+	targetPos := r.State.Players[1-playerID].BasePosition // Target enemy base
+
+	switch zone.UnitType {
+	case "tank":
+		spawnPos.Y = types.TankYPosition
+	case "airplane":
+		spawnPos.Y = types.AirplaneYPosition
+	}
+
+	// Add all units to spawn queue
+	for i := 0; i < quantity; i++ {
+		r.State.SpawnQueue.Add(zone.UnitType, playerID, spawnPos, targetPos, zoneID)
+	}
+}
+
 // HandleClaimTurret handles a turret claiming request
 func (r *GameRoom) HandleClaimTurret(playerID int, turretID string, conn ClientConnection) {
 	r.mu.Lock()

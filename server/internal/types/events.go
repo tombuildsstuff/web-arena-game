@@ -73,6 +73,11 @@ type BuyFromZonePayload struct {
 	ZoneID string `json:"zoneId"` // ID of the buy zone to purchase from
 }
 
+// BulkBuyFromZonePayload represents a request to buy 10 units at a discount
+type BulkBuyFromZonePayload struct {
+	ZoneID string `json:"zoneId"` // ID of the buy zone to purchase from
+}
+
 // ClaimTurretPayload represents a request to claim a turret
 type ClaimTurretPayload struct {
 	TurretID string `json:"turretId"` // ID of the turret to claim

@@ -17,8 +17,10 @@ const (
 	StartingMoney          = 1000
 	PassiveIncomePerSecond = 10
 	ForwardBaseClaimCost   = 500
-	KillRewardUnit         = 10 // Money awarded for destroying a unit
-	TurretClaimReward      = 20 // Money awarded for claiming a turret
+	KillRewardUnit         = 10  // Money awarded for destroying a unit
+	TurretClaimReward      = 20  // Money awarded for claiming a turret
+	BulkBuyQuantity        = 10  // Number of units in a bulk purchase
+	BulkBuyDiscount        = 0.1 // 10% discount for bulk purchases
 
 	// Tank stats
 	TankCost        = 50

@@ -1,12 +1,13 @@
 import * as THREE from 'three';
 
 export class PlayerInput {
-  constructor(camera, renderer, onMove, onShoot, onBuyFromZone, onClaimTurret, onClaimBuyZone, gameLoop) {
+  constructor(camera, renderer, onMove, onShoot, onBuyFromZone, onBulkBuyFromZone, onClaimTurret, onClaimBuyZone, gameLoop) {
     this.camera = camera;
     this.renderer = renderer;
     this.onMove = onMove;
     this.onShoot = onShoot;
     this.onBuyFromZone = onBuyFromZone;
+    this.onBulkBuyFromZone = onBulkBuyFromZone;
     this.onClaimTurret = onClaimTurret;
     this.onClaimBuyZone = onClaimBuyZone;
     this.gameLoop = gameLoop;
@@ -99,9 +100,22 @@ export class PlayerInput {
       this.sendMovement();
     }
 
-    // E key for buying from zones or claiming turrets
-    if (event.code === 'KeyE') {
+    // X key for shooting
+    if (event.code === 'KeyX') {
+      this.updateTargetPosition();
+      if (this.onShoot) {
+        this.onShoot(this.targetPosition.x, this.targetPosition.z);
+      }
+    }
+
+    // C key for buying from zones or claiming turrets
+    if (event.code === 'KeyC') {
       this.handleInteraction();
+    }
+
+    // V key for bulk buying (10 units at 10% discount)
+    if (event.code === 'KeyV') {
+      this.handleBulkBuy();
     }
   }
 
@@ -124,6 +138,19 @@ export class PlayerInput {
     const nearbyTurret = this.gameLoop.getNearbyTurret();
     if (nearbyTurret && this.onClaimTurret) {
       this.onClaimTurret(nearbyTurret.id);
+    }
+  }
+
+  handleBulkBuy() {
+    if (!this.gameLoop) return;
+
+    // Only works for regular tank/helicopter zones (not super units)
+    const nearbyZone = this.gameLoop.getNearbyBuyZone();
+    if (nearbyZone && this.onBulkBuyFromZone) {
+      // Only allow bulk buy for tank and airplane (helicopter)
+      if (nearbyZone.unitType === 'tank' || nearbyZone.unitType === 'airplane') {
+        this.onBulkBuyFromZone(nearbyZone.id);
+      }
     }
   }
 

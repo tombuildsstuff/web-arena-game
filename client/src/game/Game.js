@@ -89,6 +89,7 @@ export class Game {
       (direction) => this.sendPlayerMove(direction),
       (targetX, targetZ) => this.sendPlayerShoot(targetX, targetZ),
       (zoneId) => this.sendBuyFromZone(zoneId),
+      (zoneId) => this.sendBulkBuyFromZone(zoneId),
       (turretId) => this.sendClaimTurret(turretId),
       (zoneId) => this.sendClaimBuyZone(zoneId),
       this.gameLoop
@@ -418,6 +419,12 @@ export class Game {
   sendBuyFromZone(zoneId) {
     if (this.ws.isConnected() && this.gameState.gameStatus === 'playing') {
       this.ws.send('buy_from_zone', { zoneId });
+    }
+  }
+
+  sendBulkBuyFromZone(zoneId) {
+    if (this.ws.isConnected() && this.gameState.gameStatus === 'playing') {
+      this.ws.send('bulk_buy_from_zone', { zoneId });
     }
   }
 

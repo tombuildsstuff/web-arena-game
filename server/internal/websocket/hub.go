@@ -100,6 +100,9 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 	case "buy_from_zone":
 		h.handleBuyFromZone(client, msg.Payload)
 
+	case "bulk_buy_from_zone":
+		h.handleBulkBuyFromZone(client, msg.Payload)
+
 	case "claim_turret":
 		h.handleClaimTurret(client, msg.Payload)
 
@@ -287,6 +290,35 @@ func (h *Hub) handleBuyFromZone(client *Client, payload interface{}) {
 
 	// Forward to game room
 	room.HandleBuyFromZone(playerID, buy.ZoneID, client)
+}
+
+// handleBulkBuyFromZone processes a bulk buy from zone request (10 units at 10% discount)
+func (h *Hub) handleBulkBuyFromZone(client *Client, payload interface{}) {
+	// Parse payload
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	var buy types.BulkBuyFromZonePayload
+	if err := json.Unmarshal(data, &buy); err != nil {
+		return
+	}
+
+	// Get the game room for this client
+	room := h.gameManager.GetRoomByClient(client.ID)
+	if room == nil {
+		return
+	}
+
+	// Get player ID
+	playerID := h.gameManager.GetPlayerIDInRoom(client.ID)
+	if playerID < 0 {
+		return
+	}
+
+	// Forward to game room
+	room.HandleBulkBuyFromZone(playerID, buy.ZoneID, client)
 }
 
 // handleClaimTurret processes a turret claiming request

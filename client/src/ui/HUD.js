@@ -196,8 +196,17 @@ export class HUD {
       const pendingCount = pendingCounts[nearbyZone.unitType] || 0;
 
       let promptText = canAfford
-        ? `Press <span class="key">E</span> to buy ${unitName} ($${cost})`
+        ? `Press <span class="key">C</span> to buy ${unitName} ($${cost})`
         : `${unitName} ($${cost}) - Not enough money`;
+
+      // Show bulk buy option for regular tanks and helicopters
+      if (nearbyZone.unitType === 'tank' || nearbyZone.unitType === 'airplane') {
+        const bulkCost = Math.floor(cost * 10 * 0.9); // 10 units at 10% discount
+        const canAffordBulk = myPlayer.money >= bulkCost;
+        if (canAffordBulk) {
+          promptText += ` | <span class="key">V</span> for 10 ($${bulkCost})`;
+        }
+      }
 
       // Show pending spawn count if any
       if (pendingCount > 0) {
@@ -216,7 +225,7 @@ export class HUD {
       const canAfford = myPlayer.money >= claimCost;
 
       this.buyZoneTextElement.innerHTML = canAfford
-        ? `Press <span class="key">E</span> to claim Forward Base ($${claimCost})`
+        ? `Press <span class="key">C</span> to claim Forward Base ($${claimCost})`
         : `Forward Base ($${claimCost}) - Not enough money`;
 
       this.buyZonePromptElement.classList.remove('hidden');
@@ -225,7 +234,7 @@ export class HUD {
         : 'rgba(239, 68, 68, 0.6)';   // Red if can't afford
     } else if (nearbyTurret) {
       // Show turret claiming prompt (only shown for neutral turrets)
-      this.buyZoneTextElement.innerHTML = `Press <span class="key">E</span> to claim Turret`;
+      this.buyZoneTextElement.innerHTML = `Press <span class="key">C</span> to claim Turret`;
 
       this.buyZonePromptElement.classList.remove('hidden');
       this.buyZonePromptElement.style.borderColor = 'rgba(139, 92, 246, 0.6)'; // Purple for turrets
