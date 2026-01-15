@@ -18,7 +18,8 @@ func (s *WinConditionSystem) Check(state *State) (bool, int, string) {
 	// Check if any tank has reached the enemy base
 	// Only tanks can capture bases (not players or helicopters)
 	for _, unit := range state.Units {
-		if unit.GetType() != "tank" {
+		unitType := unit.GetType()
+		if unitType != "tank" && unitType != "super_tank" {
 			continue
 		}
 

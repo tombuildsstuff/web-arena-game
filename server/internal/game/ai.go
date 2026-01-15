@@ -122,6 +122,10 @@ func (ai *AIController) purchaseFromBase(state *State, room *GameRoom, player *P
 		cost = types.TankCost
 	case "airplane":
 		cost = types.AirplaneCost
+	case "super_tank":
+		cost = types.SuperTankCost
+	case "super_helicopter":
+		cost = types.SuperHelicopterCost
 	default:
 		return
 	}
@@ -143,6 +147,12 @@ func (ai *AIController) purchaseFromBase(state *State, room *GameRoom, player *P
 	case "airplane":
 		spawnPos.Y = types.AirplaneYPosition
 		unit = NewAirplane(ai.playerID, spawnPos, targetPos)
+	case "super_tank":
+		spawnPos.Y = types.TankYPosition
+		unit = NewSuperTank(ai.playerID, spawnPos, targetPos)
+	case "super_helicopter":
+		spawnPos.Y = types.AirplaneYPosition
+		unit = NewSuperHelicopter(ai.playerID, spawnPos, targetPos)
 	}
 
 	if unit != nil {
@@ -164,26 +174,34 @@ func (ai *AIController) buyFromZone(state *State, room *GameRoom, player *Player
 		return
 	}
 
+	// Check super unit limit (only 1 super tank and 1 super helicopter per player)
+	if zone.UnitType == "super_tank" || zone.UnitType == "super_helicopter" {
+		if state.HasSuperUnit(ai.playerID, zone.UnitType) {
+			return // AI already has this super unit type
+		}
+	}
+
 	player.Spend(zone.Cost)
 
 	spawnPos := zone.Position
 	targetPos := state.Players[1-ai.playerID].BasePosition
 
 	switch zone.UnitType {
-	case "tank":
+	case "tank", "super_tank":
 		spawnPos.Y = types.TankYPosition
-	case "airplane":
+	case "airplane", "super_helicopter":
 		spawnPos.Y = types.AirplaneYPosition
 	}
 
 	state.SpawnQueue.Add(zone.UnitType, ai.playerID, spawnPos, targetPos, zoneID)
 }
 
-// getOwnedBuyZones returns buy zones owned by the AI
+// getOwnedBuyZones returns buy zones owned by the AI (only unit purchase zones, not base zones)
 func (ai *AIController) getOwnedBuyZones(state *State) []*BuyZone {
 	var zones []*BuyZone
 	for _, zone := range state.BuyZones {
-		if zone.OwnerID == ai.playerID {
+		// Only include zones with a unit type (exclude base zones)
+		if zone.OwnerID == ai.playerID && zone.UnitType != "" {
 			zones = append(zones, zone)
 		}
 	}
@@ -198,15 +216,38 @@ func (ai *AIController) decideClaimActions(state *State, room *GameRoom, playerU
 	for _, turret := range state.Turrets {
 		if turret.CanBeClaimed(ai.playerID) && turret.IsPlayerInRange(pos) {
 			turret.Claim(ai.playerID)
+			// Reward AI for claiming turret
+			player := state.GetPlayer(ai.playerID)
+			if player != nil {
+				player.Money += types.TurretClaimReward
+			}
 			return // One action per decision cycle
 		}
 	}
 
-	// Check for claimable buy zones nearby
+	// Check for claimable buy zones (forward bases) nearby
+	player := state.GetPlayer(ai.playerID)
+	if player == nil {
+		return
+	}
+
 	for _, zone := range state.BuyZones {
 		if zone.CanBeClaimed(ai.playerID) && zone.IsPlayerInRange(pos) {
-			zone.Claim(ai.playerID)
-			return
+			// Check if AI can afford the claim cost
+			if player.Money >= zone.ClaimCost {
+				player.Money -= zone.ClaimCost
+				zone.Claim(ai.playerID)
+
+				// If this is a forward base, also claim all child zones
+				if zone.UnitType == "" && zone.IsClaimable {
+					for _, childZone := range state.BuyZones {
+						if childZone.ForwardBaseID == zone.ID {
+							childZone.Claim(ai.playerID)
+						}
+					}
+				}
+				return
+			}
 		}
 	}
 }

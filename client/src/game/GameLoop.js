@@ -6,6 +6,7 @@ import { Projectile } from './Projectile.js';
 import { Explosion } from './Explosion.js';
 import { BuyZone } from './BuyZone.js';
 import { Turret } from './Turret.js';
+import { HealthPack } from './HealthPack.js';
 import { PLAYER_COLORS } from '../utils/constants.js';
 
 export class GameLoop {
@@ -23,6 +24,7 @@ export class GameLoop {
     this.projectileMeshes = new Map(); // Map of projectile ID to Projectile object
     this.buyZoneMeshes = new Map(); // Map of buy zone ID to BuyZone object
     this.turretMeshes = new Map(); // Map of turret ID to Turret object
+    this.healthPackMeshes = new Map(); // Map of health pack ID to HealthPack object
     this.explosions = []; // Active explosions
     this.obstaclesInitialized = false;
     this.buyZonesInitialized = false;
@@ -139,6 +141,9 @@ export class GameLoop {
     // Update turret animations and check proximity
     this.updateTurrets();
 
+    // Sync and update health packs
+    this.syncHealthPacks();
+
     // Update unit positions with interpolation
     this.updateUnitPositions(deltaTime);
   }
@@ -210,7 +215,8 @@ export class GameLoop {
       if (!buyZone.isInRange(playerPos)) continue;
 
       // Check if this is a zone owned by this player (can buy from it)
-      if (buyZone.zone.ownerId === this.gameState.playerId) {
+      // Skip zones with no unitType - those are claimable base zones, not purchase zones
+      if (buyZone.zone.ownerId === this.gameState.playerId && buyZone.zone.unitType) {
         this.nearbyBuyZone = buyZone.zone;
         break;
       }
@@ -321,6 +327,30 @@ export class GameLoop {
     return this.nearbyTurret;
   }
 
+  syncHealthPacks() {
+    const stateHealthPacks = this.gameState.healthPacks || [];
+    const stateHealthPackIDs = new Set(stateHealthPacks.map(hp => hp.id));
+
+    // Remove health packs that no longer exist (collected)
+    for (const [packID, packObj] of this.healthPackMeshes.entries()) {
+      if (!stateHealthPackIDs.has(packID)) {
+        packObj.remove();
+        this.healthPackMeshes.delete(packID);
+      }
+    }
+
+    // Add new health packs and update existing ones
+    for (const pack of stateHealthPacks) {
+      if (!this.healthPackMeshes.has(pack.id)) {
+        const healthPack = new HealthPack(this.scene.getScene(), pack);
+        this.healthPackMeshes.set(pack.id, healthPack);
+      } else {
+        // Update animation
+        this.healthPackMeshes.get(pack.id).update(this.elapsedTime);
+      }
+    }
+  }
+
   syncUnits() {
     const stateUnits = this.gameState.units || [];
     const currentUnitIDs = new Set(stateUnits.map(u => u.id));
@@ -429,9 +459,13 @@ export class GameLoop {
     let unitObj;
 
     if (unit.type === 'tank') {
-      unitObj = new Tank(this.scene.getScene(), unit, color);
+      unitObj = new Tank(this.scene.getScene(), unit, color, false);
+    } else if (unit.type === 'super_tank') {
+      unitObj = new Tank(this.scene.getScene(), unit, color, true);
     } else if (unit.type === 'airplane') {
-      unitObj = new Airplane(this.scene.getScene(), unit, color);
+      unitObj = new Airplane(this.scene.getScene(), unit, color, false);
+    } else if (unit.type === 'super_helicopter') {
+      unitObj = new Airplane(this.scene.getScene(), unit, color, true);
     } else if (unit.type === 'player') {
       const isLocalPlayer = !this.isSpectating && unit.ownerId === this.gameState.playerId;
       // Get display name from player data
@@ -484,8 +518,8 @@ export class GameLoop {
           unitObj.updateHealth(unit.health, camera);
         }
 
-        // Update turret targeting for tanks
-        if (unit.type === 'tank' && unitObj.setTarget) {
+        // Update turret targeting for tanks (including super tanks)
+        if ((unit.type === 'tank' || unit.type === 'super_tank') && unitObj.setTarget) {
           // Check if this tank has a projectile (is currently shooting)
           const targetPosition = shooterTargets.get(unit.id);
           if (targetPosition) {
@@ -567,6 +601,12 @@ export class GameLoop {
       turret.remove();
     }
     this.turretMeshes.clear();
+
+    // Remove all health pack meshes
+    for (const healthPack of this.healthPackMeshes.values()) {
+      healthPack.remove();
+    }
+    this.healthPackMeshes.clear();
 
     // Clear explosions
     this.explosions = [];

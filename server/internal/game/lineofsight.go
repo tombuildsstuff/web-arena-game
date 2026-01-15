@@ -82,7 +82,8 @@ func (l *LOSSystem) HasLineOfSightBetweenUnits(attacker, target Unit) bool {
 	to := target.GetPosition()
 
 	// Helicopters (airplanes) ignore obstacles for LOS
-	ignoreHeight := attacker.GetType() == "airplane"
+	attackerType := attacker.GetType()
+	ignoreHeight := attackerType == "airplane" || attackerType == "super_helicopter"
 
 	return l.HasLineOfSight(from, to, ignoreHeight)
 }

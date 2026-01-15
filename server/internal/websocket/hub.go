@@ -60,7 +60,7 @@ func (h *Hub) Run() {
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				delete(h.clientsByID, client.ID)
-				close(client.send)
+				client.Close()
 
 				// Remove from game manager (handles both queue and active games)
 				h.gameManager.RemoveClient(client.ID)
@@ -432,8 +432,9 @@ func (h *Hub) Broadcast(msgType string, payload interface{}) {
 		select {
 		case client.send <- data:
 		default:
-			close(client.send)
-			delete(h.clients, client)
+			// Buffer full - drop the message for this client.
+			// The client will be cleaned up via ping/pong timeout if unresponsive.
+			log.Printf("client %s: broadcast buffer full, dropping message type %s", client.ID, msgType)
 		}
 	}
 }

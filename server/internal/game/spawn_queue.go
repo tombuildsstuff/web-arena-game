@@ -19,8 +19,10 @@ type PendingSpawn struct {
 
 // Spawn delay constants (in milliseconds)
 const (
-	TankSpawnDelay     = 2000 // 2 seconds between tank spawns
-	AirplaneSpawnDelay = 4000 // 4 seconds between airplane spawns
+	TankSpawnDelay            = 2000  // 2 seconds between tank spawns
+	AirplaneSpawnDelay        = 4000  // 4 seconds between airplane spawns
+	SuperTankSpawnDelay       = 10000 // 10 seconds for super tank spawns
+	SuperHelicopterSpawnDelay = 10000 // 10 seconds for super helicopter spawns
 )
 
 // SpawnQueue manages pending unit spawns
@@ -95,6 +97,10 @@ func (q *SpawnQueue) ProcessQueue(state *State) []Unit {
 				unit = NewTank(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
 			case "airplane":
 				unit = NewAirplane(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
+			case "super_tank":
+				unit = NewSuperTank(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
+			case "super_helicopter":
+				unit = NewSuperHelicopter(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
 			}
 
 			if unit != nil {
@@ -131,6 +137,10 @@ func (q *SpawnQueue) canSpawnUnit(playerID int, unitType string, now int64) bool
 		requiredDelay = TankSpawnDelay
 	case "airplane":
 		requiredDelay = AirplaneSpawnDelay
+	case "super_tank":
+		requiredDelay = SuperTankSpawnDelay
+	case "super_helicopter":
+		requiredDelay = SuperHelicopterSpawnDelay
 	default:
 		requiredDelay = 1000 // Default 1 second
 	}
@@ -157,6 +167,12 @@ func (q *SpawnQueue) isSpawnPositionClear(pending *PendingSpawn, units []Unit) b
 		spawnY = types.TankYPosition
 	case "airplane":
 		spawnRadius = types.AirplaneCollisionRadius
+		spawnY = types.AirplaneYPosition
+	case "super_tank":
+		spawnRadius = types.SuperTankCollisionRadius
+		spawnY = types.TankYPosition
+	case "super_helicopter":
+		spawnRadius = types.SuperHelicopterCollisionRadius
 		spawnY = types.AirplaneYPosition
 	default:
 		spawnRadius = 2.0
@@ -208,6 +224,12 @@ func (q *SpawnQueue) isSpawnPositionClear(pending *PendingSpawn, units []Unit) b
 		case "airplane":
 			otherY = types.AirplaneYPosition
 			otherRadius = types.AirplaneCollisionRadius
+		case "super_tank":
+			otherY = types.TankYPosition
+			otherRadius = types.SuperTankCollisionRadius
+		case "super_helicopter":
+			otherY = types.AirplaneYPosition
+			otherRadius = types.SuperHelicopterCollisionRadius
 		default:
 			otherY = 1.0
 			otherRadius = 2.0

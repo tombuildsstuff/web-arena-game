@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { HealthBar } from './HealthBar.js';
 
 export class Tank {
-  constructor(scene, unit, color) {
+  constructor(scene, unit, color, isSuper = false) {
     this.scene = scene;
     this.unit = unit;
     this.color = color;
+    this.isSuper = isSuper;
     this.mesh = null;
     this.turretGroup = null; // Separate group for turret rotation
     this.lastPosition = null;
@@ -13,13 +14,16 @@ export class Tank {
     this.turretTargetRotation = 0;
     this.currentTurretRotation = 0;
     this.healthBar = null;
-    this.maxHealth = 30; // TankHealth from server
+    this.maxHealth = isSuper ? 90 : 30; // SuperTankHealth vs TankHealth
     this.create();
   }
 
   create() {
+    // Scale factor for super tanks (1.3x larger)
+    const scale = this.isSuper ? 1.3 : 1.0;
+
     // Tank body
-    const bodyGeometry = new THREE.BoxGeometry(3, 2, 4);
+    const bodyGeometry = new THREE.BoxGeometry(3 * scale, 2 * scale, 4 * scale);
     const bodyMaterial = new THREE.MeshStandardMaterial({
       color: this.color,
       roughness: 0.6,
@@ -30,26 +34,41 @@ export class Tank {
     this.mesh.castShadow = true;
     this.mesh.receiveShadow = true;
 
+    // Add gold stripe for super tanks
+    if (this.isSuper) {
+      const stripeGeometry = new THREE.BoxGeometry(3.1 * scale, 0.3 * scale, 4.1 * scale);
+      const stripeMaterial = new THREE.MeshStandardMaterial({
+        color: 0xffd700, // Gold
+        roughness: 0.3,
+        metalness: 0.8,
+        emissive: 0xffd700,
+        emissiveIntensity: 0.2
+      });
+      const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+      stripe.position.y = 0.5 * scale;
+      this.mesh.add(stripe);
+    }
+
     // Create turret group for independent rotation
     this.turretGroup = new THREE.Group();
-    this.turretGroup.position.y = 1.75;
+    this.turretGroup.position.y = 1.75 * scale;
     this.mesh.add(this.turretGroup);
 
     // Turret base
-    const turretGeometry = new THREE.BoxGeometry(2, 1.5, 2);
+    const turretGeometry = new THREE.BoxGeometry(2 * scale, 1.5 * scale, 2 * scale);
     const turret = new THREE.Mesh(turretGeometry, bodyMaterial);
     this.turretGroup.add(turret);
 
     // Cannon - attached to turret group so it rotates with it
-    const cannonGeometry = new THREE.CylinderGeometry(0.3, 0.3, 3, 8);
+    const cannonGeometry = new THREE.CylinderGeometry(0.3 * scale, 0.3 * scale, 3 * scale, 8);
     const cannon = new THREE.Mesh(cannonGeometry, bodyMaterial);
     cannon.rotation.z = Math.PI / 2;
-    cannon.position.set(1.5, 0, 0); // Relative to turret group
+    cannon.position.set(1.5 * scale, 0, 0); // Relative to turret group
     this.turretGroup.add(cannon);
 
     // Create health bar above tank
-    this.healthBar = new HealthBar(this.maxHealth, 3, 0.35);
-    this.healthBar.getGroup().position.y = 3.5;
+    this.healthBar = new HealthBar(this.maxHealth, 3 * scale, 0.35);
+    this.healthBar.getGroup().position.y = 3.5 * scale;
     this.mesh.add(this.healthBar.getGroup());
 
     // Set initial position

@@ -26,11 +26,11 @@ func (s *MovementSystem) Update(state *State, deltaTime float64) {
 
 		// Handle different unit types
 		switch unit.GetType() {
-		case "tank":
+		case "tank", "super_tank":
 			s.updateTankMovement(unit, state, deltaTime)
 		case "player":
 			s.updatePlayerMovement(unit, state, deltaTime)
-		default: // airplane
+		default: // airplane, super_helicopter
 			s.updateDirectMovement(unit, deltaTime)
 		}
 	}

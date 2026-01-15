@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -31,6 +32,8 @@ type Client struct {
 	ID          string
 	DisplayName string // GitHub username or "Guest_XXXX"
 	IsGuest     bool
+	mu          sync.Mutex
+	closed      bool
 }
 
 // NewClient creates a new client
@@ -129,6 +132,13 @@ func (c *Client) WritePump() {
 
 // SendMessage sends a message to the client
 func (c *Client) SendMessage(msgType string, payload interface{}) {
+	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		return
+	}
+	c.mu.Unlock()
+
 	msg := types.Message{
 		Type:    msgType,
 		Payload: payload,
@@ -143,6 +153,19 @@ func (c *Client) SendMessage(msgType string, payload interface{}) {
 	select {
 	case c.send <- data:
 	default:
+		// Buffer full - drop the message rather than closing the channel.
+		// The client will eventually be cleaned up via ping/pong timeout.
+		log.Printf("client %s: send buffer full, dropping message type %s", c.ID, msgType)
+	}
+}
+
+// Close marks the client as closed and closes the send channel.
+// This should only be called by the hub during unregistration.
+func (c *Client) Close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if !c.closed {
+		c.closed = true
 		close(c.send)
 	}
 }

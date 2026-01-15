@@ -72,41 +72,83 @@ export class BuyZone {
     );
     this.scene.add(this.glowMesh);
 
-    // Add an icon/symbol on top (simple box for tank, cone for airplane)
-    if (this.zone.unitType === 'tank') {
-      const iconGeometry = new THREE.BoxGeometry(1.5, 0.8, 2);
-      const iconMaterial = new THREE.MeshStandardMaterial({
-        color: 0x333333,
-        roughness: 0.5,
-        metalness: 0.5,
-        transparent: true,
-        opacity: 1.0
-      });
-      const icon = new THREE.Mesh(iconGeometry, iconMaterial);
+    // Add an icon/symbol on top based on unit type
+    this.createUnitIcon(baseY);
+  }
+
+  createUnitIcon(baseY) {
+    const unitType = this.zone.unitType;
+    if (!unitType) return; // No icon for base zones
+
+    // Determine if this is a super unit (larger, with gold accent)
+    const isSuper = unitType.startsWith('super_');
+    const scale = isSuper ? 1.3 : 1.0;
+
+    // Base icon color (dark grey, or gold tinted for super units)
+    const iconColor = isSuper ? 0x555544 : 0x333333;
+
+    const iconMaterial = new THREE.MeshStandardMaterial({
+      color: iconColor,
+      roughness: 0.5,
+      metalness: 0.5,
+      transparent: true,
+      opacity: 1.0
+    });
+
+    let icon;
+
+    if (unitType === 'tank' || unitType === 'super_tank') {
+      // Tank icon - box shape
+      const iconGeometry = new THREE.BoxGeometry(1.5 * scale, 0.8 * scale, 2 * scale);
+      icon = new THREE.Mesh(iconGeometry, iconMaterial);
       icon.position.set(
         this.zone.position.x,
-        baseY + 0.7,
+        baseY + 0.7 * scale,
         this.zone.position.z
       );
-      icon.castShadow = true;
-      this.scene.add(icon);
-      this.iconMesh = icon;
-    } else if (this.zone.unitType === 'airplane') {
-      const iconGeometry = new THREE.ConeGeometry(0.6, 2, 8);
-      const iconMaterial = new THREE.MeshStandardMaterial({
-        color: 0x333333,
-        roughness: 0.5,
-        metalness: 0.5,
-        transparent: true,
-        opacity: 1.0
-      });
-      const icon = new THREE.Mesh(iconGeometry, iconMaterial);
+
+      // Add gold stripe for super tanks
+      if (isSuper) {
+        const stripeGeometry = new THREE.BoxGeometry(1.6 * scale, 0.2 * scale, 2.1 * scale);
+        const stripeMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffd700,
+          roughness: 0.3,
+          metalness: 0.8,
+          emissive: 0xffd700,
+          emissiveIntensity: 0.3
+        });
+        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+        stripe.position.y = 0.3 * scale;
+        icon.add(stripe);
+      }
+    } else if (unitType === 'airplane' || unitType === 'super_helicopter') {
+      // Airplane/helicopter icon - cone shape
+      const iconGeometry = new THREE.ConeGeometry(0.6 * scale, 2 * scale, 8);
+      icon = new THREE.Mesh(iconGeometry, iconMaterial);
       icon.rotation.x = Math.PI / 2;
       icon.position.set(
         this.zone.position.x,
-        baseY + 0.7,
+        baseY + 0.7 * scale,
         this.zone.position.z
       );
+
+      // Add gold ring for super helicopters
+      if (isSuper) {
+        const ringGeometry = new THREE.TorusGeometry(0.5 * scale, 0.1 * scale, 8, 16);
+        const ringMaterial = new THREE.MeshStandardMaterial({
+          color: 0xffd700,
+          roughness: 0.3,
+          metalness: 0.8,
+          emissive: 0xffd700,
+          emissiveIntensity: 0.3
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.rotation.x = Math.PI / 2;
+        icon.add(ring);
+      }
+    }
+
+    if (icon) {
       icon.castShadow = true;
       this.scene.add(icon);
       this.iconMesh = icon;

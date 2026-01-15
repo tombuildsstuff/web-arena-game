@@ -352,10 +352,11 @@ func GetSymmetricObstacles() []*Obstacle {
 	// FORWARD BASE PLATFORMS (raised areas at Z = ±70)
 	// These are the claimable forward bases
 	// Uses flat ramps so units can walk on them
+	// Enlarged to fit multiple buy zones (tank, super tank, super helicopter)
 	// ============================================================
 
 	platformHeight := 3.0
-	platformSize := 12.0
+	platformSize := 20.0 // Enlarged from 12 to fit super unit buy zones
 
 	// North forward base platform (Z = -70) - flat ramp so units can walk on it
 	obstacles = append(obstacles,
@@ -384,79 +385,79 @@ func GetSymmetricObstacles() []*Obstacle {
 	// Ramps leading up to the raised platforms
 	// ============================================================
 
-	rampWidth := 10.0
+	rampWidth := 14.0  // Wider ramp for larger platform
 	rampLength := 12.0
 
 	// North platform ramp (approaching from center, Z increasing towards -70)
-	// Ramp goes from Z=-52 (ground level) to Z=-64 (platform level)
+	// Ramp goes from Z=-48 (ground level) to Z=-60 (platform level)
 	obstacles = append(obstacles,
 		NewRamp(nextID(),
-			types.Vector3{X: 0, Y: 0, Z: -58}, // Center of ramp
+			types.Vector3{X: 0, Y: 0, Z: -54}, // Center of ramp
 			types.Vector3{X: rampWidth, Y: platformHeight, Z: rampLength},
 			0,                 // No rotation
-			platformHeight,    // ElevationStart at MinZ (-64) = 3 (top)
-			0,                 // ElevationEnd at MaxZ (-52) = 0 (bottom)
+			platformHeight,    // ElevationStart at MinZ (-60) = 3 (top)
+			0,                 // ElevationEnd at MaxZ (-48) = 0 (bottom)
 		),
 	)
 
 	// South platform ramp (approaching from center, Z decreasing towards 70)
-	// Ramp goes from Z=52 (ground level) to Z=64 (platform level)
+	// Ramp goes from Z=48 (ground level) to Z=60 (platform level)
 	obstacles = append(obstacles,
 		NewRamp(nextID(),
-			types.Vector3{X: 0, Y: 0, Z: 58}, // Center of ramp
+			types.Vector3{X: 0, Y: 0, Z: 54}, // Center of ramp
 			types.Vector3{X: rampWidth, Y: platformHeight, Z: rampLength},
 			0,                 // No rotation
-			0,                 // ElevationStart at MinZ (52) = 0 (bottom)
-			platformHeight,    // ElevationEnd at MaxZ (64) = 3 (top)
+			0,                 // ElevationStart at MinZ (48) = 0 (bottom)
+			platformHeight,    // ElevationEnd at MaxZ (60) = 3 (top)
 		),
 	)
 
 	// ============================================================
 	// PLATFORM EDGE BARRIERS
 	// Prevent units from walking off platform edges - must use ramps
-	// Platform is 12x12, ramp is 10 wide, so leave 10-unit gap for ramp
+	// Platform is 20x20, ramp is 14 wide, so leave 14-unit gap for ramp
 	// ============================================================
 
 	barrierHeight := 1.5 // Low barrier, just enough to block movement
 	barrierThickness := 1.0
 
-	// North platform barriers (platform at Z=-70, spans X:-6 to 6, Z:-76 to -64)
-	// Left edge (X = -6)
+	// North platform barriers (platform at Z=-70, spans X:-10 to 10, Z:-80 to -60)
+	// Left edge (X = -10)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleCover,
-			types.Vector3{X: -6, Y: platformHeight, Z: -70},
+			types.Vector3{X: -10, Y: platformHeight, Z: -70},
 			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
 	)
-	// Right edge (X = 6)
+	// Right edge (X = 10)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleCover,
-			types.Vector3{X: 6, Y: platformHeight, Z: -70},
+			types.Vector3{X: 10, Y: platformHeight, Z: -70},
 			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
 	)
-	// Back edge (Z = -76) - full width
+	// Back edge (Z = -80) - full width
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleCover,
-			types.Vector3{X: 0, Y: platformHeight, Z: -76},
+			types.Vector3{X: 0, Y: platformHeight, Z: -80},
 			types.Vector3{X: platformSize, Y: barrierHeight, Z: barrierThickness}, 0),
 	)
 
-	// South platform barriers (platform at Z=70, spans X:-6 to 6, Z:64 to 76)
-	// Left edge (X = -6)
+	// South platform barriers (platform at Z=70, spans X:-10 to 10, Z:60 to 80)
+	// Left edge (X = -10)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleCover,
-			types.Vector3{X: -6, Y: platformHeight, Z: 70},
+			types.Vector3{X: -10, Y: platformHeight, Z: 70},
 			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
 	)
-	// Right edge (X = 6)
+	// Right edge (X = 10)
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleCover,
-			types.Vector3{X: 6, Y: platformHeight, Z: 70},
+			types.Vector3{X: 10, Y: platformHeight, Z: 70},
 			types.Vector3{X: barrierThickness, Y: barrierHeight, Z: platformSize}, 0),
 	)
-	// Back edge (Z = 76) - full width
+	// Back edge (Z = 80) - full width
 	obstacles = append(obstacles,
 		NewObstacle(nextID(), ObstacleCover,
-			types.Vector3{X: 0, Y: platformHeight, Z: 76},
+			types.Vector3{X: 0, Y: platformHeight, Z: 80},
 			types.Vector3{X: platformSize, Y: barrierHeight, Z: barrierThickness}, 0),
 	)
 

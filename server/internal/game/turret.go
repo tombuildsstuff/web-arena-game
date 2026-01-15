@@ -164,7 +164,7 @@ func (t *Turret) CanAttack() bool {
 }
 
 // GetTurrets returns turrets for the arena
-// Base turrets are on walls next to each base, middle turrets are neutral
+// Base turrets are on corners of each base, middle turrets are neutral
 func GetTurrets() []*Turret {
 	turrets := make([]*Turret, 0)
 	idCounter := 0
@@ -174,31 +174,63 @@ func GetTurrets() []*Turret {
 		return fmt.Sprintf("turret_%d", idCounter)
 	}
 
-	// Player 1 base turrets (on walls next to base at X=-90)
-	// North wall turret
+	// ============================================================
+	// PLAYER 1 BASE TURRETS (4 corners of base at X=-90)
+	// Base dimensions: width=25 (X: -102.5 to -77.5, clamped to -100)
+	//                  depth=28.75 (Z: -14.375 to 14.375)
+	// ============================================================
+	// Front-North corner (toward center, north side)
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: -77, Y: 3, Z: -12},
+		types.Vector3{X: -77, Y: 3, Z: -15},
 		0, // Owned by player 1 by default
 	))
-	// South wall turret
+	// Front-South corner (toward center, south side)
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: -77, Y: 3, Z: 12},
+		types.Vector3{X: -77, Y: 3, Z: 15},
+		0, // Owned by player 1 by default
+	))
+	// Back-North corner (toward wall, north side)
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: -98, Y: 3, Z: -15},
+		0, // Owned by player 1 by default
+	))
+	// Back-South corner (toward wall, south side)
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: -98, Y: 3, Z: 15},
 		0, // Owned by player 1 by default
 	))
 
-	// Player 2 base turrets (on walls next to base at X=90)
-	// North wall turret
+	// ============================================================
+	// PLAYER 2 BASE TURRETS (4 corners of base at X=90)
+	// Base dimensions: width=25 (X: 77.5 to 102.5, clamped to 100)
+	//                  depth=28.75 (Z: -14.375 to 14.375)
+	// ============================================================
+	// Front-North corner (toward center, north side)
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: 77, Y: 3, Z: -12},
+		types.Vector3{X: 77, Y: 3, Z: -15},
 		1, // Owned by player 2 by default
 	))
-	// South wall turret
+	// Front-South corner (toward center, south side)
 	turrets = append(turrets, NewTurret(
 		nextID(),
-		types.Vector3{X: 77, Y: 3, Z: 12},
+		types.Vector3{X: 77, Y: 3, Z: 15},
+		1, // Owned by player 2 by default
+	))
+	// Back-North corner (toward wall, north side)
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: 98, Y: 3, Z: -15},
+		1, // Owned by player 2 by default
+	))
+	// Back-South corner (toward wall, south side)
+	turrets = append(turrets, NewTurret(
+		nextID(),
+		types.Vector3{X: 98, Y: 3, Z: 15},
 		1, // Owned by player 2 by default
 	))
 

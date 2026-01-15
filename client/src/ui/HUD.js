@@ -85,7 +85,13 @@ export class HUD {
 
     // Priority: owned buy zones first, then claimable zones, then turrets
     if (nearbyZone && myPlayer) {
-      const unitName = nearbyZone.unitType === 'tank' ? 'Tank' : 'Airplane';
+      const unitNames = {
+        'tank': 'Tank',
+        'airplane': 'Helicopter',
+        'super_tank': 'Super Tank',
+        'super_helicopter': 'Super Helicopter'
+      };
+      const unitName = unitNames[nearbyZone.unitType] || nearbyZone.unitType;
       const cost = nearbyZone.cost;
       const canAfford = myPlayer.money >= cost;
       const pendingCount = pendingCounts[nearbyZone.unitType] || 0;

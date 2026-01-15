@@ -44,9 +44,9 @@ func (s *TurretSystem) Update(state *State, deltaTime float64) {
 // checkAutoClaimByUnits checks if any tank or helicopter is near an unclaimed turret and claims it
 func (s *TurretSystem) checkAutoClaimByUnits(turret *Turret, state *State) {
 	for _, unit := range state.Units {
-		// Only tanks and airplanes can auto-claim
+		// Only tanks and airplanes (including super variants) can auto-claim
 		unitType := unit.GetType()
-		if unitType != "tank" && unitType != "airplane" {
+		if unitType != "tank" && unitType != "airplane" && unitType != "super_tank" && unitType != "super_helicopter" {
 			continue
 		}
 
@@ -58,7 +58,14 @@ func (s *TurretSystem) checkAutoClaimByUnits(turret *Turret, state *State) {
 		// Check if unit is in range
 		if turret.IsPlayerInRange(unit.GetPosition()) {
 			// Claim the turret for this unit's team
-			turret.Claim(unit.GetOwnerID())
+			ownerID := unit.GetOwnerID()
+			turret.Claim(ownerID)
+
+			// Reward player for claiming turret
+			player := state.GetPlayer(ownerID)
+			if player != nil {
+				player.Money += types.TurretClaimReward
+			}
 			return // Only one unit can claim per tick
 		}
 	}
@@ -66,9 +73,9 @@ func (s *TurretSystem) checkAutoClaimByUnits(turret *Turret, state *State) {
 
 // processTurretCombat handles a single turret's combat logic
 func (s *TurretSystem) processTurretCombat(turret *Turret, state *State, now int64) {
-	// Find the closest enemy unit in range with LOS
-	var closestTarget Unit
-	closestDistance := turret.AttackRange + 1 // Start beyond range
+	// Find the closest enemy unit in range with LOS (prioritize units over turrets)
+	var closestUnitTarget Unit
+	closestUnitDistance := turret.AttackRange + 1 // Start beyond range
 
 	for _, unit := range state.Units {
 		if !unit.IsAlive() {
@@ -83,29 +90,81 @@ func (s *TurretSystem) processTurretCombat(turret *Turret, state *State, now int
 		// Calculate distance
 		distance := calculateDistance(turret.Position, unit.GetPosition())
 
-		if distance <= turret.AttackRange && distance < closestDistance {
+		if distance <= turret.AttackRange && distance < closestUnitDistance {
 			// Check line of sight
 			turretPos := turret.Position
 			targetPos := unit.GetPosition()
 
 			// Turrets are at Y=3, need to check LOS
 			if s.LOSSystem.HasLineOfSight(turretPos, targetPos, false) {
-				closestTarget = unit
-				closestDistance = distance
+				closestUnitTarget = unit
+				closestUnitDistance = distance
 			}
 		}
 	}
 
-	// Handle target tracking
-	if closestTarget == nil {
-		// No target - clear tracking
-		turret.CurrentTargetID = ""
-		turret.TargetAcquiredAt = 0
+	// If we have a unit target, use it
+	if closestUnitTarget != nil {
+		s.handleTurretTargeting(turret, closestUnitTarget.GetID(), state, now, func() {
+			projectile := s.createTurretProjectile(turret, closestUnitTarget, now)
+			state.AddProjectile(projectile)
+		})
 		return
 	}
 
-	targetID := closestTarget.GetID()
+	// No unit target - check for enemy turrets in range
+	var closestEnemyTurret *Turret
+	closestTurretDistance := types.TurretVsTurretRange + 1
 
+	for _, enemyTurret := range state.Turrets {
+		// Skip self
+		if enemyTurret.ID == turret.ID {
+			continue
+		}
+
+		// Skip destroyed turrets
+		if !enemyTurret.IsAlive() {
+			continue
+		}
+
+		// Skip unclaimed turrets
+		if enemyTurret.OwnerID == -1 {
+			continue
+		}
+
+		// Only attack enemy turrets
+		if enemyTurret.OwnerID == turret.OwnerID {
+			continue
+		}
+
+		// Calculate distance
+		distance := calculateDistance(turret.Position, enemyTurret.Position)
+
+		if distance <= types.TurretVsTurretRange && distance < closestTurretDistance {
+			// Check line of sight (turret to turret)
+			if s.LOSSystem.HasLineOfSight(turret.Position, enemyTurret.Position, false) {
+				closestEnemyTurret = enemyTurret
+				closestTurretDistance = distance
+			}
+		}
+	}
+
+	// If we have an enemy turret target, use it
+	if closestEnemyTurret != nil {
+		s.handleTurretTargeting(turret, closestEnemyTurret.ID, state, now, func() {
+			projectile := s.createTurretToTurretProjectile(turret, closestEnemyTurret, now)
+			state.AddProjectile(projectile)
+		})
+		return
+	}
+
+	// No target - clear tracking
+	turret.CurrentTargetID = ""
+	turret.TargetAcquiredAt = 0
+}
+
+// handleTurretTargeting handles the tracking and firing logic for a turret
+func (s *TurretSystem) handleTurretTargeting(turret *Turret, targetID string, state *State, now int64, fireFunc func()) {
 	// Check if this is a new target
 	if turret.CurrentTargetID != targetID {
 		// New target - start tracking
@@ -126,12 +185,11 @@ func (s *TurretSystem) processTurretCombat(turret *Turret, state *State, now int
 	}
 
 	// Fire at the target
-	projectile := s.createTurretProjectile(turret, closestTarget, now)
-	state.AddProjectile(projectile)
+	fireFunc()
 	turret.LastAttackTime = now
 }
 
-// createTurretProjectile creates a projectile from a turret
+// createTurretProjectile creates a projectile from a turret targeting a unit
 func (s *TurretSystem) createTurretProjectile(turret *Turret, target Unit, now int64) *Projectile {
 	startPos := turret.Position
 	endPos := target.GetPosition()
@@ -145,6 +203,24 @@ func (s *TurretSystem) createTurretProjectile(turret *Turret, target Unit, now i
 		EndPos:    endPos,
 		Speed:     ProjectileSpeed,
 		Damage:    turret.Damage,
+		CreatedAt: now,
+	}
+}
+
+// createTurretToTurretProjectile creates a projectile from a turret targeting another turret
+func (s *TurretSystem) createTurretToTurretProjectile(shooter *Turret, target *Turret, now int64) *Projectile {
+	startPos := shooter.Position
+	endPos := target.Position
+
+	return &Projectile{
+		ID:        generateProjectileID(),
+		ShooterID: shooter.ID,
+		TargetID:  target.ID,
+		Position:  startPos,
+		StartPos:  startPos,
+		EndPos:    endPos,
+		Speed:     ProjectileSpeed,
+		Damage:    shooter.Damage,
 		CreatedAt: now,
 	}
 }

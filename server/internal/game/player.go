@@ -56,18 +56,28 @@ func (p *Player) AddKill() {
 	p.Kills++
 }
 
-// AddKillByType increments the kill count for a specific unit type
+// AddKillByType increments the kill count for a specific unit type and awards money
 func (p *Player) AddKillByType(unitType string) {
 	p.Kills++
 	switch unitType {
 	case "tank":
 		p.TankKills++
+		p.Money += types.KillRewardUnit // 10 money per unit kill
+	case "super_tank":
+		p.TankKills++
+		p.Money += types.KillRewardUnit * 2 // 20 money for super units (double)
 	case "airplane":
 		p.AirplaneKills++
+		p.Money += types.KillRewardUnit // 10 money per unit kill
+	case "super_helicopter":
+		p.AirplaneKills++
+		p.Money += types.KillRewardUnit * 2 // 20 money for super units (double)
 	case "turret":
 		p.TurretKills++
+		p.Money += types.KillRewardUnit // 10 money per turret destroyed
 	case "player":
 		p.PlayerKills++
+		p.Money += types.KillRewardUnit // 10 money per player kill
 	}
 }
 

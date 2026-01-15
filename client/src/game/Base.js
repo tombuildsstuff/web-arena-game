@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BASE_SIZE } from '../utils/constants.js';
+import { BASE_SIZE, ARENA_SIZE } from '../utils/constants.js';
 
 export class Base {
   constructor(scene, position, color) {
@@ -11,8 +11,25 @@ export class Base {
   }
 
   create() {
-    // Shaded ground area - semi-transparent rectangle
-    const groundGeometry = new THREE.PlaneGeometry(BASE_SIZE, BASE_SIZE);
+    // Calculate clipped base boundaries to stay within arena
+    const arenaHalf = ARENA_SIZE / 2;
+    const halfBaseWidth = BASE_SIZE / 2;
+    const halfBaseDepth = (BASE_SIZE * 1.15) / 2; // 15% taller in Z direction
+
+    // Calculate the actual bounds, clamped to arena edges
+    const westEdge = Math.max(this.position.x - halfBaseWidth, -arenaHalf);
+    const eastEdge = Math.min(this.position.x + halfBaseWidth, arenaHalf);
+    const northEdge = Math.max(this.position.z - halfBaseDepth, -arenaHalf);
+    const southEdge = Math.min(this.position.z + halfBaseDepth, arenaHalf);
+
+    // Calculate actual width and depth after clamping
+    const actualWidth = eastEdge - westEdge;
+    const actualDepth = southEdge - northEdge;
+    const centerX = (westEdge + eastEdge) / 2;
+    const centerZ = (northEdge + southEdge) / 2;
+
+    // Shaded ground area - semi-transparent rectangle (clipped to arena)
+    const groundGeometry = new THREE.PlaneGeometry(actualWidth, actualDepth);
     const groundMaterial = new THREE.MeshStandardMaterial({
       color: this.color,
       transparent: true,
@@ -23,7 +40,7 @@ export class Base {
 
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.set(this.position.x, 0.05, this.position.z);
+    ground.position.set(centerX, 0.05, centerZ);
     ground.receiveShadow = true;
     this.scene.add(ground);
     this.meshes.push(ground);
@@ -40,16 +57,16 @@ export class Base {
     const borderThickness = 0.5;
     const borderHeight = 0.3;
 
-    // Create 4 border edges
+    // Create 4 border edges (using clipped dimensions)
     const borders = [
       // North edge
-      { pos: [this.position.x, borderHeight / 2, this.position.z - BASE_SIZE / 2], size: [BASE_SIZE, borderHeight, borderThickness] },
+      { pos: [centerX, borderHeight / 2, northEdge], size: [actualWidth, borderHeight, borderThickness] },
       // South edge
-      { pos: [this.position.x, borderHeight / 2, this.position.z + BASE_SIZE / 2], size: [BASE_SIZE, borderHeight, borderThickness] },
+      { pos: [centerX, borderHeight / 2, southEdge], size: [actualWidth, borderHeight, borderThickness] },
       // West edge
-      { pos: [this.position.x - BASE_SIZE / 2, borderHeight / 2, this.position.z], size: [borderThickness, borderHeight, BASE_SIZE] },
+      { pos: [westEdge, borderHeight / 2, centerZ], size: [borderThickness, borderHeight, actualDepth] },
       // East edge
-      { pos: [this.position.x + BASE_SIZE / 2, borderHeight / 2, this.position.z], size: [borderThickness, borderHeight, BASE_SIZE] }
+      { pos: [eastEdge, borderHeight / 2, centerZ], size: [borderThickness, borderHeight, actualDepth] }
     ];
 
     borders.forEach(border => {
@@ -61,12 +78,12 @@ export class Base {
       this.meshes.push(mesh);
     });
 
-    // Corner markers - small glowing posts
+    // Corner markers - small glowing posts (using clipped corners)
     const cornerPositions = [
-      [this.position.x - BASE_SIZE / 2, this.position.z - BASE_SIZE / 2],
-      [this.position.x + BASE_SIZE / 2, this.position.z - BASE_SIZE / 2],
-      [this.position.x - BASE_SIZE / 2, this.position.z + BASE_SIZE / 2],
-      [this.position.x + BASE_SIZE / 2, this.position.z + BASE_SIZE / 2]
+      [westEdge, northEdge],
+      [eastEdge, northEdge],
+      [westEdge, southEdge],
+      [eastEdge, southEdge]
     ];
 
     const cornerGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 8);

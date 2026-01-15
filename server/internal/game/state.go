@@ -15,6 +15,7 @@ type State struct {
 	Projectiles    []*Projectile
 	BuyZones       []*BuyZone
 	Turrets        []*Turret
+	HealthPacks    []*HealthPack
 	SpawnQueue     *SpawnQueue
 	GameStatus     string // "waiting", "playing", "finished"
 	Winner         *int
@@ -42,6 +43,7 @@ func NewState(player1ClientID, player1DisplayName string, player1IsGuest bool, p
 		Projectiles:    make([]*Projectile, 0),
 		BuyZones:       GetBuyZones(),
 		Turrets:        GetTurrets(),
+		HealthPacks:    make([]*HealthPack, 0),
 		SpawnQueue:     NewSpawnQueue(),
 		GameStatus:     "playing",
 		Winner:         nil,
@@ -76,6 +78,11 @@ func (s *State) ToType() types.GameState {
 		turretsData[i] = turret.ToType()
 	}
 
+	healthPacksData := make([]types.HealthPack, len(s.HealthPacks))
+	for i, pack := range s.HealthPacks {
+		healthPacksData[i] = pack.ToType()
+	}
+
 	var pendingSpawnsData []types.PendingSpawn
 	if s.SpawnQueue != nil {
 		pendingSpawnsData = s.SpawnQueue.ToTypes()
@@ -91,6 +98,7 @@ func (s *State) ToType() types.GameState {
 		Projectiles:   projectilesData,
 		BuyZones:      buyZonesData,
 		Turrets:       turretsData,
+		HealthPacks:   healthPacksData,
 		PendingSpawns: pendingSpawnsData,
 		GameStatus:    s.GameStatus,
 		Winner:        s.Winner,
@@ -212,4 +220,52 @@ func (s *State) GetTurretByID(id string) *Turret {
 // GetTurrets returns all turrets
 func (s *State) GetTurrets() []*Turret {
 	return s.Turrets
+}
+
+// CountPlayerUnitsOfType counts how many units of a specific type a player has (alive)
+func (s *State) CountPlayerUnitsOfType(playerID int, unitType string) int {
+	count := 0
+	for _, unit := range s.Units {
+		if unit.GetOwnerID() == playerID && unit.GetType() == unitType && unit.IsAlive() {
+			count++
+		}
+	}
+	return count
+}
+
+// CountPlayerPendingUnitsOfType counts how many units of a specific type a player has pending in spawn queue
+func (s *State) CountPlayerPendingUnitsOfType(playerID int, unitType string) int {
+	if s.SpawnQueue == nil {
+		return 0
+	}
+	count := 0
+	for _, spawn := range s.SpawnQueue.Queue {
+		if spawn.OwnerID == playerID && spawn.UnitType == unitType {
+			count++
+		}
+	}
+	return count
+}
+
+// HasSuperUnit checks if a player already has a super unit of the given type (alive or pending)
+func (s *State) HasSuperUnit(playerID int, unitType string) bool {
+	// Check alive units
+	if s.CountPlayerUnitsOfType(playerID, unitType) > 0 {
+		return true
+	}
+	// Check pending spawns
+	if s.CountPlayerPendingUnitsOfType(playerID, unitType) > 0 {
+		return true
+	}
+	return false
+}
+
+// RemoveHealthPack removes a health pack by ID
+func (s *State) RemoveHealthPack(id string) {
+	for i, pack := range s.HealthPacks {
+		if pack.ID == id {
+			s.HealthPacks = append(s.HealthPacks[:i], s.HealthPacks[i+1:]...)
+			return
+		}
+	}
 }

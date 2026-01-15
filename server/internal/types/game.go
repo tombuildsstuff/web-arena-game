@@ -16,6 +16,7 @@ type GameState struct {
 	Projectiles   []Projectile   `json:"projectiles"`
 	BuyZones      []BuyZone      `json:"buyZones"`
 	Turrets       []Turret       `json:"turrets"`
+	HealthPacks   []HealthPack   `json:"healthPacks"`
 	PendingSpawns []PendingSpawn `json:"pendingSpawns"`
 	GameStatus    string         `json:"gameStatus"` // "waiting", "playing", "finished"
 	Winner        *int           `json:"winner"`
@@ -58,14 +59,15 @@ type Player struct {
 
 // BuyZone represents a location where players can purchase units
 type BuyZone struct {
-	ID          string  `json:"id"`
-	OwnerID     int     `json:"ownerId"`     // Which player owns this buy zone (-1 = neutral)
-	UnitType    string  `json:"unitType"`    // "tank" or "airplane"
-	Position    Vector3 `json:"position"`
-	Radius      float64 `json:"radius"`      // Interaction radius
-	Cost        int     `json:"cost"`        // Cost to buy units
-	ClaimCost   int     `json:"claimCost"`   // Cost to claim this zone
-	IsClaimable bool    `json:"isClaimable"` // Whether this zone can be claimed
+	ID            string  `json:"id"`
+	OwnerID       int     `json:"ownerId"`       // Which player owns this buy zone (-1 = neutral)
+	UnitType      string  `json:"unitType"`      // "tank", "airplane", etc. or "" for base zones
+	Position      Vector3 `json:"position"`
+	Radius        float64 `json:"radius"`        // Interaction radius
+	Cost          int     `json:"cost"`          // Cost to buy units
+	ClaimCost     int     `json:"claimCost"`     // Cost to claim this zone
+	IsClaimable   bool    `json:"isClaimable"`   // Whether this zone can be claimed
+	ForwardBaseID string  `json:"forwardBaseId"` // Parent forward base ID (empty if this IS a base)
 }
 
 // Unit represents a unit (tank, airplane, or player) in the game
@@ -102,4 +104,10 @@ type PendingSpawn struct {
 	SpawnPos  Vector3 `json:"spawnPos"`  // Where the unit will spawn
 	QueuedAt  int64   `json:"queuedAt"`  // When the spawn was queued (Unix millis)
 	WaitTime  float64 `json:"waitTime"`  // Seconds the unit has been waiting
+}
+
+// HealthPack represents a collectible health pickup
+type HealthPack struct {
+	ID       string  `json:"id"`
+	Position Vector3 `json:"position"`
 }

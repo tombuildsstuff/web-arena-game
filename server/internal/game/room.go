@@ -39,6 +39,7 @@ type GameRoom struct {
 	movementSystem     *MovementSystem
 	combatSystem       *CombatSystem
 	turretSystem       *TurretSystem
+	healthPackSystem   *HealthPackSystem
 	winConditionSystem *WinConditionSystem
 }
 
@@ -70,6 +71,7 @@ func NewGameRoom(id string, player1ClientID, player1DisplayName string, player1I
 		movementSystem:     NewMovementSystem(pathfindingSystem),
 		combatSystem:       NewCombatSystem(losSystem),
 		turretSystem:       NewTurretSystem(losSystem),
+		healthPackSystem:   NewHealthPackSystem(),
 		winConditionSystem: NewWinConditionSystem(),
 	}
 }
@@ -232,6 +234,9 @@ func (r *GameRoom) update() {
 	// Update turrets (combat and respawns)
 	r.turretSystem.Update(r.State, deltaTime)
 
+	// Update health packs (spawning and collection)
+	r.healthPackSystem.Update(r.State)
+
 	// Check player respawns
 	r.checkPlayerRespawns()
 
@@ -309,6 +314,10 @@ func (r *GameRoom) HandlePurchase(playerID int, unitType string) {
 		cost = types.TankCost
 	case "airplane":
 		cost = types.AirplaneCost
+	case "super_tank":
+		cost = types.SuperTankCost
+	case "super_helicopter":
+		cost = types.SuperHelicopterCost
 	default:
 		log.Printf("Unknown unit type: %s", unitType)
 		return
@@ -324,6 +333,22 @@ func (r *GameRoom) HandlePurchase(playerID int, unitType string) {
 		return
 	}
 
+	// Check super unit limit (only 1 super tank and 1 super helicopter per player)
+	if unitType == "super_tank" || unitType == "super_helicopter" {
+		if r.State.HasSuperUnit(playerID, unitType) {
+			if conn, ok := r.clientConnections[playerID]; ok {
+				unitName := "Super Tank"
+				if unitType == "super_helicopter" {
+					unitName = "Super Helicopter"
+				}
+				conn.SendMessage("error", types.ErrorPayload{
+					Message: "You can only have one " + unitName + " at a time",
+				})
+			}
+			return
+		}
+	}
+
 	// Deduct cost
 	player.Spend(cost)
 
@@ -334,6 +359,10 @@ func (r *GameRoom) HandlePurchase(playerID int, unitType string) {
 		unit = NewTank(playerID, spawnPos, targetPos)
 	case "airplane":
 		unit = NewAirplane(playerID, spawnPos, targetPos)
+	case "super_tank":
+		unit = NewSuperTank(playerID, spawnPos, targetPos)
+	case "super_helicopter":
+		unit = NewSuperHelicopter(playerID, spawnPos, targetPos)
 	}
 
 	// Add to state
@@ -421,6 +450,20 @@ func (r *GameRoom) HandleBuyFromZone(playerID int, zoneID string, conn ClientCon
 		return
 	}
 
+	// Check super unit limit (only 1 super tank and 1 super helicopter per player)
+	if zone.UnitType == "super_tank" || zone.UnitType == "super_helicopter" {
+		if r.State.HasSuperUnit(playerID, zone.UnitType) {
+			unitName := "Super Tank"
+			if zone.UnitType == "super_helicopter" {
+				unitName = "Super Helicopter"
+			}
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "You can only have one " + unitName + " at a time",
+			})
+			return
+		}
+	}
+
 	// Deduct cost
 	player.Spend(zone.Cost)
 
@@ -429,9 +472,9 @@ func (r *GameRoom) HandleBuyFromZone(playerID int, zoneID string, conn ClientCon
 	targetPos := r.State.Players[1-playerID].BasePosition // Target enemy base
 
 	switch zone.UnitType {
-	case "tank":
+	case "tank", "super_tank":
 		spawnPos.Y = types.TankYPosition
-	case "airplane":
+	case "airplane", "super_helicopter":
 		spawnPos.Y = types.AirplaneYPosition
 	}
 
@@ -494,6 +537,12 @@ func (r *GameRoom) HandleClaimTurret(playerID int, turretID string, conn ClientC
 
 	// Claim the turret
 	turret.Claim(playerID)
+
+	// Reward player for claiming turret
+	player := r.State.GetPlayer(playerID)
+	if player != nil {
+		player.Money += types.TurretClaimReward
+	}
 }
 
 // HandleClaimBuyZone handles a buy zone claiming request
@@ -570,6 +619,15 @@ func (r *GameRoom) HandleClaimBuyZone(playerID int, zoneID string, conn ClientCo
 
 	// Claim the zone
 	zone.Claim(playerID)
+
+	// If this is a forward base, also claim all child zones
+	if zone.UnitType == "" && zone.IsClaimable {
+		for _, childZone := range r.State.BuyZones {
+			if childZone.ForwardBaseID == zone.ID {
+				childZone.Claim(playerID)
+			}
+		}
+	}
 }
 
 // HandlePlayerShoot handles player shoot command
