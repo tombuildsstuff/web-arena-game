@@ -20,7 +20,22 @@ type Player struct {
 	PlayerKills   int    // Enemy player deaths caused
 }
 
-// NewPlayer creates a new player
+// NewPlayerWithMap creates a new player using map configuration
+func NewPlayerWithMap(id int, clientID string, displayName string, isGuest bool, mapDef *types.MapDefinition) *Player {
+	playerConfig := mapDef.Players[id]
+	return &Player{
+		ID:           id,
+		Money:        types.StartingMoney,
+		BasePosition: playerConfig.BasePosition,
+		Color:        playerConfig.Color,
+		ClientID:     clientID,
+		DisplayName:  displayName,
+		IsGuest:      isGuest,
+	}
+}
+
+// NewPlayer creates a new player using default positions
+// Deprecated: Use NewPlayerWithMap with a MapDefinition instead
 func NewPlayer(id int, clientID string, displayName string, isGuest bool) *Player {
 	basePos := types.Base1Position
 	if id == 1 {

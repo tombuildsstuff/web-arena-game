@@ -2,10 +2,13 @@ package game
 
 import (
 	"log"
+	"math/rand"
 	"os"
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/tombuildsstuff/web-arena-game/server/internal/game/maps"
+	"github.com/tombuildsstuff/web-arena-game/server/internal/types"
 )
 
 // Manager manages all game rooms and matchmaking
@@ -29,10 +32,11 @@ type Manager struct {
 
 // PlayerQueueEntry represents a player in the matchmaking queue
 type PlayerQueueEntry struct {
-	ClientID    string
-	Connection  ClientConnection
-	DisplayName string
-	IsGuest     bool
+	ClientID      string
+	Connection    ClientConnection
+	DisplayName   string
+	IsGuest       bool
+	MapPreference string // Preferred map ID (empty = no preference)
 }
 
 // NewManager creates a new game manager
@@ -57,7 +61,7 @@ func (m *Manager) GetLeaderboard() *Leaderboard {
 }
 
 // AddToQueue adds a player to the matchmaking queue
-func (m *Manager) AddToQueue(clientID string, conn ClientConnection, displayName string, isGuest bool) {
+func (m *Manager) AddToQueue(clientID string, conn ClientConnection, displayName string, isGuest bool, mapPreference string) {
 	m.queueMutex.Lock()
 	defer m.queueMutex.Unlock()
 
@@ -68,10 +72,11 @@ func (m *Manager) AddToQueue(clientID string, conn ClientConnection, displayName
 
 	// Add to queue
 	m.queue[clientID] = &PlayerQueueEntry{
-		ClientID:    clientID,
-		Connection:  conn,
-		DisplayName: displayName,
-		IsGuest:     isGuest,
+		ClientID:      clientID,
+		Connection:    conn,
+		DisplayName:   displayName,
+		IsGuest:       isGuest,
+		MapPreference: mapPreference,
 	}
 
 	// Try to match players
@@ -86,6 +91,44 @@ func (m *Manager) RemoveFromQueue(clientID string) {
 	if _, exists := m.queue[clientID]; exists {
 		delete(m.queue, clientID)
 	}
+}
+
+// resolveMapVote determines which map to use based on two players' preferences
+func resolveMapVote(pref1, pref2 string) *types.MapDefinition {
+	// Both have same preference (including both empty)
+	if pref1 == pref2 {
+		if pref1 == "" {
+			return maps.GetDefault()
+		}
+		if m, err := maps.Get(pref1); err == nil {
+			return m
+		}
+		return maps.GetDefault()
+	}
+
+	// One has preference, other doesn't
+	if pref1 == "" && pref2 != "" {
+		if m, err := maps.Get(pref2); err == nil {
+			return m
+		}
+		return maps.GetDefault()
+	}
+	if pref2 == "" && pref1 != "" {
+		if m, err := maps.Get(pref1); err == nil {
+			return m
+		}
+		return maps.GetDefault()
+	}
+
+	// Both have different preferences - random pick
+	chosen := pref1
+	if rand.Intn(2) == 1 {
+		chosen = pref2
+	}
+	if m, err := maps.Get(chosen); err == nil {
+		return m
+	}
+	return maps.GetDefault()
 }
 
 // tryMatchPlayers attempts to match players from the queue
@@ -113,9 +156,13 @@ func (m *Manager) tryMatchPlayers() {
 	delete(m.queue, player1.ClientID)
 	delete(m.queue, player2.ClientID)
 
+	// Resolve map vote
+	mapDef := resolveMapVote(player1.MapPreference, player2.MapPreference)
+	log.Printf("Map vote resolved: P1=%q, P2=%q -> %s", player1.MapPreference, player2.MapPreference, mapDef.Name)
+
 	// Create game room with display names
 	gameID := uuid.New().String()
-	room := NewGameRoom(gameID,
+	room := NewGameRoomWithMap(gameID, mapDef,
 		player1.ClientID, player1.DisplayName, player1.IsGuest,
 		player2.ClientID, player2.DisplayName, player2.IsGuest,
 	)
@@ -144,17 +191,25 @@ func (m *Manager) tryMatchPlayers() {
 }
 
 // CreateAIGame creates a game with a human player vs AI
-func (m *Manager) CreateAIGame(clientID string, conn ClientConnection, displayName string, isGuest bool, difficulty string) {
+func (m *Manager) CreateAIGame(clientID string, conn ClientConnection, displayName string, isGuest bool, difficulty string, mapPreference string) {
 	// Remove from queue if present
 	m.queueMutex.Lock()
 	delete(m.queue, clientID)
 	m.queueMutex.Unlock()
 
+	// Get the requested map or default
+	mapDef := maps.GetDefault()
+	if mapPreference != "" {
+		if m, err := maps.Get(mapPreference); err == nil {
+			mapDef = m
+		}
+	}
+
 	// Create game room with AI as player 2
 	gameID := uuid.New().String()
 	aiDisplayName := "AI (" + difficulty + ")"
 
-	room := NewGameRoom(gameID,
+	room := NewGameRoomWithMap(gameID, mapDef,
 		clientID, displayName, isGuest,
 		"ai-"+gameID, aiDisplayName, false,
 	)

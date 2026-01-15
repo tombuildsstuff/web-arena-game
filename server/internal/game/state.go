@@ -20,9 +20,41 @@ type State struct {
 	GameStatus     string // "waiting", "playing", "finished"
 	Winner         *int
 	MatchStartTime int64 // Unix timestamp when match started
+	MapDefinition  *types.MapDefinition
 }
 
-// NewState creates a new game state
+// NewStateWithMap creates a new game state using a map definition
+func NewStateWithMap(mapDef *types.MapDefinition, player1ClientID, player1DisplayName string, player1IsGuest bool, player2ClientID, player2DisplayName string, player2IsGuest bool) *State {
+	player1 := NewPlayerWithMap(0, player1ClientID, player1DisplayName, player1IsGuest, mapDef)
+	player2 := NewPlayerWithMap(1, player2ClientID, player2DisplayName, player2IsGuest, mapDef)
+
+	// Create player units at their bases
+	playerUnit1 := NewPlayerUnit(0, player1.BasePosition)
+	playerUnit2 := NewPlayerUnit(1, player2.BasePosition)
+
+	now := time.Now().UnixMilli()
+	return &State{
+		Timestamp: now,
+		Players: [2]*Player{
+			player1,
+			player2,
+		},
+		Units:          []Unit{playerUnit1, playerUnit2},
+		Obstacles:      GetObstaclesFromMap(mapDef),
+		Projectiles:    make([]*Projectile, 0),
+		BuyZones:       GetBuyZonesFromMap(mapDef),
+		Turrets:        GetTurretsFromMap(mapDef),
+		HealthPacks:    make([]*HealthPack, 0),
+		SpawnQueue:     NewSpawnQueue(),
+		GameStatus:     "playing",
+		Winner:         nil,
+		MatchStartTime: now,
+		MapDefinition:  mapDef,
+	}
+}
+
+// NewState creates a new game state using the default map
+// Deprecated: Use NewStateWithMap with an explicit map definition instead
 func NewState(player1ClientID, player1DisplayName string, player1IsGuest bool, player2ClientID, player2DisplayName string, player2IsGuest bool) *State {
 	player1 := NewPlayer(0, player1ClientID, player1DisplayName, player1IsGuest)
 	player2 := NewPlayer(1, player2ClientID, player2DisplayName, player2IsGuest)
@@ -48,6 +80,7 @@ func NewState(player1ClientID, player1DisplayName string, player1IsGuest bool, p
 		GameStatus:     "playing",
 		Winner:         nil,
 		MatchStartTime: now,
+		MapDefinition:  nil,
 	}
 }
 

@@ -142,6 +142,12 @@ export class Game {
       console.log('Game started:', payload);
       this.gameState.setPlayerInfo(payload.playerId, payload.gameId);
 
+      // Store map definition if provided
+      if (payload.map) {
+        this.gameState.setMapDefinition(payload.map);
+        console.log('Map loaded:', payload.map.name);
+      }
+
       if (payload.state) {
         this.gameState.update(payload.state);
         this.scene.createBases(this.gameState.players);
@@ -355,10 +361,12 @@ export class Game {
   setupQueueScreen() {
     const joinButton = document.getElementById('join-queue-button');
     const queueStatus = document.getElementById('queue-status');
+    const mpMapSelect = document.getElementById('mp-map-select');
 
     joinButton.addEventListener('click', () => {
       if (this.ws.isConnected()) {
-        this.ws.send('join_queue', {});
+        const mapId = mpMapSelect ? mpMapSelect.value : 'classic';
+        this.ws.send('join_queue', { mapId });
         joinButton.disabled = true;
         document.getElementById('play-vs-ai-button').disabled = true;
         queueStatus.classList.remove('hidden');
@@ -368,11 +376,13 @@ export class Game {
     // Play vs AI button
     const playVsAIButton = document.getElementById('play-vs-ai-button');
     const aiDifficulty = document.getElementById('ai-difficulty');
+    const aiMapSelect = document.getElementById('ai-map-select');
     if (playVsAIButton) {
       playVsAIButton.addEventListener('click', () => {
         if (this.ws.isConnected()) {
           const difficulty = aiDifficulty.value;
-          this.ws.send('start_vs_ai', { difficulty });
+          const mapId = aiMapSelect ? aiMapSelect.value : 'classic';
+          this.ws.send('start_vs_ai', { difficulty, mapId });
           joinButton.disabled = true;
           playVsAIButton.disabled = true;
         }

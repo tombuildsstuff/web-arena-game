@@ -17,6 +17,27 @@ type BuyZone struct {
 	ForwardBaseID string // ID of parent forward base (empty if this IS a base or not part of one)
 }
 
+// GetBuyZonesFromMap creates buy zones from a map definition
+func GetBuyZonesFromMap(mapDef *types.MapDefinition) []*BuyZone {
+	zones := make([]*BuyZone, 0, len(mapDef.BuyZones))
+
+	for _, z := range mapDef.BuyZones {
+		zones = append(zones, &BuyZone{
+			ID:            z.ID,
+			OwnerID:       z.DefaultOwner,
+			UnitType:      z.UnitType,
+			Position:      z.Position,
+			Radius:        z.Radius,
+			Cost:          z.Cost,
+			ClaimCost:     z.ClaimCost,
+			IsClaimable:   z.IsClaimable,
+			ForwardBaseID: z.ForwardBaseID,
+		})
+	}
+
+	return zones
+}
+
 // ToType converts BuyZone to types.BuyZone for JSON serialization
 func (b *BuyZone) ToType() types.BuyZone {
 	return types.BuyZone{
@@ -60,6 +81,8 @@ func (b *BuyZone) IsPlayerInRange(pos types.Vector3) bool {
 // GetBuyZones returns the buy zones for both players
 // Each player has a tank buy zone and a helicopter buy zone in their base
 // Plus claimable forward bases at top/bottom middle
+//
+// Deprecated: Use GetBuyZonesFromMap with a MapDefinition instead
 func GetBuyZones() []*BuyZone {
 	zones := make([]*BuyZone, 0)
 

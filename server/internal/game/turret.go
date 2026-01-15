@@ -163,8 +163,21 @@ func (t *Turret) CanAttack() bool {
 	return timeSinceLastAttack >= attackCooldown
 }
 
+// GetTurretsFromMap creates turrets from a map definition
+func GetTurretsFromMap(mapDef *types.MapDefinition) []*Turret {
+	turrets := make([]*Turret, 0, len(mapDef.Turrets))
+
+	for _, t := range mapDef.Turrets {
+		turrets = append(turrets, NewTurret(t.ID, t.Position, t.DefaultOwner))
+	}
+
+	return turrets
+}
+
 // GetTurrets returns turrets for the arena
 // Base turrets are on corners of each base, middle turrets are neutral
+//
+// Deprecated: Use GetTurretsFromMap with a MapDefinition instead
 func GetTurrets() []*Turret {
 	turrets := make([]*Turret, 0)
 	idCounter := 0

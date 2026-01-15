@@ -15,6 +15,7 @@ export class GameState {
     this.winner = null;
     this.playerId = null;
     this.gameId = null;
+    this.mapDefinition = null; // Map configuration from server
   }
 
   update(newState) {
@@ -34,6 +35,10 @@ export class GameState {
   setPlayerInfo(playerId, gameId) {
     this.playerId = playerId;
     this.gameId = gameId;
+  }
+
+  setMapDefinition(mapDef) {
+    this.mapDefinition = mapDef;
   }
 
   getMyPlayer() {
@@ -73,6 +78,7 @@ export class GameState {
     this.winner = null;
     this.playerId = null;
     this.gameId = null;
+    this.mapDefinition = null;
   }
 
   // Get pending spawns for a specific player

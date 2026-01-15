@@ -6,8 +6,10 @@ type Message struct {
 	Payload interface{} `json:"payload"`
 }
 
-// JoinQueuePayload is empty for now
-type JoinQueuePayload struct{}
+// JoinQueuePayload represents a request to join the matchmaking queue
+type JoinQueuePayload struct {
+	MapID string `json:"mapId,omitempty"` // Preferred map ID (empty = no preference)
+}
 
 // PurchaseUnitPayload represents a request to purchase a unit
 type PurchaseUnitPayload struct {
@@ -16,9 +18,10 @@ type PurchaseUnitPayload struct {
 
 // GameStartPayload is sent when a game begins
 type GameStartPayload struct {
-	GameID   string    `json:"gameId"`
-	PlayerID int       `json:"playerId"`
-	State    GameState `json:"state"`
+	GameID   string         `json:"gameId"`
+	PlayerID int            `json:"playerId"`
+	State    GameState      `json:"state"`
+	Map      *MapDefinition `json:"map,omitempty"`
 }
 
 // GameUpdatePayload is sent periodically with the current game state
@@ -115,5 +118,6 @@ type LobbyStatusPayload struct {
 
 // StartVsAIPayload represents a request to start a game vs AI
 type StartVsAIPayload struct {
-	Difficulty string `json:"difficulty"` // "easy", "medium", or "hard"
+	Difficulty string `json:"difficulty"`        // "easy", "medium", or "hard"
+	MapID      string `json:"mapId,omitempty"`   // Preferred map ID (empty = default)
 }

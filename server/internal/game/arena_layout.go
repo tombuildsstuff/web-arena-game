@@ -6,11 +6,35 @@ import (
 	"github.com/tombuildsstuff/web-arena-game/server/internal/types"
 )
 
+// GetObstaclesFromMap creates obstacles from a map definition
+func GetObstaclesFromMap(mapDef *types.MapDefinition) []*Obstacle {
+	obstacles := make([]*Obstacle, 0, len(mapDef.Obstacles))
+
+	for _, obs := range mapDef.Obstacles {
+		var obstacle *Obstacle
+		switch obs.Type {
+		case "ramp":
+			obstacle = NewRamp(obs.ID, obs.Position, obs.Size, obs.Rotation, obs.ElevationStart, obs.ElevationEnd)
+		case "wall":
+			obstacle = NewObstacle(obs.ID, ObstacleWall, obs.Position, obs.Size, obs.Rotation)
+		case "pillar":
+			obstacle = NewObstacle(obs.ID, ObstaclePillar, obs.Position, obs.Size, obs.Rotation)
+		case "cover":
+			obstacle = NewObstacle(obs.ID, ObstacleCover, obs.Position, obs.Size, obs.Rotation)
+		default:
+			obstacle = NewObstacle(obs.ID, ObstacleWall, obs.Position, obs.Size, obs.Rotation)
+		}
+		obstacles = append(obstacles, obstacle)
+	}
+
+	return obstacles
+}
+
 // GetSymmetricObstacles returns an arena layout with standalone walls providing cover
 // Arena is 200x200 with bases at (-90, 0, 0) and (90, 0, 0)
 // Layout is symmetric about the X=0 axis for fair gameplay
 //
-// IMPORTANT: Walls are standalone segments with spacing around them - no enclosed rooms
+// Deprecated: Use GetObstaclesFromMap with a MapDefinition instead
 func GetSymmetricObstacles() []*Obstacle {
 	obstacles := make([]*Obstacle, 0)
 	idCounter := 0

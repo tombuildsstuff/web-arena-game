@@ -83,7 +83,7 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 
 	switch msg.Type {
 	case "join_queue":
-		h.handleJoinQueue(client)
+		h.handleJoinQueue(client, msg.Payload)
 
 	case "start_vs_ai":
 		h.handleStartVsAI(client, msg.Payload)
@@ -130,8 +130,20 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 }
 
 // handleJoinQueue adds a client to the matchmaking queue
-func (h *Hub) handleJoinQueue(client *Client) {
-	h.gameManager.AddToQueue(client.ID, client, client.DisplayName, client.IsGuest)
+func (h *Hub) handleJoinQueue(client *Client, payload interface{}) {
+	// Parse payload for map preference
+	var mapID string
+	if payload != nil {
+		data, err := json.Marshal(payload)
+		if err == nil {
+			var joinQueue types.JoinQueuePayload
+			if json.Unmarshal(data, &joinQueue) == nil {
+				mapID = joinQueue.MapID
+			}
+		}
+	}
+
+	h.gameManager.AddToQueue(client.ID, client, client.DisplayName, client.IsGuest, mapID)
 }
 
 // handleStartVsAI starts a game against AI
@@ -161,8 +173,8 @@ func (h *Hub) handleStartVsAI(client *Client, payload interface{}) {
 		return
 	}
 
-	// Create AI game
-	h.gameManager.CreateAIGame(client.ID, client, client.DisplayName, client.IsGuest, difficulty)
+	// Create AI game with map preference
+	h.gameManager.CreateAIGame(client.ID, client, client.DisplayName, client.IsGuest, difficulty, startAI.MapID)
 }
 
 // handlePurchaseUnit processes a unit purchase request
