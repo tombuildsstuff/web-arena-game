@@ -371,6 +371,9 @@ export class Game {
         joinButton.disabled = true;
         document.getElementById('play-vs-ai-button').disabled = true;
         queueStatus.classList.remove('hidden');
+      } else {
+        // Try to reconnect if not connected
+        this.ws.forceReconnect();
       }
     });
 
@@ -386,6 +389,9 @@ export class Game {
           this.ws.send('start_vs_ai', { difficulty, mapId });
           joinButton.disabled = true;
           playVsAIButton.disabled = true;
+        } else {
+          // Try to reconnect if not connected
+          this.ws.forceReconnect();
         }
       });
     }

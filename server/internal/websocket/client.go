@@ -132,13 +132,6 @@ func (c *Client) WritePump() {
 
 // SendMessage sends a message to the client
 func (c *Client) SendMessage(msgType string, payload interface{}) {
-	c.mu.Lock()
-	if c.closed {
-		c.mu.Unlock()
-		return
-	}
-	c.mu.Unlock()
-
 	msg := types.Message{
 		Type:    msgType,
 		Payload: payload,
@@ -147,6 +140,14 @@ func (c *Client) SendMessage(msgType string, payload interface{}) {
 	data, err := json.Marshal(msg)
 	if err != nil {
 		log.Printf("error marshaling message: %v", err)
+		return
+	}
+
+	// Hold lock during channel send to prevent race with Close()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.closed {
 		return
 	}
 

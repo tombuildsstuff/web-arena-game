@@ -309,25 +309,28 @@ func (m *Manager) RemoveClient(clientID string) {
 	delete(m.queue, clientID)
 	m.queueMutex.Unlock()
 
-	m.roomsMutex.Lock()
-	defer m.roomsMutex.Unlock()
+	var roomToStop *GameRoom
 
+	m.roomsMutex.Lock()
 	// Check if client is a player
 	if roomID, exists := m.clientToRoom[clientID]; exists {
 		if room, ok := m.rooms[roomID]; ok {
-			room.Stop()
+			roomToStop = room
 			delete(m.rooms, roomID)
 		}
 		delete(m.clientToRoom, clientID)
-		return
-	}
-
-	// Check if client is a spectator
-	if gameID, exists := m.spectatorToRoom[clientID]; exists {
+	} else if gameID, exists := m.spectatorToRoom[clientID]; exists {
+		// Check if client is a spectator
 		if room, ok := m.rooms[gameID]; ok {
 			room.RemoveSpectator(clientID)
 		}
 		delete(m.spectatorToRoom, clientID)
+	}
+	m.roomsMutex.Unlock()
+
+	// Call Stop outside of lock to avoid deadlock with handleGameEnd callback
+	if roomToStop != nil {
+		roomToStop.Stop()
 	}
 }
 
