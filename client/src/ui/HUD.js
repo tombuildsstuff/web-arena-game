@@ -5,13 +5,22 @@ export class HUD {
     this.soundManager = soundManager;
     this.playerIdElement = document.getElementById('player-id');
     this.playerMoneyElement = document.getElementById('player-money');
-    this.playerHealthElement = document.getElementById('player-health');
+    this.healthBarElement = document.getElementById('health-bar');
+    this.healthTextElement = document.getElementById('health-text');
     this.respawnTimerElement = document.getElementById('respawn-timer');
     this.buyZonePromptElement = document.getElementById('buy-zone-prompt');
     this.buyZoneTextElement = document.getElementById('buy-zone-text');
     this.muteButton = document.getElementById('mute-button');
+    this.controlsOverlay = document.getElementById('controls-overlay');
+
+    // Unit count elements
+    this.myTanksElement = document.getElementById('my-tanks');
+    this.myHelicoptersElement = document.getElementById('my-helicopters');
+    this.enemyTanksElement = document.getElementById('enemy-tanks');
+    this.enemyHelicoptersElement = document.getElementById('enemy-helicopters');
 
     this.setupMuteButton();
+    this.setupHelpToggle();
   }
 
   setupMuteButton() {
@@ -34,6 +43,28 @@ export class HUD {
     this.muteButton.title = isMuted ? 'Unmute sounds' : 'Mute sounds';
   }
 
+  setupHelpToggle() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'h' && !e.repeat) {
+        // Don't toggle if typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        this.toggleHelp();
+      }
+    });
+  }
+
+  toggleHelp() {
+    if (this.controlsOverlay) {
+      this.controlsOverlay.classList.toggle('hidden');
+    }
+  }
+
+  hideHelp() {
+    if (this.controlsOverlay) {
+      this.controlsOverlay.classList.add('hidden');
+    }
+  }
+
   setSoundManager(soundManager) {
     this.soundManager = soundManager;
     this.updateMuteButtonIcon(soundManager?.getMuted() || false);
@@ -47,31 +78,99 @@ export class HUD {
       // Use displayName if available, fallback to "Player X"
       const displayName = myPlayer.displayName || `Player ${this.gameState.playerId + 1}`;
       this.playerIdElement.textContent = displayName;
-      this.playerMoneyElement.textContent = `Money: $${myPlayer.money}`;
+      this.playerMoneyElement.textContent = `$${myPlayer.money}`;
     } else {
-      this.playerIdElement.textContent = 'Player: -';
-      this.playerMoneyElement.textContent = 'Money: $0';
+      this.playerIdElement.textContent = '-';
+      this.playerMoneyElement.textContent = '$0';
     }
 
     // Update player unit health and respawn status
     if (myPlayerUnit) {
-      this.playerHealthElement.textContent = `Health: ${myPlayerUnit.health}/80`;
+      const maxHealth = 80;
+      const currentHealth = myPlayerUnit.health || 0;
+      const healthPercent = Math.max(0, Math.min(100, (currentHealth / maxHealth) * 100));
+
+      // Update health bar width
+      if (this.healthBarElement) {
+        this.healthBarElement.style.width = `${healthPercent}%`;
+
+        // Update health bar color based on health level
+        this.healthBarElement.classList.remove('low', 'critical', 'dead');
+        if (myPlayerUnit.isRespawning) {
+          this.healthBarElement.classList.add('dead');
+        } else if (healthPercent <= 25) {
+          this.healthBarElement.classList.add('critical');
+        } else if (healthPercent <= 50) {
+          this.healthBarElement.classList.add('low');
+        }
+      }
+
+      // Update health text
+      if (this.healthTextElement) {
+        this.healthTextElement.textContent = `${currentHealth}/${maxHealth}`;
+      }
 
       if (myPlayerUnit.isRespawning && myPlayerUnit.respawnTime > 0) {
         this.respawnTimerElement.textContent = `Respawning: ${Math.ceil(myPlayerUnit.respawnTime)}s`;
         this.respawnTimerElement.classList.remove('hidden');
-        this.playerHealthElement.classList.add('dead');
       } else {
         this.respawnTimerElement.classList.add('hidden');
-        this.playerHealthElement.classList.remove('dead');
       }
     } else {
-      this.playerHealthElement.textContent = 'Health: -';
+      if (this.healthBarElement) {
+        this.healthBarElement.style.width = '0%';
+      }
+      if (this.healthTextElement) {
+        this.healthTextElement.textContent = '-/-';
+      }
       this.respawnTimerElement.classList.add('hidden');
     }
 
     // Update buy zone prompt
     this.updateBuyZonePrompt();
+
+    // Update unit counts
+    this.updateUnitCounts();
+  }
+
+  updateUnitCounts() {
+    const playerId = this.gameState.playerId;
+    if (playerId === null) return;
+
+    const units = this.gameState.units || [];
+
+    // Count units by type and owner
+    let myTanks = 0;
+    let myHelicopters = 0;
+    let enemyTanks = 0;
+    let enemyHelicopters = 0;
+
+    for (const unit of units) {
+      // Skip player units and dead units
+      if (unit.type === 'player' || !unit.health || unit.health <= 0) continue;
+
+      const isMyUnit = unit.ownerId === playerId;
+
+      if (unit.type === 'tank' || unit.type === 'super_tank') {
+        if (isMyUnit) {
+          myTanks++;
+        } else {
+          enemyTanks++;
+        }
+      } else if (unit.type === 'airplane' || unit.type === 'super_helicopter') {
+        if (isMyUnit) {
+          myHelicopters++;
+        } else {
+          enemyHelicopters++;
+        }
+      }
+    }
+
+    // Update DOM
+    if (this.myTanksElement) this.myTanksElement.textContent = myTanks;
+    if (this.myHelicoptersElement) this.myHelicoptersElement.textContent = myHelicopters;
+    if (this.enemyTanksElement) this.enemyTanksElement.textContent = enemyTanks;
+    if (this.enemyHelicoptersElement) this.enemyHelicoptersElement.textContent = enemyHelicopters;
   }
 
   updateBuyZonePrompt() {

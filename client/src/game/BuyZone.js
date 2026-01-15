@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { PLAYER_COLORS } from '../utils/constants.js';
 
 // Neutral/claimable zone color (grey, matching unclaimed turrets)
-const NEUTRAL_COLOR = 0x888888;
+const NEUTRAL_COLOR = '#888888';
 
 export class BuyZone {
   constructor(scene, zone) {
@@ -178,7 +178,7 @@ export class BuyZone {
       // Restore normal appearance
       if (this.mesh) {
         this.mesh.material.opacity = 0.8;
-        this.mesh.material.color.setHex(this.baseColor);
+        this.mesh.material.color.set(this.baseColor);
       }
       if (this.iconMesh) {
         this.iconMesh.material.opacity = 1.0;
@@ -187,7 +187,7 @@ export class BuyZone {
       // Dim the zone
       if (this.mesh) {
         this.mesh.material.opacity = 0.3;
-        this.mesh.material.color.setHex(0x444444);
+        this.mesh.material.color.set('#444444');
       }
       if (this.iconMesh) {
         this.iconMesh.material.opacity = 0.3;
@@ -212,10 +212,10 @@ export class BuyZone {
 
     // Update mesh colors
     if (this.mesh) {
-      this.mesh.material.color.setHex(this.baseColor);
+      this.mesh.material.color.set(this.baseColor);
     }
     if (this.glowMesh) {
-      this.glowMesh.material.color.setHex(this.baseColor);
+      this.glowMesh.material.color.set(this.baseColor);
     }
   }
 

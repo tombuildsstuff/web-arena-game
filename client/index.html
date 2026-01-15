@@ -14,17 +14,41 @@
   <div id="ui-overlay">
     <!-- HUD -->
     <div id="hud">
-      <div id="player-info">
-        <span id="player-id">Player: -</span>
-        <span id="player-money">Money: $0</span>
-      </div>
-      <div id="player-status">
-        <span id="player-health">Health: 5/5</span>
-        <span id="respawn-timer" class="hidden">Respawning: 10s</span>
-      </div>
-      <div id="hud-bottom">
-        <div id="controls-hint">WASD: Move | Click: Shoot | E: Buy | Right-drag: Rotate | Scroll: Zoom</div>
+      <div id="hud-top-row">
+        <span id="player-id">Player</span>
+        <span id="player-money">$0</span>
         <button id="mute-button" title="Mute sounds">🔊</button>
+      </div>
+      <div id="health-bar-container">
+        <div id="health-bar"></div>
+        <span id="health-text">80/80</span>
+      </div>
+      <div id="respawn-timer" class="hidden">Respawning: 10s</div>
+      <div id="unit-counts">
+        <div id="my-units" class="unit-count-row">
+          <span class="unit-count-label">You:</span>
+          <span class="unit-count-item">🚗<span id="my-tanks">0</span></span>
+          <span class="unit-count-item">🚁<span id="my-helicopters">0</span></span>
+        </div>
+        <div id="enemy-units" class="unit-count-row">
+          <span class="unit-count-label">Foe:</span>
+          <span class="unit-count-item">🚗<span id="enemy-tanks">0</span></span>
+          <span class="unit-count-item">🚁<span id="enemy-helicopters">0</span></span>
+        </div>
+      </div>
+      <div id="help-hint">Press H for controls</div>
+    </div>
+
+    <!-- Controls Help Overlay -->
+    <div id="controls-overlay" class="hidden">
+      <div id="controls-content">
+        <h3>Controls</h3>
+        <div class="control-row"><span class="key">WASD</span> Move</div>
+        <div class="control-row"><span class="key">Click</span> Shoot</div>
+        <div class="control-row"><span class="key">E</span> Buy/Claim</div>
+        <div class="control-row"><span class="key">Right-drag</span> Rotate camera</div>
+        <div class="control-row"><span class="key">Scroll</span> Zoom</div>
+        <div class="control-row"><span class="key">H</span> Toggle this help</div>
       </div>
     </div>
 
@@ -189,6 +213,19 @@
             </tbody>
           </table>
           <p id="leaderboard-empty" class="hidden">No games played yet!</p>
+        </div>
+
+        <!-- Controls Summary -->
+        <div id="controls-summary">
+          <h3>Controls</h3>
+          <div class="controls-grid">
+            <span><strong>WASD</strong> Move</span>
+            <span><strong>Click</strong> Shoot</span>
+            <span><strong>E</strong> Buy/Claim</span>
+            <span><strong>Right-drag</strong> Rotate</span>
+            <span><strong>Scroll</strong> Zoom</span>
+            <span><strong>H</strong> Help</span>
+          </div>
         </div>
 
         <!-- Footer Links -->

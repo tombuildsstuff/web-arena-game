@@ -31,53 +31,85 @@ body {
 /* HUD */
 #hud {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  background: rgba(0, 0, 0, 0.7);
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.75);
   color: white;
-  padding: 15px 20px;
-  border-radius: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
   backdrop-filter: blur(10px);
+  font-size: 13px;
+  min-width: 140px;
 }
 
-#player-info {
+#hud-top-row {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 #player-id {
-  font-size: 14px;
-  opacity: 0.8;
+  font-size: 12px;
+  opacity: 0.7;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
 }
 
 #player-money {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: bold;
   color: #fbbf24;
 }
 
-#player-status {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+/* Health bar */
+#health-bar-container {
+  position: relative;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
 }
 
-#player-health {
-  font-size: 16px;
-  color: #22c55e;
+#health-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  border-radius: 3px;
+  transition: width 0.2s ease, background 0.3s ease;
+  width: 100%;
 }
 
-#player-health.dead {
-  color: #ef4444;
+#health-bar.low {
+  background: linear-gradient(90deg, #f97316, #fb923c);
+}
+
+#health-bar.critical {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+#health-bar.dead {
+  background: #374151;
+}
+
+#health-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 #respawn-timer {
-  font-size: 14px;
+  font-size: 12px;
   color: #fbbf24;
+  text-align: center;
+  margin-bottom: 6px;
   animation: pulse 1s infinite;
 }
 
@@ -86,19 +118,95 @@ body {
   50% { opacity: 0.5; }
 }
 
-#hud-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
+/* Unit counts */
+#unit-counts {
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 12px;
 }
 
-#controls-hint {
-  font-size: 12px;
+.unit-count-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.unit-count-row:last-child {
+  margin-bottom: 0;
+}
+
+.unit-count-label {
+  width: 28px;
   opacity: 0.6;
+  font-size: 11px;
+}
+
+.unit-count-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+}
+
+#my-units .unit-count-item {
+  color: #60a5fa;
+}
+
+#enemy-units .unit-count-item {
+  color: #f87171;
+}
+
+#help-hint {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 10px;
+  opacity: 0.5;
+  text-align: center;
+}
+
+/* Controls overlay */
+#controls-overlay {
+  position: absolute;
+  top: 10px;
+  left: 160px;
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 6px;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+}
+
+#controls-overlay.hidden {
+  display: none;
+}
+
+#controls-content h3 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+
+.control-row {
+  font-size: 12px;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 8px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+}
+
+.control-row .key {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  min-width: 70px;
+  text-align: center;
 }
 
 #mute-button {
@@ -914,9 +1022,35 @@ body {
   background: rgba(0, 0, 0, 0.5);
 }
 
+/* Controls Summary on Queue Screen */
+#controls-summary {
+  margin-top: 30px;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+#controls-summary h3 {
+  font-size: 14px;
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 16px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.controls-grid strong {
+  color: #fbbf24;
+}
+
 /* Footer Links */
 #footer-links {
-  margin-top: 40px;
+  margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
