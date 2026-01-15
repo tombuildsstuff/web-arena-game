@@ -263,11 +263,11 @@ func divideTurrets() []types.MapTurret {
 		{ID: "turret_26", Position: types.Vector3{X: -55, Y: 3, Z: 65}, DefaultOwner: -1},
 		{ID: "turret_27", Position: types.Vector3{X: 55, Y: 3, Z: 65}, DefaultOwner: -1},
 
-		// Mid-lane turrets - between center and bases
-		{ID: "turret_28", Position: types.Vector3{X: -50, Y: 3, Z: -20}, DefaultOwner: -1},
-		{ID: "turret_29", Position: types.Vector3{X: -50, Y: 3, Z: 20}, DefaultOwner: -1},
-		{ID: "turret_30", Position: types.Vector3{X: 50, Y: 3, Z: -20}, DefaultOwner: -1},
-		{ID: "turret_31", Position: types.Vector3{X: 50, Y: 3, Z: 20}, DefaultOwner: -1},
+		// Mid-lane turrets - between center and bases (moved off the walls)
+		{ID: "turret_28", Position: types.Vector3{X: -50, Y: 3, Z: -15}, DefaultOwner: -1},
+		{ID: "turret_29", Position: types.Vector3{X: -50, Y: 3, Z: 15}, DefaultOwner: -1},
+		{ID: "turret_30", Position: types.Vector3{X: 50, Y: 3, Z: -15}, DefaultOwner: -1},
+		{ID: "turret_31", Position: types.Vector3{X: 50, Y: 3, Z: 15}, DefaultOwner: -1},
 	}
 }
 
