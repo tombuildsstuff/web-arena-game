@@ -293,4 +293,6 @@ All rights to Future Cop: LAPD are reserved by Electronic Arts.
 
 ## License
 
-This project is open source and available for educational purposes.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+Sound effects are sourced from [Freesound.org](https://freesound.org) under CC0 and CC BY licenses. See the LICENSE file for full attribution.
