@@ -53,37 +53,6 @@ func NewStateWithMap(mapDef *types.MapDefinition, player1ClientID, player1Displa
 	}
 }
 
-// NewState creates a new game state using the default map
-// Deprecated: Use NewStateWithMap with an explicit map definition instead
-func NewState(player1ClientID, player1DisplayName string, player1IsGuest bool, player2ClientID, player2DisplayName string, player2IsGuest bool) *State {
-	player1 := NewPlayer(0, player1ClientID, player1DisplayName, player1IsGuest)
-	player2 := NewPlayer(1, player2ClientID, player2DisplayName, player2IsGuest)
-
-	// Create player units at their bases
-	playerUnit1 := NewPlayerUnit(0, player1.BasePosition)
-	playerUnit2 := NewPlayerUnit(1, player2.BasePosition)
-
-	now := time.Now().UnixMilli()
-	return &State{
-		Timestamp: now,
-		Players: [2]*Player{
-			player1,
-			player2,
-		},
-		Units:          []Unit{playerUnit1, playerUnit2},
-		Obstacles:      GetSymmetricObstacles(),
-		Projectiles:    make([]*Projectile, 0),
-		BuyZones:       GetBuyZones(),
-		Turrets:        GetTurrets(),
-		HealthPacks:    make([]*HealthPack, 0),
-		SpawnQueue:     NewSpawnQueue(),
-		GameStatus:     "playing",
-		Winner:         nil,
-		MatchStartTime: now,
-		MapDefinition:  nil,
-	}
-}
-
 // ToType converts State to types.GameState for JSON serialization
 func (s *State) ToType() types.GameState {
 	unitsData := make([]types.Unit, len(s.Units))

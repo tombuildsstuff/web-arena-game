@@ -34,25 +34,6 @@ func NewPlayerWithMap(id int, clientID string, displayName string, isGuest bool,
 	}
 }
 
-// NewPlayer creates a new player using default positions
-// Deprecated: Use NewPlayerWithMap with a MapDefinition instead
-func NewPlayer(id int, clientID string, displayName string, isGuest bool) *Player {
-	basePos := types.Base1Position
-	if id == 1 {
-		basePos = types.Base2Position
-	}
-
-	return &Player{
-		ID:           id,
-		Money:        types.StartingMoney,
-		BasePosition: basePos,
-		Color:        types.PlayerColors[id],
-		ClientID:     clientID,
-		DisplayName:  displayName,
-		IsGuest:      isGuest,
-	}
-}
-
 // ToType converts Player to types.Player for JSON serialization
 func (p *Player) ToType() types.Player {
 	return types.Player{

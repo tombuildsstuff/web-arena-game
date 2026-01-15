@@ -76,35 +76,6 @@ func NewGameRoomWithMap(id string, mapDef *types.MapDefinition, player1ClientID,
 	}
 }
 
-// NewGameRoom creates a new game room using the default map
-// Deprecated: Use NewGameRoomWithMap with an explicit map definition instead
-func NewGameRoom(id string, player1ClientID, player1DisplayName string, player1IsGuest bool, player2ClientID, player2DisplayName string, player2IsGuest bool) *GameRoom {
-	state := NewState(player1ClientID, player1DisplayName, player1IsGuest, player2ClientID, player2DisplayName, player2IsGuest)
-
-	// Initialize spatial systems
-	spatialGrid := NewSpatialGrid(state.Obstacles)
-	pathfindingSystem := NewPathfindingSystem(state.Obstacles)
-	losSystem := NewLOSSystem(spatialGrid)
-
-	return &GameRoom{
-		ID:                 id,
-		State:              state,
-		IsRunning:          false,
-		stopChan:           make(chan bool),
-		clientConnections:  make(map[int]ClientConnection),
-		spectators:         make(map[string]ClientConnection),
-		lastIncomeTime:     time.Now(),
-		pathfindingSystem:  pathfindingSystem,
-		spatialGrid:        spatialGrid,
-		losSystem:          losSystem,
-		movementSystem:     NewMovementSystem(pathfindingSystem),
-		combatSystem:       NewCombatSystem(losSystem),
-		turretSystem:       NewTurretSystem(losSystem),
-		healthPackSystem:   NewHealthPackSystem(),
-		winConditionSystem: NewWinConditionSystem(),
-	}
-}
-
 // SetClientConnection sets the client connection for a player
 func (r *GameRoom) SetClientConnection(playerID int, conn ClientConnection) {
 	r.mu.Lock()
