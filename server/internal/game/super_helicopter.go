@@ -22,6 +22,7 @@ func NewSuperHelicopter(ownerID int, spawnPos types.Vector3, targetPos types.Vec
 			OwnerID:         ownerID,
 			Position:        spawnPos,
 			Health:          types.SuperHelicopterHealth,
+			MaxHealth:       types.SuperHelicopterHealth,
 			TargetPosition:  targetPos,
 			Speed:           types.SuperHelicopterSpeed,
 			Damage:          types.SuperHelicopterDamage,

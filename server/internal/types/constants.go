@@ -54,6 +54,36 @@ const (
 	SuperHelicopterAttackRange = 22.0 // Slightly longer range
 	SuperHelicopterAttackSpeed = 1.0  // attacks per second
 
+	// Sniper stats (infantry - low health, high range, high damage, slow fire)
+	SniperCost            = 60
+	SniperSpeed           = 4.0  // Slow movement
+	SniperHealth          = 15   // Very fragile - low pain tolerance
+	SniperDamage          = 25   // High damage per shot
+	SniperAttackRange     = 35.0 // Very long range
+	SniperAttackSpeed     = 0.5  // Slow fire rate (1 shot per 2 seconds)
+	SniperCollisionRadius = 0.8  // Small - human sized
+
+	// Rocket Launcher stats (infantry - low health, long range, very high damage, very slow fire)
+	RocketLauncherCost            = 75
+	RocketLauncherSpeed           = 3.5  // Very slow movement (heavy weapon)
+	RocketLauncherHealth          = 20   // Fragile but slightly tougher than sniper
+	RocketLauncherDamage          = 40   // Very high damage
+	RocketLauncherAttackRange     = 30.0 // Long range
+	RocketLauncherAttackSpeed     = 0.3  // Very slow fire rate (1 shot per 3+ seconds)
+	RocketLauncherCollisionRadius = 0.8  // Small - human sized
+
+	// Infantry positioning (same as tanks - ground level)
+	InfantryYPosition = 1.0
+
+	// Barracks stats
+	BarracksHealth        = 40   // Takes more hits than turrets
+	BarracksRespawnTime   = 30.0 // Seconds to respawn as neutral after destruction
+	BarracksClaimRadius   = 8.0  // Proximity to claim (infantry only)
+	BarracksHealTime      = 5.0  // Seconds infantry must stay inside to heal
+	BarracksHealAmount    = 10   // Health restored per heal tick
+	BarracksScatterDamage = 5    // Damage dealt to infantry when barracks is destroyed
+	BarracksScatterRadius = 12.0 // How far infantry scatter when barracks is destroyed
+
 	// Unit positioning
 	TankYPosition     = 1.0
 	AirplaneYPosition = 10.0

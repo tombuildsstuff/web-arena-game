@@ -109,6 +109,9 @@ func (h *Hub) handleClientMessage(clientMsg *ClientMessage) {
 	case "claim_buy_zone":
 		h.handleClaimBuyZone(client, msg.Payload)
 
+	case "claim_barracks":
+		h.handleClaimBarracks(client, msg.Payload)
+
 	case "leave_game":
 		h.handleLeaveGame(client)
 
@@ -389,6 +392,35 @@ func (h *Hub) handleClaimBuyZone(client *Client, payload interface{}) {
 
 	// Forward to game room
 	room.HandleClaimBuyZone(playerID, claim.ZoneID, client)
+}
+
+// handleClaimBarracks processes a barracks claiming request
+func (h *Hub) handleClaimBarracks(client *Client, payload interface{}) {
+	// Parse payload
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	var claim types.ClaimBarracksPayload
+	if err := json.Unmarshal(data, &claim); err != nil {
+		return
+	}
+
+	// Get the game room for this client
+	room := h.gameManager.GetRoomByClient(client.ID)
+	if room == nil {
+		return
+	}
+
+	// Get player ID
+	playerID := h.gameManager.GetPlayerIDInRoom(client.ID)
+	if playerID < 0 {
+		return
+	}
+
+	// Forward to game room
+	room.HandleClaimBarracks(playerID, claim.BarracksID, client)
 }
 
 // handleLeaveGame removes a client from their current game

@@ -15,6 +15,7 @@ type State struct {
 	Projectiles    []*Projectile
 	BuyZones       []*BuyZone
 	Turrets        []*Turret
+	Barracks       []*Barracks
 	HealthPacks    []*HealthPack
 	SpawnQueue     *SpawnQueue
 	GameStatus     string // "waiting", "playing", "finished"
@@ -44,6 +45,7 @@ func NewStateWithMap(mapDef *types.MapDefinition, player1ClientID, player1Displa
 		Projectiles:    make([]*Projectile, 0),
 		BuyZones:       GetBuyZonesFromMap(mapDef),
 		Turrets:        GetTurretsFromMap(mapDef),
+		Barracks:       GetBarracksFromMap(mapDef),
 		HealthPacks:    make([]*HealthPack, 0),
 		SpawnQueue:     NewSpawnQueue(),
 		GameStatus:     "playing",
@@ -80,6 +82,11 @@ func (s *State) ToType() types.GameState {
 		turretsData[i] = turret.ToType()
 	}
 
+	barracksData := make([]types.Barracks, len(s.Barracks))
+	for i, barracks := range s.Barracks {
+		barracksData[i] = barracks.ToType()
+	}
+
 	healthPacksData := make([]types.HealthPack, len(s.HealthPacks))
 	for i, pack := range s.HealthPacks {
 		healthPacksData[i] = pack.ToType()
@@ -100,6 +107,7 @@ func (s *State) ToType() types.GameState {
 		Projectiles:   projectilesData,
 		BuyZones:      buyZonesData,
 		Turrets:       turretsData,
+		Barracks:      barracksData,
 		HealthPacks:   healthPacksData,
 		PendingSpawns: pendingSpawnsData,
 		GameStatus:    s.GameStatus,
@@ -270,4 +278,14 @@ func (s *State) RemoveHealthPack(id string) {
 			return
 		}
 	}
+}
+
+// GetBarracksByID returns a barracks by ID
+func (s *State) GetBarracksByID(id string) *Barracks {
+	for _, barracks := range s.Barracks {
+		if barracks.ID == id {
+			return barracks
+		}
+	}
+	return nil
 }

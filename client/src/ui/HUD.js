@@ -179,16 +179,19 @@ export class HUD {
     const nearbyZone = this.gameLoop.getNearbyBuyZone();
     const nearbyClaimableZone = this.gameLoop.getNearbyClaimableBuyZone();
     const nearbyTurret = this.gameLoop.getNearbyTurret();
+    const nearbyBarracks = this.gameLoop.getNearbyBarracks();
     const myPlayer = this.gameState.getMyPlayer();
     const pendingCounts = this.gameState.getMyPendingSpawnCounts();
 
-    // Priority: owned buy zones first, then claimable zones, then turrets
+    // Priority: owned buy zones first, then claimable zones, then turrets, then barracks
     if (nearbyZone && myPlayer) {
       const unitNames = {
         'tank': 'Tank',
         'airplane': 'Helicopter',
         'super_tank': 'Super Tank',
-        'super_helicopter': 'Super Helicopter'
+        'super_helicopter': 'Super Helicopter',
+        'sniper': 'Sniper',
+        'rocket_launcher': 'Rocket Launcher'
       };
       const unitName = unitNames[nearbyZone.unitType] || nearbyZone.unitType;
       const cost = nearbyZone.cost;
@@ -238,6 +241,14 @@ export class HUD {
 
       this.buyZonePromptElement.classList.remove('hidden');
       this.buyZonePromptElement.style.borderColor = 'rgba(139, 92, 246, 0.6)'; // Purple for turrets
+    } else if (nearbyBarracks) {
+      // Show barracks claiming prompt (neutral or enemy barracks)
+      const isEnemy = nearbyBarracks.ownerId !== -1;
+      const actionText = isEnemy ? 'capture' : 'claim';
+      this.buyZoneTextElement.innerHTML = `Press <span class="key">C</span> to ${actionText} Barracks (Free)`;
+
+      this.buyZonePromptElement.classList.remove('hidden');
+      this.buyZonePromptElement.style.borderColor = 'rgba(107, 107, 76, 0.6)'; // Olive for barracks
     } else {
       this.buyZonePromptElement.classList.add('hidden');
     }

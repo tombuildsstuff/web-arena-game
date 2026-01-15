@@ -25,6 +25,8 @@ type Unit interface {
 	ToType() types.Unit
 	IsAlive() bool
 	TakeDamage(amount int)
+	Heal(amount int)
+	GetMaxHealth() int
 	// Pathfinding support
 	GetWaypoints() []types.Vector3
 	SetWaypoints(waypoints []types.Vector3)
@@ -48,6 +50,8 @@ type Unit interface {
 	SetAvoidanceDirection(dir int)
 	GetAvoidanceTicks() int
 	SetAvoidanceTicks(ticks int)
+	// Infantry check (for barracks claiming)
+	IsInfantry() bool
 }
 
 // BaseUnit provides common functionality for all units
@@ -57,6 +61,7 @@ type BaseUnit struct {
 	OwnerID         int
 	Position        types.Vector3
 	Health          int
+	MaxHealth       int
 	TargetPosition  types.Vector3
 	Speed           float64
 	Damage          int
@@ -154,6 +159,17 @@ func (u *BaseUnit) TakeDamage(amount int) {
 	}
 }
 
+func (u *BaseUnit) Heal(amount int) {
+	u.Health += amount
+	if u.Health > u.MaxHealth {
+		u.Health = u.MaxHealth
+	}
+}
+
+func (u *BaseUnit) GetMaxHealth() int {
+	return u.MaxHealth
+}
+
 func (u *BaseUnit) ToType() types.Unit {
 	return types.Unit{
 		ID:             u.ID,
@@ -249,4 +265,9 @@ func (u *BaseUnit) GetAvoidanceTicks() int {
 
 func (u *BaseUnit) SetAvoidanceTicks(ticks int) {
 	u.AvoidanceTicks = ticks
+}
+
+// IsInfantry returns false by default - only infantry units override this
+func (u *BaseUnit) IsInfantry() bool {
+	return false
 }

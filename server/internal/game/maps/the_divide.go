@@ -36,6 +36,9 @@ func TheDivideMap() *types.MapDefinition {
 		// Turrets
 		Turrets: divideTurrets(),
 
+		// Barracks (infantry spawn points)
+		Barracks: divideBarracks(),
+
 		// Obstacles
 		Obstacles: divideObstacles(),
 
@@ -70,6 +73,24 @@ func divideBuyZones() []types.MapBuyZone {
 			Cost:         types.AirplaneCost,
 			IsClaimable:  false,
 		},
+		{
+			ID:           "buy_p1_sniper",
+			DefaultOwner: 0,
+			UnitType:     "sniper",
+			Position:     types.Vector3{X: -95, Y: 0, Z: -4},
+			Radius:       4.0,
+			Cost:         types.SniperCost,
+			IsClaimable:  false,
+		},
+		{
+			ID:           "buy_p1_rocket_launcher",
+			DefaultOwner: 0,
+			UnitType:     "rocket_launcher",
+			Position:     types.Vector3{X: -95, Y: 0, Z: 4},
+			Radius:       4.0,
+			Cost:         types.RocketLauncherCost,
+			IsClaimable:  false,
+		},
 
 		// Player 2 base buy zones (at X=90)
 		{
@@ -88,6 +109,24 @@ func divideBuyZones() []types.MapBuyZone {
 			Position:     types.Vector3{X: 90, Y: 0, Z: 8},
 			Radius:       4.0,
 			Cost:         types.AirplaneCost,
+			IsClaimable:  false,
+		},
+		{
+			ID:           "buy_p2_sniper",
+			DefaultOwner: 1,
+			UnitType:     "sniper",
+			Position:     types.Vector3{X: 95, Y: 0, Z: -4},
+			Radius:       4.0,
+			Cost:         types.SniperCost,
+			IsClaimable:  false,
+		},
+		{
+			ID:           "buy_p2_rocket_launcher",
+			DefaultOwner: 1,
+			UnitType:     "rocket_launcher",
+			Position:     types.Vector3{X: 95, Y: 0, Z: 4},
+			Radius:       4.0,
+			Cost:         types.RocketLauncherCost,
 			IsClaimable:  false,
 		},
 
@@ -402,4 +441,23 @@ func divideObstacles() []types.MapObstacle {
 	)
 
 	return obstacles
+}
+
+func divideBarracks() []types.MapBarracks {
+	return []types.MapBarracks{
+		// Central barracks - key strategic point between the two platforms
+		{ID: "barracks_center", Position: types.Vector3{X: 0, Y: 0, Z: 0}},
+
+		// Flanking barracks - west side
+		{ID: "barracks_west_north", Position: types.Vector3{X: -55, Y: 0, Z: -35}},
+		{ID: "barracks_west_south", Position: types.Vector3{X: -55, Y: 0, Z: 35}},
+
+		// Flanking barracks - east side
+		{ID: "barracks_east_north", Position: types.Vector3{X: 55, Y: 0, Z: -35}},
+		{ID: "barracks_east_south", Position: types.Vector3{X: 55, Y: 0, Z: 35}},
+
+		// Near-platform barracks (below the raised forward bases)
+		{ID: "barracks_north_approach", Position: types.Vector3{X: 0, Y: 0, Z: -30}},
+		{ID: "barracks_south_approach", Position: types.Vector3{X: 0, Y: 0, Z: 30}},
+	}
 }

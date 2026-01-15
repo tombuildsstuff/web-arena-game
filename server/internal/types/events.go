@@ -40,11 +40,14 @@ type GameOverPayload struct {
 
 // PlayerStats contains detailed kill statistics for a player
 type PlayerStats struct {
-	TankKills     int `json:"tankKills"`
-	AirplaneKills int `json:"airplaneKills"`
-	TurretKills   int `json:"turretKills"`
-	PlayerKills   int `json:"playerKills"`
-	TotalPoints   int `json:"totalPoints"`
+	TankKills           int `json:"tankKills"`
+	AirplaneKills       int `json:"airplaneKills"`
+	SniperKills         int `json:"sniperKills"`
+	RocketLauncherKills int `json:"rocketLauncherKills"`
+	TurretKills         int `json:"turretKills"`
+	BarracksKills       int `json:"barracksKills"`
+	PlayerKills         int `json:"playerKills"`
+	TotalPoints         int `json:"totalPoints"`
 }
 
 // MatchStats contains end-of-match statistics
@@ -89,6 +92,11 @@ type ClaimTurretPayload struct {
 // ClaimBuyZonePayload represents a request to claim a buy zone
 type ClaimBuyZonePayload struct {
 	ZoneID string `json:"zoneId"` // ID of the buy zone to claim
+}
+
+// ClaimBarracksPayload represents a request to claim a barracks
+type ClaimBarracksPayload struct {
+	BarracksID string `json:"barracksId"` // ID of the barracks to claim
 }
 
 // SpectateStartPayload is sent when a spectator joins a game

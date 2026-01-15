@@ -94,6 +94,7 @@ export class Game {
       (zoneId) => this.sendBulkBuyFromZone(zoneId),
       (turretId) => this.sendClaimTurret(turretId),
       (zoneId) => this.sendClaimBuyZone(zoneId),
+      (barracksId) => this.sendClaimBarracks(barracksId),
       this.gameLoop
     );
 
@@ -450,6 +451,12 @@ export class Game {
   sendClaimBuyZone(zoneId) {
     if (this.ws.isConnected() && this.gameState.gameStatus === 'playing') {
       this.ws.send('claim_buy_zone', { zoneId });
+    }
+  }
+
+  sendClaimBarracks(barracksId) {
+    if (this.ws.isConnected() && this.gameState.gameStatus === 'playing') {
+      this.ws.send('claim_barracks', { barracksId });
     }
   }
 

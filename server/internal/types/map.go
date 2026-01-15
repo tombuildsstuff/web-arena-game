@@ -19,6 +19,9 @@ type MapDefinition struct {
 	// Turrets
 	Turrets []MapTurret `json:"turrets"`
 
+	// Barracks (infantry spawn points)
+	Barracks []MapBarracks `json:"barracks"`
+
 	// Obstacles (walls, pillars, platforms, ramps)
 	Obstacles []MapObstacle `json:"obstacles"`
 
@@ -51,6 +54,12 @@ type MapTurret struct {
 	ID           string  `json:"id"`
 	Position     Vector3 `json:"position"`
 	DefaultOwner int     `json:"defaultOwner"` // -1 = neutral, 0 = player 1, 1 = player 2
+}
+
+// MapBarracks defines a barracks (infantry spawn point) in the map
+type MapBarracks struct {
+	ID       string  `json:"id"`
+	Position Vector3 `json:"position"`
 }
 
 // MapObstacle defines an obstacle in the map

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export class PlayerInput {
-  constructor(camera, renderer, onMove, onShoot, onBuyFromZone, onBulkBuyFromZone, onClaimTurret, onClaimBuyZone, gameLoop) {
+  constructor(camera, renderer, onMove, onShoot, onBuyFromZone, onBulkBuyFromZone, onClaimTurret, onClaimBuyZone, onClaimBarracks, gameLoop) {
     this.camera = camera;
     this.renderer = renderer;
     this.onMove = onMove;
@@ -10,6 +10,7 @@ export class PlayerInput {
     this.onBulkBuyFromZone = onBulkBuyFromZone;
     this.onClaimTurret = onClaimTurret;
     this.onClaimBuyZone = onClaimBuyZone;
+    this.onClaimBarracks = onClaimBarracks;
     this.gameLoop = gameLoop;
 
     // Movement keys state (using key codes for reliability across keyboard layouts)
@@ -122,7 +123,7 @@ export class PlayerInput {
   handleInteraction() {
     if (!this.gameLoop) return;
 
-    // Priority: owned buy zones, then claimable buy zones, then turrets
+    // Priority: owned buy zones, then claimable buy zones, then turrets, then barracks
     const nearbyZone = this.gameLoop.getNearbyBuyZone();
     if (nearbyZone && this.onBuyFromZone) {
       this.onBuyFromZone(nearbyZone.id);
@@ -138,6 +139,12 @@ export class PlayerInput {
     const nearbyTurret = this.gameLoop.getNearbyTurret();
     if (nearbyTurret && this.onClaimTurret) {
       this.onClaimTurret(nearbyTurret.id);
+      return;
+    }
+
+    const nearbyBarracks = this.gameLoop.getNearbyBarracks();
+    if (nearbyBarracks && this.onClaimBarracks) {
+      this.onClaimBarracks(nearbyBarracks.id);
     }
   }
 

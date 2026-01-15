@@ -22,6 +22,7 @@ func NewAirplane(ownerID int, spawnPos types.Vector3, targetPos types.Vector3) *
 			OwnerID:         ownerID,
 			Position:        spawnPos,
 			Health:          types.AirplaneHealth,
+			MaxHealth:       types.AirplaneHealth,
 			TargetPosition:  targetPos,
 			Speed:           types.AirplaneSpeed,
 			Damage:          types.AirplaneDamage,

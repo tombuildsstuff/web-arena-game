@@ -7,6 +7,9 @@ import { Explosion } from './Explosion.js';
 import { BuyZone } from './BuyZone.js';
 import { Turret } from './Turret.js';
 import { HealthPack } from './HealthPack.js';
+import { Sniper } from './Sniper.js';
+import { RocketLauncher } from './RocketLauncher.js';
+import { Barracks } from './Barracks.js';
 import { PLAYER_COLORS } from '../utils/constants.js';
 
 export class GameLoop {
@@ -25,10 +28,12 @@ export class GameLoop {
     this.buyZoneMeshes = new Map(); // Map of buy zone ID to BuyZone object
     this.turretMeshes = new Map(); // Map of turret ID to Turret object
     this.healthPackMeshes = new Map(); // Map of health pack ID to HealthPack object
+    this.barracksMeshes = new Map(); // Map of barracks ID to Barracks object
     this.explosions = []; // Active explosions
     this.obstaclesInitialized = false;
     this.buyZonesInitialized = false;
     this.turretsInitialized = false;
+    this.barracksInitialized = false;
     this.previousUnitIDs = new Set(); // Track unit IDs for death detection
     this.previousProjectileIDs = new Set(); // Track projectile IDs for shot detection
     this.previousTurretStates = new Map(); // Track turret states for sound triggers
@@ -36,6 +41,7 @@ export class GameLoop {
     this.nearbyBuyZone = null; // The buy zone the player is currently near
     this.nearbyClaimableBuyZone = null; // A claimable buy zone the player is near
     this.nearbyTurret = null; // The turret the player is currently near
+    this.nearbyBarracks = null; // The barracks the player is currently near
     this.buyZonePopup = null; // Reference to the popup for position updates
     this.isSpectating = false; // Spectator mode flag
   }
@@ -143,6 +149,12 @@ export class GameLoop {
 
     // Sync and update health packs
     this.syncHealthPacks();
+
+    // Sync barracks (once at game start, then update)
+    this.syncBarracks();
+
+    // Update barracks animations and check proximity
+    this.updateBarracks();
 
     // Update unit positions with interpolation
     this.updateUnitPositions(deltaTime);
@@ -351,6 +363,63 @@ export class GameLoop {
     }
   }
 
+  syncBarracks() {
+    const stateBarracks = this.gameState.barracks || [];
+    if (stateBarracks.length === 0) return;
+
+    // Initialize barracks once
+    if (!this.barracksInitialized) {
+      for (const barracks of stateBarracks) {
+        if (!this.barracksMeshes.has(barracks.id)) {
+          const barracksObj = new Barracks(this.scene.getScene(), barracks);
+          this.barracksMeshes.set(barracks.id, barracksObj);
+        }
+      }
+      this.barracksInitialized = true;
+    }
+  }
+
+  updateBarracks() {
+    const stateBarracks = this.gameState.barracks || [];
+
+    // Update barracks states
+    for (const barracksData of stateBarracks) {
+      const barracksObj = this.barracksMeshes.get(barracksData.id);
+      if (barracksObj) {
+        barracksObj.update(barracksData, this.elapsedTime);
+      }
+    }
+
+    // Check if player is near any barracks
+    this.nearbyBarracks = null;
+    const playerUnit = this.gameState.getMyPlayerUnit();
+    if (!playerUnit || playerUnit.isRespawning) return;
+
+    const playerPos = playerUnit.position;
+    const playerId = this.gameState.playerId;
+
+    for (const barracksData of stateBarracks) {
+      const barracksObj = this.barracksMeshes.get(barracksData.id);
+      if (!barracksObj) continue;
+
+      // Check if player is in range of barracks
+      if (!barracksObj.isInRange(playerPos)) continue;
+
+      // Can't claim destroyed barracks
+      if (barracksData.isDestroyed) continue;
+      // Can't claim your own barracks
+      if (barracksData.ownerId === playerId) continue;
+
+      // Can claim neutral or enemy barracks
+      this.nearbyBarracks = barracksData;
+      break;
+    }
+  }
+
+  getNearbyBarracks() {
+    return this.nearbyBarracks;
+  }
+
   syncUnits() {
     const stateUnits = this.gameState.units || [];
     const currentUnitIDs = new Set(stateUnits.map(u => u.id));
@@ -466,6 +535,10 @@ export class GameLoop {
       unitObj = new Airplane(this.scene.getScene(), unit, color, false);
     } else if (unit.type === 'super_helicopter') {
       unitObj = new Airplane(this.scene.getScene(), unit, color, true);
+    } else if (unit.type === 'sniper') {
+      unitObj = new Sniper(this.scene.getScene(), unit, color);
+    } else if (unit.type === 'rocket_launcher') {
+      unitObj = new RocketLauncher(this.scene.getScene(), unit, color);
     } else if (unit.type === 'player') {
       const isLocalPlayer = !this.isSpectating && unit.ownerId === this.gameState.playerId;
       // Get display name from player data
@@ -608,6 +681,12 @@ export class GameLoop {
     }
     this.healthPackMeshes.clear();
 
+    // Remove all barracks meshes
+    for (const barracks of this.barracksMeshes.values()) {
+      barracks.remove();
+    }
+    this.barracksMeshes.clear();
+
     // Clear explosions
     this.explosions = [];
 
@@ -615,6 +694,7 @@ export class GameLoop {
     this.obstaclesInitialized = false;
     this.buyZonesInitialized = false;
     this.turretsInitialized = false;
+    this.barracksInitialized = false;
 
     // Reset tracking
     this.previousUnitIDs.clear();
@@ -624,6 +704,7 @@ export class GameLoop {
     this.nearbyBuyZone = null;
     this.nearbyClaimableBuyZone = null;
     this.nearbyTurret = null;
+    this.nearbyBarracks = null;
     this.elapsedTime = 0;
 
     // Reset spectator state

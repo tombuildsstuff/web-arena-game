@@ -16,6 +16,7 @@ type GameState struct {
 	Projectiles   []Projectile   `json:"projectiles"`
 	BuyZones      []BuyZone      `json:"buyZones"`
 	Turrets       []Turret       `json:"turrets"`
+	Barracks      []Barracks     `json:"barracks"`
 	HealthPacks   []HealthPack   `json:"healthPacks"`
 	PendingSpawns []PendingSpawn `json:"pendingSpawns"`
 	GameStatus    string         `json:"gameStatus"` // "waiting", "playing", "finished"
@@ -110,4 +111,17 @@ type PendingSpawn struct {
 type HealthPack struct {
 	ID       string  `json:"id"`
 	Position Vector3 `json:"position"`
+}
+
+// Barracks represents a claimable spawn point for infantry units
+type Barracks struct {
+	ID            string  `json:"id"`
+	Position      Vector3 `json:"position"`
+	OwnerID       int     `json:"ownerId"`       // -1 = neutral, 0 = player 1, 1 = player 2
+	Health        int     `json:"health"`
+	MaxHealth     int     `json:"maxHealth"`
+	IsDestroyed   bool    `json:"isDestroyed"`
+	RespawnTime   float64 `json:"respawnTime"`   // Seconds remaining until respawn as neutral
+	ClaimRadius   float64 `json:"claimRadius"`   // Radius for claiming (infantry only)
+	OccupantCount int     `json:"occupantCount"` // Number of infantry inside (for client healing indicator)
 }

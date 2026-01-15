@@ -82,6 +82,24 @@ func NewProjectileFromPlayerToTurret(shooter *PlayerUnit, turret *Turret, timest
 	}
 }
 
+// NewProjectileToBarracks creates a projectile from a unit to a barracks
+func NewProjectileToBarracks(shooter Unit, barracks *Barracks, timestamp int64) *Projectile {
+	shooterPos := shooter.GetPosition()
+	targetPos := barracks.Position
+
+	return &Projectile{
+		ID:        uuid.New().String(),
+		ShooterID: shooter.GetID(),
+		TargetID:  barracks.ID,
+		Position:  shooterPos,
+		StartPos:  shooterPos,
+		EndPos:    targetPos,
+		Speed:     ProjectileSpeed,
+		Damage:    shooter.GetDamage(),
+		CreatedAt: timestamp,
+	}
+}
+
 // ToType converts Projectile to types.Projectile for JSON serialization
 func (p *Projectile) ToType() types.Projectile {
 	return types.Projectile{
@@ -176,6 +194,27 @@ func (ps *ProjectileSystem) Update(state *State, deltaTime float64) {
 							shooterOwner := state.GetPlayer(shooter.GetOwnerID())
 							if shooterOwner != nil {
 								shooterOwner.AddKillByType("turret")
+							}
+						}
+					}
+				}
+			}
+
+			// Try to apply damage to barracks target
+			if !hit {
+				targetBarracks := state.GetBarracksByID(proj.TargetID)
+				if targetBarracks != nil && targetBarracks.IsAlive() {
+					wasAlive := targetBarracks.IsAlive()
+					targetBarracks.TakeDamage(proj.Damage)
+					hit = true
+
+					// If barracks was destroyed, credit the kill
+					if wasAlive && !targetBarracks.IsAlive() {
+						shooter := state.GetUnitByID(proj.ShooterID)
+						if shooter != nil {
+							shooterOwner := state.GetPlayer(shooter.GetOwnerID())
+							if shooterOwner != nil {
+								shooterOwner.AddKillByType("barracks")
 							}
 						}
 					}

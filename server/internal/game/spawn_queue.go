@@ -23,6 +23,8 @@ const (
 	AirplaneSpawnDelay        = 4000  // 4 seconds between airplane spawns
 	SuperTankSpawnDelay       = 10000 // 10 seconds for super tank spawns
 	SuperHelicopterSpawnDelay = 10000 // 10 seconds for super helicopter spawns
+	SniperSpawnDelay          = 1500  // 1.5 seconds between sniper spawns
+	RocketLauncherSpawnDelay  = 2000  // 2 seconds between rocket launcher spawns
 )
 
 // SpawnQueue manages pending unit spawns
@@ -101,6 +103,10 @@ func (q *SpawnQueue) ProcessQueue(state *State) []Unit {
 				unit = NewSuperTank(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
 			case "super_helicopter":
 				unit = NewSuperHelicopter(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
+			case "sniper":
+				unit = NewSniper(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
+			case "rocket_launcher":
+				unit = NewRocketLauncher(pending.OwnerID, pending.SpawnPos, pending.TargetPos)
 			}
 
 			if unit != nil {
@@ -141,6 +147,10 @@ func (q *SpawnQueue) canSpawnUnit(playerID int, unitType string, now int64) bool
 		requiredDelay = SuperTankSpawnDelay
 	case "super_helicopter":
 		requiredDelay = SuperHelicopterSpawnDelay
+	case "sniper":
+		requiredDelay = SniperSpawnDelay
+	case "rocket_launcher":
+		requiredDelay = RocketLauncherSpawnDelay
 	default:
 		requiredDelay = 1000 // Default 1 second
 	}
@@ -174,6 +184,12 @@ func (q *SpawnQueue) isSpawnPositionClear(pending *PendingSpawn, units []Unit) b
 	case "super_helicopter":
 		spawnRadius = types.SuperHelicopterCollisionRadius
 		spawnY = types.AirplaneYPosition
+	case "sniper":
+		spawnRadius = types.SniperCollisionRadius
+		spawnY = types.InfantryYPosition
+	case "rocket_launcher":
+		spawnRadius = types.RocketLauncherCollisionRadius
+		spawnY = types.InfantryYPosition
 	default:
 		spawnRadius = 2.0
 		spawnY = 1.0
@@ -230,6 +246,12 @@ func (q *SpawnQueue) isSpawnPositionClear(pending *PendingSpawn, units []Unit) b
 		case "super_helicopter":
 			otherY = types.AirplaneYPosition
 			otherRadius = types.SuperHelicopterCollisionRadius
+		case "sniper":
+			otherY = types.InfantryYPosition
+			otherRadius = types.SniperCollisionRadius
+		case "rocket_launcher":
+			otherY = types.InfantryYPosition
+			otherRadius = types.RocketLauncherCollisionRadius
 		default:
 			otherY = 1.0
 			otherRadius = 2.0

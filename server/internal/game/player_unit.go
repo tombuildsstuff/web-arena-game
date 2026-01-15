@@ -31,6 +31,7 @@ func NewPlayerUnit(ownerID int, basePosition types.Vector3) *PlayerUnit {
 			OwnerID:         ownerID,
 			Position:        spawnPos,
 			Health:          types.PlayerUnitHealth,
+			MaxHealth:       types.PlayerUnitHealth,
 			TargetPosition:  spawnPos, // Players don't have AI targets
 			Speed:           types.PlayerUnitSpeed,
 			Damage:          types.PlayerUnitDamage,

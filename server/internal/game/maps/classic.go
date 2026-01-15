@@ -36,6 +36,9 @@ func ClassicMap() *types.MapDefinition {
 		// Turrets
 		Turrets: classicTurrets(),
 
+		// Barracks (infantry spawn points)
+		Barracks: classicBarracks(),
+
 		// Obstacles
 		Obstacles: classicObstacles(),
 
@@ -70,6 +73,24 @@ func classicBuyZones() []types.MapBuyZone {
 			Cost:         types.AirplaneCost,
 			IsClaimable:  false,
 		},
+		{
+			ID:           "buy_p1_sniper",
+			DefaultOwner: 0,
+			UnitType:     "sniper",
+			Position:     types.Vector3{X: -95, Y: 0, Z: -4},
+			Radius:       4.0,
+			Cost:         types.SniperCost,
+			IsClaimable:  false,
+		},
+		{
+			ID:           "buy_p1_rocket_launcher",
+			DefaultOwner: 0,
+			UnitType:     "rocket_launcher",
+			Position:     types.Vector3{X: -95, Y: 0, Z: 4},
+			Radius:       4.0,
+			Cost:         types.RocketLauncherCost,
+			IsClaimable:  false,
+		},
 
 		// Player 2 base buy zones (at X=90)
 		{
@@ -88,6 +109,24 @@ func classicBuyZones() []types.MapBuyZone {
 			Position:     types.Vector3{X: 90, Y: 0, Z: 8},
 			Radius:       4.0,
 			Cost:         types.AirplaneCost,
+			IsClaimable:  false,
+		},
+		{
+			ID:           "buy_p2_sniper",
+			DefaultOwner: 1,
+			UnitType:     "sniper",
+			Position:     types.Vector3{X: 95, Y: 0, Z: -4},
+			Radius:       4.0,
+			Cost:         types.SniperCost,
+			IsClaimable:  false,
+		},
+		{
+			ID:           "buy_p2_rocket_launcher",
+			DefaultOwner: 1,
+			UnitType:     "rocket_launcher",
+			Position:     types.Vector3{X: 95, Y: 0, Z: 4},
+			Radius:       4.0,
+			Cost:         types.RocketLauncherCost,
 			IsClaimable:  false,
 		},
 
@@ -389,4 +428,18 @@ func classicObstacles() []types.MapObstacle {
 	)
 
 	return obstacles
+}
+
+func classicBarracks() []types.MapBarracks {
+	return []types.MapBarracks{
+		// Mid-field barracks (neutral, key strategic points)
+		{ID: "barracks_center_north", Position: types.Vector3{X: 0, Y: 0, Z: -40}},
+		{ID: "barracks_center_south", Position: types.Vector3{X: 0, Y: 0, Z: 40}},
+
+		// Side corridor barracks (flanking positions)
+		{ID: "barracks_west_north", Position: types.Vector3{X: -50, Y: 0, Z: -55}},
+		{ID: "barracks_west_south", Position: types.Vector3{X: -50, Y: 0, Z: 55}},
+		{ID: "barracks_east_north", Position: types.Vector3{X: 50, Y: 0, Z: -55}},
+		{ID: "barracks_east_south", Position: types.Vector3{X: 50, Y: 0, Z: 55}},
+	}
 }

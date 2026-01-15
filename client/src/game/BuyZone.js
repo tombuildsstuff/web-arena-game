@@ -146,6 +146,92 @@ export class BuyZone {
         ring.rotation.x = Math.PI / 2;
         icon.add(ring);
       }
+    } else if (unitType === 'sniper') {
+      // Sniper icon - person silhouette with long rifle
+      icon = new THREE.Group();
+      icon.position.set(
+        this.zone.position.x,
+        baseY,
+        this.zone.position.z
+      );
+
+      // Body (capsule-like)
+      const bodyGeometry = new THREE.CapsuleGeometry(0.3, 0.8, 4, 8);
+      const body = new THREE.Mesh(bodyGeometry, iconMaterial);
+      body.position.y = 0.9;
+      icon.add(body);
+
+      // Head
+      const headGeometry = new THREE.SphereGeometry(0.25, 8, 8);
+      const head = new THREE.Mesh(headGeometry, iconMaterial);
+      head.position.y = 1.6;
+      icon.add(head);
+
+      // Long sniper rifle
+      const rifleMaterial = new THREE.MeshStandardMaterial({
+        color: 0x222222,
+        roughness: 0.4,
+        metalness: 0.6
+      });
+      const rifleGeometry = new THREE.CylinderGeometry(0.05, 0.05, 1.8, 8);
+      const rifle = new THREE.Mesh(rifleGeometry, rifleMaterial);
+      rifle.rotation.z = Math.PI / 6; // Angled
+      rifle.position.set(0.4, 1.1, 0);
+      icon.add(rifle);
+
+      // Scope on rifle
+      const scopeGeometry = new THREE.CylinderGeometry(0.08, 0.08, 0.3, 8);
+      const scope = new THREE.Mesh(scopeGeometry, rifleMaterial);
+      scope.rotation.z = Math.PI / 6;
+      scope.position.set(0.5, 1.3, 0);
+      icon.add(scope);
+
+    } else if (unitType === 'rocket_launcher') {
+      // Rocket launcher icon - person with launcher tube
+      icon = new THREE.Group();
+      icon.position.set(
+        this.zone.position.x,
+        baseY,
+        this.zone.position.z
+      );
+
+      // Body (capsule-like)
+      const bodyGeometry = new THREE.CapsuleGeometry(0.35, 0.7, 4, 8);
+      const body = new THREE.Mesh(bodyGeometry, iconMaterial);
+      body.position.y = 0.85;
+      icon.add(body);
+
+      // Head
+      const headGeometry = new THREE.SphereGeometry(0.25, 8, 8);
+      const head = new THREE.Mesh(headGeometry, iconMaterial);
+      head.position.y = 1.55;
+      icon.add(head);
+
+      // Rocket launcher tube
+      const tubeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x445544,
+        roughness: 0.5,
+        metalness: 0.4
+      });
+      const tubeGeometry = new THREE.CylinderGeometry(0.15, 0.12, 1.4, 8);
+      const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+      tube.rotation.z = Math.PI / 4; // On shoulder
+      tube.position.set(0.5, 1.2, 0);
+      icon.add(tube);
+
+      // Rocket tip (red)
+      const rocketTipMaterial = new THREE.MeshStandardMaterial({
+        color: 0xcc3333,
+        roughness: 0.4,
+        metalness: 0.3,
+        emissive: 0xcc3333,
+        emissiveIntensity: 0.2
+      });
+      const tipGeometry = new THREE.ConeGeometry(0.12, 0.3, 8);
+      const tip = new THREE.Mesh(tipGeometry, rocketTipMaterial);
+      tip.rotation.z = -Math.PI / 4;
+      tip.position.set(0.85, 1.55, 0);
+      icon.add(tip);
     }
 
     if (icon) {

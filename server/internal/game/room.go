@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"sync"
 	"time"
 
@@ -237,6 +238,9 @@ func (r *GameRoom) update() {
 	// Update health packs (spawning and collection)
 	r.healthPackSystem.Update(r.State)
 
+	// Update barracks (respawn timer)
+	r.updateBarracks(deltaTime)
+
 	// Check player respawns
 	r.checkPlayerRespawns()
 
@@ -281,6 +285,78 @@ func (r *GameRoom) checkPlayerRespawns() {
 			playerUnit.CheckRespawn()
 		}
 	}
+}
+
+// updateBarracks updates all barracks (respawn timers, occupants, scatter)
+func (r *GameRoom) updateBarracks(deltaTime float64) {
+	for _, barracks := range r.State.Barracks {
+		// Handle respawn timer
+		barracks.Update(deltaTime)
+
+		// Process any pending scatter from destruction
+		scatteredIDs := barracks.GetAndClearPendingScatter()
+		for _, unitID := range scatteredIDs {
+			r.scatterInfantryFromBarracks(unitID, barracks.Position)
+		}
+
+		// Skip occupant tracking if barracks is destroyed
+		if barracks.IsDestroyed {
+			continue
+		}
+
+		// Track infantry inside this barracks
+		for _, unit := range r.State.Units {
+			if !unit.IsInfantry() {
+				continue
+			}
+			if unit.GetHealth() <= 0 {
+				continue
+			}
+
+			// Check if infantry is inside barracks
+			if barracks.IsUnitInRange(unit.GetPosition()) {
+				// Update occupant time and heal if ready
+				healAmount := barracks.UpdateOccupant(unit.GetID(), deltaTime)
+				if healAmount > 0 {
+					unit.Heal(healAmount)
+				}
+			} else {
+				// Remove from occupants if they left
+				barracks.RemoveOccupant(unit.GetID())
+			}
+		}
+	}
+}
+
+// scatterInfantryFromBarracks moves an infantry unit outside the barracks and applies damage
+func (r *GameRoom) scatterInfantryFromBarracks(unitID string, barracksPos types.Vector3) {
+	unit := r.State.GetUnitByID(unitID)
+	if unit == nil || !unit.IsInfantry() {
+		return
+	}
+
+	// Apply scatter damage
+	unit.TakeDamage(types.BarracksScatterDamage)
+
+	// Scatter in a random direction
+	// Use unit ID hash for deterministic scatter direction
+	hash := 0
+	for _, c := range unitID {
+		hash = hash*31 + int(c)
+	}
+	angle := float64(hash%360) * math.Pi / 180.0
+
+	// Calculate new position outside barracks
+	scatterDist := types.BarracksScatterRadius
+	newX := barracksPos.X + math.Cos(angle)*scatterDist
+	newZ := barracksPos.Z + math.Sin(angle)*scatterDist
+
+	// Update unit position
+	unit.SetPosition(types.Vector3{
+		X: newX,
+		Y: types.InfantryYPosition,
+		Z: newZ,
+	})
 }
 
 // HandlePurchase handles a unit purchase request
@@ -476,6 +552,13 @@ func (r *GameRoom) HandleBuyFromZone(playerID int, zoneID string, conn ClientCon
 		spawnPos.Y = types.TankYPosition
 	case "airplane", "super_helicopter":
 		spawnPos.Y = types.AirplaneYPosition
+	case "sniper", "rocket_launcher":
+		spawnPos.Y = types.InfantryYPosition
+		// Infantry spawn at closest owned barracks, or base if none owned
+		if closestBarracks := r.getClosestOwnedBarracks(playerID, zone.Position); closestBarracks != nil {
+			spawnPos = closestBarracks.Position
+			spawnPos.Y = types.InfantryYPosition
+		}
 	}
 
 	// Add to spawn queue
@@ -726,6 +809,66 @@ func (r *GameRoom) HandleClaimBuyZone(playerID int, zoneID string, conn ClientCo
 	}
 }
 
+// HandleClaimBarracks handles a barracks claiming request
+func (r *GameRoom) HandleClaimBarracks(playerID int, barracksID string, conn ClientConnection) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.State.GameStatus != "playing" {
+		return
+	}
+
+	// Find the barracks
+	var barracks *Barracks
+	for _, b := range r.State.Barracks {
+		if b.ID == barracksID {
+			barracks = b
+			break
+		}
+	}
+
+	if barracks == nil {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Invalid barracks",
+		})
+		return
+	}
+
+	// Get the player unit
+	playerUnit := r.State.GetPlayerUnit(playerID)
+	if playerUnit == nil || !playerUnit.IsAlive() {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "You must be alive to claim a barracks",
+		})
+		return
+	}
+
+	// Check if player is near the barracks
+	if !barracks.IsUnitInRange(playerUnit.GetPosition()) {
+		conn.SendMessage("error", types.ErrorPayload{
+			Message: "Get closer to the barracks",
+		})
+		return
+	}
+
+	// Check if barracks can be claimed
+	if !barracks.CanBeClaimed(playerID) {
+		if barracks.IsDestroyed {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "Barracks is destroyed",
+			})
+		} else if barracks.OwnerID == playerID {
+			conn.SendMessage("error", types.ErrorPayload{
+				Message: "You already own this barracks",
+			})
+		}
+		return
+	}
+
+	// Claim the barracks (free for infantry)
+	barracks.Claim(playerID)
+}
+
 // HandlePlayerShoot handles player shoot command
 func (r *GameRoom) HandlePlayerShoot(playerID int, targetX, targetZ float64) {
 	r.mu.Lock()
@@ -804,10 +947,31 @@ func (r *GameRoom) HandlePlayerShoot(playerID int, targetX, targetZ float64) {
 		}
 	}
 
+	// Check if there's a barracks at the target position (enemy barracks only)
+	var targetBarracks *Barracks
+	if targetUnit == nil && targetTurret == nil {
+		for _, barracks := range r.State.Barracks {
+			if barracks.OwnerID == playerID {
+				continue // Don't shoot own barracks
+			}
+			if !barracks.IsAlive() {
+				continue
+			}
+
+			distToTarget := calculateDistance(barracks.Position, targetPos)
+			if distToTarget < 5.0 { // Close enough to target position
+				targetBarracks = barracks
+				break
+			}
+		}
+	}
+
 	// Create projectile
 	var projectile *Projectile
 	if targetTurret != nil {
 		projectile = NewProjectileFromPlayerToTurret(playerUnit, targetTurret, now)
+	} else if targetBarracks != nil {
+		projectile = NewProjectileToBarracks(playerUnit, targetBarracks, now)
 	} else {
 		projectile = NewProjectileFromPlayer(playerUnit, targetPos, targetUnit, now)
 	}
@@ -933,6 +1097,29 @@ func (r *GameRoom) GetGameInfo() types.ActiveGame {
 		Player2Name:    r.State.Players[1].DisplayName,
 		SpectatorCount: len(r.spectators),
 	}
+}
+
+// getClosestOwnedBarracks returns the closest barracks owned by the player, or nil if none owned
+func (r *GameRoom) getClosestOwnedBarracks(playerID int, fromPos types.Vector3) *Barracks {
+	var closest *Barracks
+	closestDistSq := float64(0)
+
+	for _, barracks := range r.State.Barracks {
+		if barracks.OwnerID != playerID || barracks.IsDestroyed {
+			continue
+		}
+
+		dx := barracks.Position.X - fromPos.X
+		dz := barracks.Position.Z - fromPos.Z
+		distSq := dx*dx + dz*dz
+
+		if closest == nil || distSq < closestDistSq {
+			closest = barracks
+			closestDistSq = distSq
+		}
+	}
+
+	return closest
 }
 
 // Marshal game room to JSON (for debugging)

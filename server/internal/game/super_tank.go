@@ -19,6 +19,7 @@ func NewSuperTank(ownerID int, spawnPos types.Vector3, targetPos types.Vector3) 
 			OwnerID:         ownerID,
 			Position:        spawnPos,
 			Health:          types.SuperTankHealth,
+			MaxHealth:       types.SuperTankHealth,
 			TargetPosition:  targetPos,
 			Speed:           types.SuperTankSpeed,
 			Damage:          types.SuperTankDamage,
