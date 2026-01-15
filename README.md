@@ -40,14 +40,14 @@ A real-time 3D multiplayer strategy game where two players compete by purchasing
 
 ### Client
 - **Vanilla JavaScript** with ES6+ modules
-- **Three.js** for 3D rendering
-- **Vite** for build tooling and dev server
-- **Bun** as the JavaScript runtime
+- **Three.js 0.160** for 3D rendering
+- **Vite 5.4** for build tooling and dev server
+- **Bun 1.x** as the JavaScript runtime
 
 ### Server
-- **Go 1.21+** for high-performance game logic
-- **gorilla/websocket** for WebSocket connections
-- **chi** router for HTTP handling
+- **Go 1.25** for high-performance game logic
+- **gorilla/websocket 1.5** for WebSocket connections
+- **chi 5.2** router for HTTP handling
 - Authoritative server architecture (20 TPS)
 
 ## Project Structure
@@ -82,8 +82,8 @@ web-arena-game/
 
 ### Prerequisites
 
-- **Go 1.21+**: [Download Go](https://go.dev/dl/)
-- **Bun**: [Install Bun](https://bun.sh/)
+- **Go 1.25+**: [Download Go](https://go.dev/dl/)
+- **Bun 1.x**: [Install Bun](https://bun.sh/)
 - **Make**: Usually pre-installed on macOS/Linux
 
 ### Quick Start
