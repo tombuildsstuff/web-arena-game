@@ -4,7 +4,7 @@ This file provides context for Claude Code when working on this project.
 
 ## Project Overview
 
-Arena Game is a real-time 3D multiplayer strategy game. Players control a soldier character while purchasing and deploying autonomous units (tanks, helicopters) to defeat opponents. The game uses a client-server architecture with authoritative server logic.
+Arena Game is a real-time 3D multiplayer strategy game. Players control a soldier character while purchasing and deploying autonomous units (tanks, helicopters, infantry) to defeat opponents. The game uses a client-server architecture with authoritative server logic.
 
 ## Quick Commands
 
@@ -57,7 +57,11 @@ cd server && make fmt && make lint
 | `internal/game/ai.go` | AI opponent behavior |
 | `internal/game/spawn_queue.go` | Delayed unit spawning system |
 | `internal/game/turret.go` | Turret placement and behavior |
+| `internal/game/barracks.go` | Barracks (infantry spawn points) logic |
+| `internal/game/sniper.go` | Sniper infantry unit behavior |
+| `internal/game/rocket_launcher.go` | Rocket launcher infantry unit behavior |
 | `internal/game/health_pack.go` | Health pack spawning |
+| `internal/game/leaderboard.go` | Leaderboard persistence and total matches tracking |
 | `internal/websocket/hub.go` | WebSocket message routing |
 | `internal/types/constants.go` | Game balance constants (costs, damage, etc.) |
 | `internal/types/events.go` | WebSocket message payload types |
@@ -71,9 +75,13 @@ cd server && make fmt && make lint
 | `src/game/Base.js` | Player base rendering |
 | `src/game/BuyZone.js` | Buy zone rendering and highlighting |
 | `src/game/Turret.js` | Turret 3D model and animations |
+| `src/game/Barracks.js` | Barracks 3D model and claim state |
+| `src/game/Sniper.js` | Sniper infantry 3D model and animations |
+| `src/game/RocketLauncher.js` | Rocket launcher infantry 3D model |
 | `src/input/PlayerInput.js` | Keyboard/mouse input handling |
 | `src/input/MobileInput.js` | Touch controls for mobile |
 | `src/ui/HUD.js` | Health bar, money, unit counts, prompts |
+| `src/ui/Leaderboard.js` | Leaderboard display and total matches counter |
 | `src/network/WebSocketClient.js` | Server communication |
 | `src/state/GameState.js` | Client-side state management |
 
@@ -120,7 +128,7 @@ Client-side rendering constants are in `client/src/utils/constants.js`.
 - Constants for game balance are centralized in `types/constants.go`
 
 ### Client-side
-- Entity pattern: each game object has a corresponding class (Tank, Helicopter, Turret, etc.)
+- Entity pattern: each game object has a corresponding class (Tank, Helicopter, Sniper, RocketLauncher, Turret, Barracks, etc.)
 - State is received from server; client never modifies authoritative state
 - Three.js scene management through GameLoop
 - DOM-based UI separate from 3D canvas

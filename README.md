@@ -1,6 +1,6 @@
 # Arena Game
 
-A real-time 3D multiplayer strategy game where two players compete by purchasing and deploying tanks, helicopters, and turrets while controlling a player character that can shoot enemies directly.
+A real-time 3D multiplayer strategy game where two players compete by purchasing and deploying tanks, helicopters, infantry units, and turrets while controlling a player character that can shoot enemies directly.
 
 **[Play Now at arena.ibuildstuff.eu](https://arena.ibuildstuff.eu)**
 
@@ -10,8 +10,9 @@ A real-time 3D multiplayer strategy game where two players compete by purchasing
 - **3D Graphics**: Built with Three.js for immersive 3D visualization
 - **Player Character**: Control a soldier that can move and shoot enemies
 - **Strategic Gameplay**:
-  - Purchase tanks, helicopters, and super units
-  - Claim neutral turrets and forward bases
+  - Purchase tanks, helicopters, infantry (snipers, rocket launchers), and super units
+  - Claim neutral turrets, forward bases, and barracks
+  - Infantry can capture barracks for forward spawning and healing
   - Earn passive income and kill rewards
   - Units automatically move toward enemy base
   - Units engage in combat when in range
@@ -140,22 +141,28 @@ Then open browser at `http://localhost:5173`
 | Starting money | $200 | |
 | Passive income | $10/second | |
 | Tank | $50 | From base or forward bases |
+| Sniper | $60 | Infantry, long range, low HP |
+| Rocket Launcher | $75 | Infantry, high damage, slow |
 | Helicopter | $80 | From base or forward bases |
-| Super Tank | $250 | One per player, from base only |
-| Super Helicopter | $400 | One per player, from base only |
+| Super Tank | $150 | From forward bases only |
+| Super Helicopter | $150 | From forward bases only |
 | Bulk buy (10 units) | 10% discount | $450 for tanks, $720 for helicopters |
 | Forward Base claim | $500 | Top/bottom claimable zones |
 | Turret claim | Free | Walk to neutral turret and press C |
+| Barracks claim | Free | Infantry only, walk inside and press C |
 
 ### Kill Rewards
 | Target | Reward |
 |--------|--------|
 | Tank | $15 |
+| Sniper | $20 |
+| Rocket Launcher | $25 |
 | Helicopter | $25 |
 | Super Tank | $75 |
 | Super Helicopter | $100 |
 | Player | $50 |
 | Turret | $30 |
+| Barracks | $40 |
 
 ### Unit Stats
 
@@ -163,20 +170,26 @@ Then open browser at `http://localhost:5173`
 |------|-----|-------|--------|-------------|-------|
 | Player | 80 | 12 | 15 | 3/sec | 25 |
 | Tank | 30 | 5 | 10 | 1/sec | 10 |
+| Sniper | 15 | 4 | 25 | 0.5/sec | 35 |
+| Rocket Launcher | 20 | 3.5 | 40 | 0.3/sec | 30 |
 | Helicopter | 30 | 15 | 10 | 1/sec | 20 |
-| Super Tank | 150 | 4 | 25 | 0.5/sec | 15 |
-| Super Helicopter | 100 | 12 | 20 | 1.5/sec | 25 |
+| Super Tank | 90 | 4 | 20 | 1/sec | 12 |
+| Super Helicopter | 90 | 12 | 20 | 1/sec | 22 |
 | Turret | 100 | - | 15 | 2/sec | 30 |
 | Base Turret | 150 | - | 20 | 2/sec | 35 |
+| Barracks | 40 | - | - | - | - |
 
 ### Scoring System
 | Kill | Points |
 |------|--------|
 | Tank | 10 |
+| Sniper | 15 |
+| Rocket Launcher | 20 |
 | Helicopter | 20 |
 | Super Tank | 30 |
 | Super Helicopter | 40 |
 | Turret | 20 |
+| Barracks | 25 |
 | Player | 50 |
 
 ### Win Condition
@@ -188,9 +201,10 @@ Then open browser at `http://localhost:5173`
 ### Map Features
 - **Player Bases**: Protected spawn areas at each end
 - **Base Turrets**: 4 turrets at each base corner, defend the base
-- **Buy Zones**: Areas to purchase tanks and helicopters
-- **Forward Bases**: Claimable zones (top/bottom) for forward spawning
+- **Buy Zones**: Areas to purchase tanks, helicopters, and infantry
+- **Forward Bases**: Claimable zones (top/bottom) for forward spawning of tanks and super units
 - **Neutral Turrets**: Claimable defensive positions in the middle
+- **Barracks**: 6 neutral infantry spawn points, claimable by infantry units only
 - **Health Packs**: Spawn periodically, heal 30 HP
 
 ## AI Difficulty
