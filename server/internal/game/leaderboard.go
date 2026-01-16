@@ -168,38 +168,18 @@ func (lb *Leaderboard) load() {
 		return
 	}
 
-	// Try new format first
 	var lbData leaderboardData
-	if err := json.Unmarshal(data, &lbData); err == nil && lbData.Entries != nil {
-		lb.totalMatches = lbData.TotalMatches
-		for _, entry := range lbData.Entries {
-			entryCopy := entry
-			lb.entries[entry.PlayerName] = &entryCopy
-		}
-		log.Printf("Loaded %d leaderboard entries, %d total matches", len(lb.entries), lb.totalMatches)
-		return
-	}
-
-	// Fall back to old format (array of entries)
-	var entries []LeaderboardEntry
-	if err := json.Unmarshal(data, &entries); err != nil {
+	if err := json.Unmarshal(data, &lbData); err != nil {
 		log.Printf("Error parsing leaderboard file: %v", err)
 		return
 	}
 
-	for _, entry := range entries {
+	lb.totalMatches = lbData.TotalMatches
+	for _, entry := range lbData.Entries {
 		entryCopy := entry
 		lb.entries[entry.PlayerName] = &entryCopy
 	}
-
-	// Estimate total matches from existing data (sum of gamesPlayed / 2)
-	var totalGames int
-	for _, entry := range lb.entries {
-		totalGames += entry.GamesPlayed
-	}
-	lb.totalMatches = totalGames / 2
-
-	log.Printf("Loaded %d leaderboard entries (legacy format), estimated %d total matches", len(lb.entries), lb.totalMatches)
+	log.Printf("Loaded %d leaderboard entries, %d total matches", len(lb.entries), lb.totalMatches)
 }
 
 // saveUnlocked saves the leaderboard to file (must hold lock)
