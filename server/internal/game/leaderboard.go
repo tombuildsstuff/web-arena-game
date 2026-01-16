@@ -27,9 +27,10 @@ type LeaderboardEntry struct {
 
 // Leaderboard manages player statistics
 type Leaderboard struct {
-	entries  map[string]*LeaderboardEntry
-	mu       sync.RWMutex
-	filePath string
+	entries      map[string]*LeaderboardEntry
+	totalMatches int
+	mu           sync.RWMutex
+	filePath     string
 }
 
 // NewLeaderboard creates a new leaderboard, loading from file if exists
@@ -118,6 +119,21 @@ func (lb *Leaderboard) GetPlayerStats(playerName string) *LeaderboardEntry {
 	return nil
 }
 
+// GetTotalMatches returns the total number of matches played
+func (lb *Leaderboard) GetTotalMatches() int {
+	lb.mu.RLock()
+	defer lb.mu.RUnlock()
+	return lb.totalMatches
+}
+
+// IncrementTotalMatches increments the total matches counter (called when a game starts)
+func (lb *Leaderboard) IncrementTotalMatches() {
+	lb.mu.Lock()
+	defer lb.mu.Unlock()
+	lb.totalMatches++
+	lb.saveUnlocked()
+}
+
 // getOrCreateEntry gets or creates an entry for a player (must hold write lock)
 func (lb *Leaderboard) getOrCreateEntry(playerName string) *LeaderboardEntry {
 	if entry, exists := lb.entries[playerName]; exists {
@@ -129,6 +145,12 @@ func (lb *Leaderboard) getOrCreateEntry(playerName string) *LeaderboardEntry {
 	}
 	lb.entries[playerName] = entry
 	return entry
+}
+
+// leaderboardData is the structure for JSON persistence
+type leaderboardData struct {
+	TotalMatches int                `json:"totalMatches"`
+	Entries      []LeaderboardEntry `json:"entries"`
 }
 
 // load reads the leaderboard from the file
@@ -146,6 +168,19 @@ func (lb *Leaderboard) load() {
 		return
 	}
 
+	// Try new format first
+	var lbData leaderboardData
+	if err := json.Unmarshal(data, &lbData); err == nil && lbData.Entries != nil {
+		lb.totalMatches = lbData.TotalMatches
+		for _, entry := range lbData.Entries {
+			entryCopy := entry
+			lb.entries[entry.PlayerName] = &entryCopy
+		}
+		log.Printf("Loaded %d leaderboard entries, %d total matches", len(lb.entries), lb.totalMatches)
+		return
+	}
+
+	// Fall back to old format (array of entries)
 	var entries []LeaderboardEntry
 	if err := json.Unmarshal(data, &entries); err != nil {
 		log.Printf("Error parsing leaderboard file: %v", err)
@@ -157,7 +192,14 @@ func (lb *Leaderboard) load() {
 		lb.entries[entry.PlayerName] = &entryCopy
 	}
 
-	log.Printf("Loaded %d leaderboard entries", len(lb.entries))
+	// Estimate total matches from existing data (sum of gamesPlayed / 2)
+	var totalGames int
+	for _, entry := range lb.entries {
+		totalGames += entry.GamesPlayed
+	}
+	lb.totalMatches = totalGames / 2
+
+	log.Printf("Loaded %d leaderboard entries (legacy format), estimated %d total matches", len(lb.entries), lb.totalMatches)
 }
 
 // saveUnlocked saves the leaderboard to file (must hold lock)
@@ -167,7 +209,12 @@ func (lb *Leaderboard) saveUnlocked() {
 		entries = append(entries, *entry)
 	}
 
-	data, err := json.MarshalIndent(entries, "", "  ")
+	lbData := leaderboardData{
+		TotalMatches: lb.totalMatches,
+		Entries:      entries,
+	}
+
+	data, err := json.MarshalIndent(lbData, "", "  ")
 	if err != nil {
 		log.Printf("Error marshaling leaderboard: %v", err)
 		return

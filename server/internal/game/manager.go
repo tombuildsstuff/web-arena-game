@@ -186,6 +186,9 @@ func (m *Manager) tryMatchPlayers() {
 
 	log.Printf("Created game room %s with players %s/%s (P1) and %s/%s (P2)", gameID, player1.ClientID, player1.DisplayName, player2.ClientID, player2.DisplayName)
 
+	// Increment total matches counter
+	m.leaderboard.IncrementTotalMatches()
+
 	// Start the game
 	room.Start()
 }
@@ -237,6 +240,9 @@ func (m *Manager) CreateAIGame(clientID string, conn ClientConnection, displayNa
 	m.roomsMutex.Unlock()
 
 	log.Printf("Created AI game room %s: %s vs %s", gameID, displayName, aiDisplayName)
+
+	// Increment total matches counter
+	m.leaderboard.IncrementTotalMatches()
 
 	// Start the game
 	room.Start()

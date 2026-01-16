@@ -4,6 +4,7 @@ export class Leaderboard {
     this.top3Container = document.getElementById('leaderboard-top3');
     this.viewMoreButton = document.getElementById('leaderboard-view-more');
     this.empty = document.getElementById('leaderboard-empty');
+    this.totalMatchesEl = document.getElementById('total-matches');
 
     // Modal elements
     this.modal = document.getElementById('leaderboard-modal');
@@ -14,6 +15,7 @@ export class Leaderboard {
 
     // Store entries for modal
     this.entries = [];
+    this.totalMatches = 0;
 
     this.setupEventListeners();
   }
@@ -41,13 +43,16 @@ export class Leaderboard {
       this.top3Container.classList.add('hidden');
       this.viewMoreButton.classList.add('hidden');
       this.empty.classList.add('hidden');
+      if (this.totalMatchesEl) this.totalMatchesEl.classList.add('hidden');
 
       const response = await fetch('/api/leaderboard');
       if (!response.ok) {
         throw new Error('Failed to fetch leaderboard');
       }
 
-      this.entries = await response.json();
+      const data = await response.json();
+      this.entries = data.entries || [];
+      this.totalMatches = data.totalMatches || 0;
       this.render();
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
@@ -57,6 +62,13 @@ export class Leaderboard {
 
   render() {
     this.loading.classList.add('hidden');
+
+    // Always show total matches if available (90s web counter style)
+    if (this.totalMatchesEl && this.totalMatches > 0) {
+      const paddedCount = String(this.totalMatches).padStart(6, '0');
+      this.totalMatchesEl.innerHTML = `${paddedCount}<span class="counter-label">Matches Played</span>`;
+      this.totalMatchesEl.classList.remove('hidden');
+    }
 
     if (!this.entries || this.entries.length === 0) {
       this.empty.classList.remove('hidden');

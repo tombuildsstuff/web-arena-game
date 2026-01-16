@@ -61,8 +61,16 @@ func main() {
 		leaderboard := gameManager.GetLeaderboard()
 		entries := leaderboard.GetTopPlayers(50) // Top 50 players
 
+		response := struct {
+			TotalMatches int         `json:"totalMatches"`
+			Entries      interface{} `json:"entries"`
+		}{
+			TotalMatches: leaderboard.GetTotalMatches(),
+			Entries:      entries,
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(entries)
+		json.NewEncoder(w).Encode(response)
 	})
 
 	r.Get("/ws", func(w http.ResponseWriter, r *http.Request) {

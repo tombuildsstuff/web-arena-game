@@ -690,6 +690,33 @@ body {
   opacity: 0.8;
 }
 
+/* 90s web counter style */
+#total-matches {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 4px 8px;
+  background: #000;
+  border: 3px solid;
+  border-color: #808080 #fff #fff #808080;
+  box-shadow: inset 0 0 0 2px #000, inset 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: bold;
+  color: #33ff33;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px #33ff33;
+}
+
+#total-matches .counter-label {
+  display: block;
+  font-size: 9px;
+  color: #888;
+  letter-spacing: 1px;
+  text-shadow: none;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
 #leaderboard-loading,
 #leaderboard-empty {
   color: #94a3b8;
