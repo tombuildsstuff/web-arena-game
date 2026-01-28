@@ -285,7 +285,7 @@ This project was built as a collaboration between a human and an AI. Here's how 
 - **Documentation**: README, code comments, CLAUDE.md
 - **Sound research**: Finding and suggesting sound effects from Freesound.org
 
-### Human ([@tombuildsstuff](https://github.com/tombuildsstuff))
+### Human ([@tombuildsstuff](https://ibuildstuff.eu))
 
 - **Prompting & direction**: Describing features, requesting changes, guiding development
 - **GitHub OAuth app**: Creating and configuring the GitHub application for SSO
@@ -296,7 +296,7 @@ This project was built as a collaboration between a human and an AI. Here's how 
 ## Credits
 
 - **Code**: [Claude Code](https://www.anthropic.com/claude-code) by Anthropic
-- **Direction**: [@tombuildsstuff](https://github.com/tombuildsstuff)
+- **Direction**: [@tombuildsstuff](https://ibuildstuff.eu)
 - **Sound Effects**: Various artists from [Freesound.org](https://freesound.org) (see in-game credits)
 
 ## Inspiration
